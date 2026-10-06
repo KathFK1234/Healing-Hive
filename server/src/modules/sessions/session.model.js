@@ -39,6 +39,12 @@ const sessionSchema = new mongoose.Schema({
         type: Boolean,
         default: true
     },
+    // Where the two people meet. Set when the professional confirms.
+    meetingUrl: String,
+    googleEventId: {
+        type: String,
+        select: false
+    },
     // What the client wants the professional to know beforehand
     clientNote: String,
     // The professional's own notes. Never sent to the client.
