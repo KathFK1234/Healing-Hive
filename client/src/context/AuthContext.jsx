@@ -54,6 +54,9 @@ export function AuthProvider({ children }) {
       retry: me.refetch,
       login: async (credentials) => accept(await api.post('/auth/login', credentials)),
       register: async (details) => accept(await api.post('/auth/register', details)),
+      registerProfessional: async (details) => accept(await api.post('/auth/register-professional', details)),
+      // Used by the password reset page, which gets a session back like sign-in does
+      acceptSession: accept,
       signOut,
     };
   }, [token, me.data, me.isPending, me.isError, me.error, me.refetch, queryClient, signOut]);

@@ -1,5 +1,6 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
+import { homePath } from '@/lib/roles';
 import { Spinner, ErrorState } from '@/components/ui';
 import { AppLayout } from './AppLayout';
 import { PublicLayout } from './PublicLayout';
@@ -23,7 +24,7 @@ export function Protected({ roles }) {
       {!user
         ? <Navigate to="/login" replace state={{ from: location.pathname + location.search }} />
         : roles && !roles.includes(user.role)
-          ? <Navigate to="/home" replace />
+          ? <Navigate to={homePath(user)} replace />
           : <AppLayout><Outlet /></AppLayout>}
     </AuthGate>
   );
@@ -37,7 +38,7 @@ export function Open() {
     <AuthGate>
       {user
         ? <AppLayout><Outlet /></AppLayout>
-        : <PublicLayout><div className="container py-8"><Outlet /></div></PublicLayout>}
+        : <PublicLayout><div className="container max-w-4xl py-12 sm:py-16"><Outlet /></div></PublicLayout>}
     </AuthGate>
   );
 }
@@ -48,7 +49,7 @@ export function GuestOnly() {
   const location = useLocation();
   return (
     <AuthGate>
-      {user ? <Navigate to={location.state?.from || '/home'} replace /> : <Outlet />}
+      {user ? <Navigate to={location.state?.from || homePath(user)} replace /> : <Outlet />}
     </AuthGate>
   );
 }

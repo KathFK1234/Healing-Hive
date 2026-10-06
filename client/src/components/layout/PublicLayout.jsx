@@ -16,7 +16,7 @@ const links = [
 ];
 
 const linkClass = ({ isActive }) =>
-  classNames('rounded-lg px-3 py-2 text-sm font-bold hover:bg-muted', isActive ? 'text-primary' : 'text-foreground');
+  classNames('whitespace-nowrap rounded-full px-4 py-2 font-semibold hover:bg-muted', isActive ? 'text-primary' : 'text-foreground');
 
 export function PublicLayout({ children }) {
   const [open, setOpen] = useState(false);
@@ -28,11 +28,11 @@ export function PublicLayout({ children }) {
         Skip to content
       </a>
 
-      <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur">
-        <div className="container flex h-16 items-center justify-between gap-3">
+      <header className="sticky top-0 z-40 bg-background/95 backdrop-blur">
+        <div className="mx-auto flex h-20 max-w-6xl items-center justify-between gap-3 px-5">
           <Logo />
 
-          <nav aria-label="Main" className="hidden items-center gap-1 lg:flex">
+          <nav aria-label="Main" className="hidden items-center gap-1 xl:flex">
             {links.map((link) => <NavLink key={link.to} to={link.to} className={linkClass}>{link.label}</NavLink>)}
           </nav>
 
@@ -43,7 +43,7 @@ export function PublicLayout({ children }) {
             <Button to="/signup" variant="honey" size="sm" className="hidden sm:inline-flex">Get started</Button>
             <button
               type="button"
-              className="inline-flex h-10 w-10 items-center justify-center rounded-lg hover:bg-muted lg:hidden"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-lg hover:bg-muted xl:hidden"
               aria-expanded={open}
               aria-controls="mobile-menu"
               aria-label={open ? 'Close menu' : 'Open menu'}
@@ -55,7 +55,7 @@ export function PublicLayout({ children }) {
         </div>
 
         {open && (
-          <nav id="mobile-menu" aria-label="Main" className="border-t border-border lg:hidden">
+          <nav id="mobile-menu" aria-label="Main" className="border-t border-border xl:hidden">
             <div className="container flex flex-col gap-1 py-3">
               {links.map((link) => <NavLink key={link.to} to={link.to} className={linkClass} onClick={close}>{link.label}</NavLink>)}
               <div className="mt-2 grid grid-cols-2 gap-2 sm:hidden">
@@ -70,31 +70,31 @@ export function PublicLayout({ children }) {
 
       <main id="main" className="flex-1">{children}</main>
 
-      <footer className="mt-16 border-t border-border bg-card">
-        <div className="container grid gap-8 py-10 sm:grid-cols-2 lg:grid-cols-4">
+      <footer className="mt-24 bg-muted">
+        <div className="container grid gap-10 py-14 sm:grid-cols-2 lg:grid-cols-4">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <LogoMark className="h-7 w-7" />
-              <span className="font-extrabold">Healing Hive</span>
+              <span className="font-bold">Healing Hive</span>
             </div>
             <p className="text-sm text-muted-foreground">Supporting Kenyan youth on their mental health journey. <em>St;ll Here.</em></p>
           </div>
           <FooterList title="Get support" items={[['Find a therapist', '/therapists'], ['Peer counsellors', '/therapists?type=peer'], ['AI companion', '/companion'], ['Events', '/events']]} />
           <FooterList title="Learn" items={[['Mental health nuggets', '/nuggets'], ['For professionals', '/professionals'], ['Sign in', '/login']]} />
           <div>
-            <h2 className="mb-2 text-sm font-extrabold">In a crisis?</h2>
-            <ul className="space-y-1 text-sm">
-              {CRISIS_CONTACTS.slice(0, 3).map((contact) => (
+            <h2 className="mb-3 text-sm font-bold">In a crisis?</h2>
+            <ul className="space-y-2 text-sm">
+              {CRISIS_CONTACTS.slice(0, 2).map((contact) => (
                 <li key={contact.phone}>
                   <span className="text-muted-foreground">{contact.name}: </span>
-                  <a href={telHref(contact.phone)} className="font-bold text-danger hover:underline">{contact.phone}</a>
+                  <a href={telHref(contact.phone)} className="font-semibold text-danger hover:underline">{contact.phone}</a>
                 </li>
               ))}
             </ul>
-            <Link to="/help" className="mt-2 inline-block text-sm font-bold text-primary hover:underline">All help contacts</Link>
+            <Link to="/help" className="mt-2 inline-block text-sm font-semibold text-primary hover:underline">All help contacts</Link>
           </div>
         </div>
-        <p className="border-t border-border py-4 text-center text-xs text-muted-foreground">
+        <p className="pb-8 text-center text-sm text-muted-foreground">
           Healing Hive is not an emergency service. If you are in danger, call 999 or 112.
         </p>
       </footer>
@@ -105,8 +105,8 @@ export function PublicLayout({ children }) {
 function FooterList({ title, items }) {
   return (
     <div>
-      <h2 className="mb-2 text-sm font-extrabold">{title}</h2>
-      <ul className="space-y-1 text-sm">
+      <h2 className="mb-3 text-sm font-bold">{title}</h2>
+      <ul className="space-y-2 text-sm">
         {items.map(([label, to]) => (
           <li key={to}><Link to={to} className="text-muted-foreground hover:text-foreground hover:underline">{label}</Link></li>
         ))}

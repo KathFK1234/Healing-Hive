@@ -13,8 +13,8 @@ export function Logo({ to = '/' }) {
   return (
     <Link to={to} className="flex items-center gap-2 rounded-lg" aria-label="Healing Hive home">
       <LogoMark />
-      <span className="leading-none">
-        <span className="block text-lg font-extrabold tracking-tight">Healing Hive</span>
+      <span className="whitespace-nowrap leading-none">
+        <span className="block text-lg font-bold tracking-tight">Healing Hive</span>
         <span className="block text-xs italic text-muted-foreground">St;ll Here</span>
       </span>
     </Link>

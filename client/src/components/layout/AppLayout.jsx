@@ -3,79 +3,121 @@ import { NavLink } from 'react-router-dom';
 import classNames from 'classnames';
 import {
   House, HeartHandshake, CalendarDays, MessageCircle, NotebookPen, Activity, Lightbulb, Bell, Ticket,
-  Stethoscope, ShieldCheck, Settings, LogOut, Ellipsis,
+  Stethoscope, ShieldCheck, Settings, LogOut, Ellipsis, Building2, ClipboardList,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { homePath, isApplicant, isPractitioner } from '@/lib/roles';
 import { Avatar, Modal } from '@/components/ui';
 import { Logo } from './Logo';
 import { HelpButton } from './HelpButton';
 import { ThemeToggle } from './ThemeToggle';
 
-const mainItems = [
-  { to: '/home', label: 'Home', icon: House },
-  { to: '/therapists', label: 'Find support', icon: HeartHandshake },
-  { to: '/sessions', label: 'My sessions', icon: CalendarDays },
-  { to: '/companion', label: 'AI companion', icon: MessageCircle },
-  { to: '/journal', label: 'Journal', icon: NotebookPen },
-  { to: '/mood', label: 'Mood', icon: Activity },
-  { to: '/nuggets', label: 'Nuggets', icon: Lightbulb },
-  { to: '/reminders', label: 'Reminders', icon: Bell },
-  { to: '/events', label: 'Events', icon: Ticket },
-];
+const learn = {
+  label: 'Learn',
+  items: [
+    { to: '/nuggets', label: 'Nuggets', icon: Lightbulb },
+    { to: '/events', label: 'Events', icon: Ticket },
+  ],
+};
 
-// The four destinations people use most sit in the phone's bottom bar;
-// everything else is one tap away under "More".
-const tabItems = [
-  { to: '/home', label: 'Home', icon: House },
-  { to: '/therapists', label: 'Support', icon: HeartHandshake },
-  { to: '/companion', label: 'Companion', icon: MessageCircle },
-  { to: '/journal', label: 'Journal', icon: NotebookPen },
-];
-
-function itemsFor(user) {
-  const items = [...mainItems];
-  if (user.role === 'therapist' || user.role === 'peer') {
-    items.push({ to: '/practice', label: 'My practice', icon: Stethoscope });
+// The menu is short and grouped, and depends on who is signed in: someone
+// looking for support, a professional, an institution or an admin.
+function menuFor(user) {
+  if (user.role === 'admin') {
+    return [
+      { items: [{ to: '/admin', label: 'Admin', icon: ShieldCheck }, { to: '/therapists', label: 'Directory', icon: HeartHandshake }] },
+      learn,
+    ];
   }
-  if (user.role === 'admin') items.push({ to: '/admin', label: 'Admin', icon: ShieldCheck });
-  return items;
+  if (isPractitioner(user)) {
+    return [{ items: [{ to: '/practice', label: 'My practice', icon: Stethoscope }] }, learn];
+  }
+  if (user.role === 'institution') {
+    return [{ items: [{ to: '/institution', label: 'My institution', icon: Building2 }] }, learn];
+  }
+  if (isApplicant(user)) {
+    return [{ items: [{ to: '/apply', label: 'My application', icon: ClipboardList }] }, learn];
+  }
+  return [
+    { items: [{ to: '/home', label: 'Home', icon: House }] },
+    {
+      label: 'Talk to someone',
+      items: [
+        { to: '/therapists', label: 'Find support', icon: HeartHandshake },
+        { to: '/sessions', label: 'My sessions', icon: CalendarDays },
+        { to: '/companion', label: 'AI companion', icon: MessageCircle },
+      ],
+    },
+    {
+      label: 'For you',
+      items: [
+        { to: '/journal', label: 'Journal', icon: NotebookPen },
+        { to: '/mood', label: 'Mood', icon: Activity },
+        { to: '/reminders', label: 'Reminders', icon: Bell },
+      ],
+    },
+    learn,
+  ];
 }
+
+// The phone's bottom bar holds the first four destinations; the rest sit under "More".
+const CLIENT_TABS = ['/home', '/therapists', '/companion', '/journal'];
+
+// Shorter names so they fit under an icon on a narrow phone
+const SHORT_LABELS = {
+  'Find support': 'Support', 'AI companion': 'Companion', 'My practice': 'Practice',
+  'My institution': 'Institution', 'My application': 'Application',
+};
 
 const sideLink = ({ isActive }) =>
   classNames(
-    'flex h-11 items-center gap-3 rounded-xl px-3 text-sm font-bold transition-colors',
+    'flex h-12 items-center gap-3 rounded-2xl px-4 font-semibold transition-colors',
     isActive ? 'bg-primary-soft text-primary' : 'text-foreground hover:bg-muted',
   );
+
+const tabLink = ({ isActive }) =>
+  classNames('flex h-16 flex-col items-center justify-center gap-1 text-xs font-semibold', isActive ? 'text-primary' : 'text-muted-foreground');
 
 export function AppLayout({ children }) {
   const { user, signOut } = useAuth();
   const [moreOpen, setMoreOpen] = useState(false);
-  const items = itemsFor(user);
 
+  const groups = menuFor(user);
+  const all = groups.flatMap((group) => group.items);
+  const isClient = all.some((item) => item.to === '/home');
+  const tabs = isClient ? CLIENT_TABS.map((to) => all.find((item) => item.to === to)) : all.slice(0, 4);
+  const overflow = all.filter((item) => !tabs.includes(item));
 
   return (
-    <div className="min-h-screen lg:pl-64">
+    <div className="min-h-screen lg:pl-72">
       <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-card focus:px-4 focus:py-2">
         Skip to content
       </a>
 
       {/* Desktop sidebar */}
-      <aside className="fixed inset-y-0 left-0 hidden w-64 flex-col border-r border-border bg-card lg:flex">
-        <div className="flex h-16 items-center px-5"><Logo to="/home" /></div>
-        <nav aria-label="Main" className="flex-1 space-y-1 overflow-y-auto px-3 py-2">
-          {items.map(({ to, label, icon: Icon }) => (
-            <NavLink key={to} to={to} className={sideLink}>
-              <Icon className="h-5 w-5" aria-hidden="true" />
-              {label}
-            </NavLink>
+      <aside className="fixed inset-y-0 left-0 hidden w-72 flex-col border-r border-border bg-card lg:flex">
+        <div className="flex h-20 items-center px-7"><Logo to={homePath(user)} /></div>
+        <nav aria-label="Main" className="flex-1 space-y-6 overflow-y-auto px-4 py-4">
+          {groups.map((group, index) => (
+            <div key={group.label || index}>
+              {group.label && <p className="mb-2 px-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">{group.label}</p>}
+              <div className="space-y-1">
+                {group.items.map(({ to, label, icon: Icon }) => (
+                  <NavLink key={to} to={to} className={sideLink}>
+                    <Icon className="h-5 w-5" aria-hidden="true" />
+                    {label}
+                  </NavLink>
+                ))}
+              </div>
+            </div>
           ))}
         </nav>
-        <div className="space-y-1 border-t border-border p-3">
-          <NavLink to="/settings" className={(state) => classNames(sideLink(state), 'h-14')}>
+        <div className="space-y-1 p-4">
+          <NavLink to="/settings" className={(state) => classNames(sideLink(state), 'h-16')}>
             <Avatar name={user.fullName} size="sm" />
             <span className="min-w-0">
               <span className="block truncate">{user.fullName}</span>
-              <span className="block text-xs font-semibold text-muted-foreground">Settings</span>
+              <span className="block text-xs font-medium text-muted-foreground">Settings</span>
             </span>
           </NavLink>
           <button type="button" onClick={signOut} className={classNames(sideLink({ isActive: false }), 'w-full')}>
@@ -86,9 +128,9 @@ export function AppLayout({ children }) {
       </aside>
 
       {/* Top bar */}
-      <header className="sticky top-0 z-30 border-b border-border bg-background/95 backdrop-blur">
-        <div className="flex h-16 items-center justify-between gap-3 px-4 lg:px-8">
-          <div className="lg:hidden"><Logo to="/home" /></div>
+      <header className="sticky top-0 z-30 bg-background/95 backdrop-blur">
+        <div className="flex h-20 items-center justify-between gap-3 px-5 lg:px-12">
+          <div className="lg:hidden"><Logo to={homePath(user)} /></div>
           <div className="ml-auto flex items-center gap-2">
             <HelpButton />
             <ThemeToggle />
@@ -96,26 +138,18 @@ export function AppLayout({ children }) {
         </div>
       </header>
 
-      <main id="main" className="mx-auto w-full max-w-5xl px-4 pb-28 pt-6 lg:px-8 lg:pb-12">{children}</main>
+      <main id="main" className="mx-auto w-full max-w-4xl px-5 pb-36 pt-4 lg:px-12 lg:pb-24 lg:pt-8">{children}</main>
 
       {/* Phone bottom bar */}
       <nav aria-label="Main" className="pb-safe fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card lg:hidden">
-        <div className="grid grid-cols-5">
-          {tabItems.map(({ to, label, icon: Icon }) => (
-            <NavLink
-              key={to}
-              to={to}
-              className={({ isActive }) => classNames('flex h-16 flex-col items-center justify-center gap-1 text-xs font-bold', isActive ? 'text-primary' : 'text-muted-foreground')}
-            >
+        <div className="grid" style={{ gridTemplateColumns: `repeat(${tabs.length + 1}, minmax(0, 1fr))` }}>
+          {tabs.map(({ to, label, icon: Icon }) => (
+            <NavLink key={to} to={to} className={tabLink}>
               <Icon className="h-5 w-5" aria-hidden="true" />
-              {label}
+              {SHORT_LABELS[label] || label}
             </NavLink>
           ))}
-          <button
-            type="button"
-            onClick={() => setMoreOpen(true)}
-            className="flex h-16 flex-col items-center justify-center gap-1 text-xs font-bold text-muted-foreground"
-          >
+          <button type="button" onClick={() => setMoreOpen(true)} className={tabLink({ isActive: false })}>
             <Ellipsis className="h-5 w-5" aria-hidden="true" />
             More
           </button>
@@ -123,14 +157,14 @@ export function AppLayout({ children }) {
       </nav>
 
       <Modal open={moreOpen} onClose={() => setMoreOpen(false)} title="More">
-        <nav aria-label="More" className="grid grid-cols-2 gap-2">
-          {items.filter((item) => !tabItems.some((tab) => tab.to === item.to)).concat({ to: '/settings', label: 'Settings', icon: Settings }).map(({ to, label, icon: Icon }) => (
+        <nav aria-label="More" className="grid gap-1 pb-2 sm:grid-cols-2">
+          {overflow.concat({ to: '/settings', label: 'Settings', icon: Settings }).map(({ to, label, icon: Icon }) => (
             <NavLink key={to} to={to} onClick={() => setMoreOpen(false)} className={sideLink}>
               <Icon className="h-5 w-5" aria-hidden="true" />
               {label}
             </NavLink>
           ))}
-          <button type="button" onClick={signOut} className={classNames(sideLink({ isActive: false }), 'col-span-2')}>
+          <button type="button" onClick={signOut} className={sideLink({ isActive: false })}>
             <LogOut className="h-5 w-5" aria-hidden="true" />
             Sign out
           </button>

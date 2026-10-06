@@ -8,12 +8,14 @@ export function HelpButton({ className }) {
     <Link
       to="/help"
       className={classNames(
-        'inline-flex h-10 items-center gap-2 rounded-full bg-danger-soft px-3.5 text-sm font-extrabold text-danger hover:bg-danger hover:text-white dark:hover:text-background',
+        'inline-flex h-10 items-center gap-2 whitespace-nowrap rounded-full bg-danger-soft px-4 text-sm font-bold text-danger hover:bg-danger hover:text-white dark:hover:text-background',
         className,
       )}
     >
       <LifeBuoy className="h-4 w-4" aria-hidden="true" />
-      Get help now
+      {/* shorter on narrow phones, where the logo needs the room */}
+      <span className="min-[400px]:hidden">Get help</span>
+      <span className="max-[399px]:hidden">Get help now</span>
     </Link>
   );
 }
