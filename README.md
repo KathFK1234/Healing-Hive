@@ -10,50 +10,62 @@ This is the second version of the [MindConnect](https://github.com/derick-machar
 
 | For | Features |
 | --- | --- |
-| People looking for support | Directory of verified therapists and peer counsellors, session booking, daily mood check-ins, private journal, AI companion, nuggets, reminders, events |
-| Therapists and peer counsellors | Application and verification, public profile, weekly hours, accepting requests, private session notes, writing nuggets, hosting events |
+| People looking for support | Directory of verified therapists and peer counsellors, booking, video sessions, ratings, daily mood check-ins, private journal, AI companion, nuggets, reminders, events |
+| Therapists and peer counsellors | Their own sign-up and verification, public profile, weekly hours, Google Calendar and Meet, accepting requests, private session notes, writing nuggets, hosting events |
+| Institutions | Their own sign-up, inviting verified professionals, a dashboard of sessions, ratings and value per team member |
 | Admins | Reviewing applications, reviewing and publishing nuggets, platform numbers |
 
 A **Get help now** button with Kenyan crisis lines is on every page.
 
 ## Getting started
 
-You need Node.js 20 or newer and a MongoDB database (local, or a free MongoDB Atlas cluster).
+You need Node.js 20 or newer. Nothing else: no database to install, no settings to fill in.
 
 ```bash
-# 1. Install everything (run from the repo root)
 npm install
-
-# 2. Configure the server
-cp server/.env.example server/.env
-#    then open server/.env and fill in MONGO_URI and JWT_SECRET
-
-# 3. Add starter nuggets and your admin account
-#    (set ADMIN_EMAIL and ADMIN_PASSWORD in server/.env first)
-npm run seed
-#    for local development you can also add sample professionals:
-npm run seed -- --demo
-
-# 4. Start the API and the web app, in two terminals
-npm run dev:server     # http://localhost:7002
-npm run dev:client     # http://localhost:5173
+npm run dev
 ```
+
+`npm run dev` starts three things together and prints the web address to open (usually http://localhost:5173):
+
+- a local database that keeps its data in `server/.data` between runs
+- the API, on port 7002
+- the web app
+
+The first run creates `server/.env` for you and fills the database with starter nuggets, events and sample accounts, so every page has something in it:
+
+| Sign in as | Email | Password |
+| --- | --- | --- |
+| Someone looking for support | `client@healinghive.local` | `healing-hive-demo` |
+| A therapist | `therapist@healinghive.local` | `healing-hive-demo` |
+| An institution | `institution@healinghive.local` | `healing-hive-demo` |
+| The admin | `admin@healinghive.local` | in `server/.env` (`ADMIN_PASSWORD`) |
+
+To start again from a clean database, stop `npm run dev` and delete the `server/.data` folder.
 
 Other commands, all from the repo root:
 
 | Command | What it does |
 | --- | --- |
-| `npm test` | Runs the API tests against an in-memory MongoDB. No setup needed. |
+| `npm test` | Runs the API tests against an in-memory MongoDB |
 | `npm run lint` | Lints the web app |
 | `npm run build` | Builds the web app into `client/dist` |
+| `npm run seed` | Adds starter nuggets and the admin account to whatever database `server/.env` points at |
 
-### Settings
+### Switching features on
 
-Every server setting is listed in [`server/.env.example`](server/.env.example) and checked at startup; the server refuses to start with a missing or weak value and tells you which.
+Everything below is optional locally. Each setting is explained in [`server/.env.example`](server/.env.example); the server checks them at startup and tells you which one is wrong. **Never commit `.env`** (it is in `.gitignore`).
 
-- **Never commit `.env`.** It is in `.gitignore`.
-- **AI companion:** leave `OPENAI_API_KEY` empty to run without it. The chat page then says it is switched off, and still answers crisis messages with help contacts. `AI_BASE_URL` and `AI_MODEL` let you point it at any OpenAI-compatible provider.
-- **Web app:** `client/.env.example` has one setting, `VITE_API_URL`, only needed when the API is hosted on a different address from the web app.
+| Feature | What to set in `server/.env` | Without it |
+| --- | --- | --- |
+| AI companion (Claude) | `ANTHROPIC_API_KEY`, from [console.anthropic.com](https://console.anthropic.com) | The chat page says it is switched off. Crisis messages still get help contacts. |
+| Real emails | `SMTP_HOST`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM`. For Gmail use `smtp.gmail.com` and an [app password](https://myaccount.google.com/apppasswords). | Emails, including password reset links, are printed in the terminal running `npm run dev`. |
+| Google Calendar and Meet | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` (steps in `.env.example`) | Each confirmed session gets the professional's own meeting link, or a private Jitsi room. |
+| A hosted database | `MONGO_URI` pointing at MongoDB Atlas | The local database is used. |
+
+### Do I need to deploy it?
+
+Not to build and test: everything above runs on your own machine, including Google sign-in (Google allows `localhost` redirect addresses). You need a deployed copy when other people have to reach it: real users, a professional connecting their calendar from their own device, or Safaricom's M-Pesa servers calling back with payment results.
 
 ## How it's organised
 
@@ -63,10 +75,10 @@ server/                  Express + MongoDB API, served under /api/v1
     config/              settings (validated) and database connection
     middleware/          sign-in check, role check, input validation, error handling
     modules/             one folder per feature: its model, routes and logic together
-      auth/ users/ professionals/ sessions/ moods/ journal/
-      reminders/ nuggets/ events/ ai/ admin/
-    utils/               shared helpers, including crisis contacts
-  scripts/seed.js        starter content and the first admin
+      auth/ users/ professionals/ sessions/ reviews/ institutions/
+      google/ moods/ journal/ reminders/ nuggets/ events/ ai/ admin/
+    utils/               shared helpers: crisis contacts, outgoing email
+  scripts/               local dev database, starter content and sample accounts
   test/                  API tests
 
 client/                  React + Vite + Tailwind web app
@@ -83,27 +95,27 @@ To add a feature: create a folder in `server/src/modules/`, mount its routes in 
 ### Rules the code relies on
 
 - **Input is validated before it reaches a controller.** Routes declare a schema, and only fields in the schema get through. This is what stops someone setting their own `role`, or the owner of a record, from the request body.
-- **Roles change in one place.** Everyone signs up as `user`. An account becomes `therapist` or `peer` only when an admin approves its application.
-- **Personal data is scoped to its owner in the query.** Journal entries, mood check-ins, reminders and AI conversations have no route for anyone else, admins included.
+- **Roles change in one place.** Everyone starts with the role `user`, including professionals who have applied. An account becomes `therapist`, `peer` or `institution` only when an admin approves its application.
+- **Each kind of account has its own home and menu** (`client/src/lib/roles.js`): people looking for support, applicants, practising professionals, institutions and admins.
+- **Personal data is scoped to its owner in the query.** Journal entries, mood check-ins, reminders and AI conversations have no route for anyone else, admins included. Institutions see counts for their team, never client names or notes. Reviews are public without names.
 - **The database prevents double-booking**, with a unique index on a professional's time slot, so two people booking at the same instant cannot both succeed.
 - **Times are East Africa Time** (UTC+3, no daylight saving) for working hours, slots and reminders.
 - **Colours come from design tokens** in `client/src/index.css`, with light and dark values. Use the Tailwind names (`bg-primary`, `text-muted-foreground`, `bg-honey-soft`), not hex values.
 
 ## Not built yet
 
-- **Payments (M-Pesa and card).** Sessions record a price and a payment status, but nothing is charged. Needs Safaricom Daraja credentials.
+- **Payments (M-Pesa and card).** Sessions record a price and a payment status, but nothing is charged. Needs Safaricom Daraja credentials and a deployed address for callbacks.
 - **Reminder delivery by SMS or email.** Reminders are saved and shown in the app. Sending them needs Africa's Talking credentials and a scheduled job.
-- **Video and voice calls.** A session records how the two people want to meet, but there is no built-in call room.
-- **Institution dashboards.** Institutions can apply; their tools are not built.
-- **Password reset by email**, which needs an email provider.
-- **Ratings and reviews** of professionals.
+- **A built-in call room.** Sessions happen on Google Meet, the professional's own link, or Jitsi. Note that Jitsi's free service asks whoever opens a room first to sign in with a Google or GitHub account.
+- **Changing your email address**, and confirming an email address at sign-up.
 
 ## Before going live
 
 - **Verify every crisis number** in `server/src/utils/crisis.js` and `client/src/lib/crisis.js` (the two lists must match), and re-check them regularly.
+- Google Calendar uses "sensitive" permissions. While the Google Cloud project is in testing, only the test users you list can connect; opening it to all professionals needs Google's verification.
 - Have a qualified clinician review the AI companion's instructions in `server/src/modules/ai/ai.service.js` and the crisis wording.
 - Generate a fresh `JWT_SECRET` for production, and set `NODE_ENV=production` and `CLIENT_ORIGIN` to the real web address.
-- Do not run `npm run seed -- --demo` against the production database: the sample professionals would appear in the public directory.
+- Do not run `npm run seed -- --demo` against the production database: the sample accounts share a public password and would appear in the directory. (It refuses when `NODE_ENV=production`.)
 
 ## Contributors
 
