@@ -9,11 +9,14 @@ const LEAD_TIME_MS = 2 * 60 * MINUTE_MS;
 export const BOOKING_WINDOW_DAYS = 14;
 
 // Turns a professional's weekly hours into the list of start times that are
-// still free. `taken` is the start times of their pending and confirmed sessions.
-export function openSlots(professional, taken = [], now = new Date()) {
+// still free. `taken` is the start times of their pending and confirmed sessions;
+// `busy` is [{ start, end }] from their own calendar (Google), when connected.
+export function openSlots(professional, taken = [], now = new Date(), busy = []) {
     const length = professional.sessionMinutes || 50;
     const takenTimes = new Set(taken.map((date) => new Date(date).getTime()));
     const earliest = now.getTime() + LEAD_TIME_MS;
+    const busyRanges = busy.map((range) => [new Date(range.start).getTime(), new Date(range.end).getTime()]);
+    const isBusy = (start) => busyRanges.some(([from, to]) => start < to && start + length * MINUTE_MS > from);
     const today = new Date(now.getTime() + EAT_OFFSET_MS);
     const slots = [];
 
@@ -25,7 +28,7 @@ export function openSlots(professional, taken = [], now = new Date()) {
         for (const window of hours) {
             for (let minute = window.start; minute + length <= window.end; minute += length) {
                 const time = day.getTime() + minute * MINUTE_MS - EAT_OFFSET_MS;
-                if (time >= earliest && !takenTimes.has(time)) slots.push(new Date(time));
+                if (time >= earliest && !takenTimes.has(time) && !isBusy(time)) slots.push(new Date(time));
             }
         }
     }
