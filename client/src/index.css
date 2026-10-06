@@ -1,0 +1,88 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Design tokens. Every colour in the app comes from here (see tailwind.config.cjs).
+   Text colours are checked for at least 4.5:1 contrast on their backgrounds. */
+@layer base {
+  :root {
+    --background: 40 33% 98%;
+    --foreground: 200 25% 14%;
+    --card: 0 0% 100%;
+    --muted: 40 20% 94%;
+    --muted-foreground: 200 10% 38%;
+    --border: 40 16% 87%;
+
+    --primary: 174 46% 28%;
+    --primary-foreground: 0 0% 100%;
+    --primary-soft: 174 40% 93%;
+
+    --honey: 41 90% 60%;
+    --honey-foreground: 35 70% 14%;
+    --honey-soft: 43 90% 93%;
+
+    --calm: 203 55% 38%;
+    --calm-soft: 203 60% 94%;
+    --warmth: 16 62% 42%;
+    --warmth-soft: 18 80% 95%;
+    --danger: 2 65% 42%;
+    --danger-soft: 2 80% 96%;
+  }
+
+  .dark {
+    --background: 200 18% 9%;
+    --foreground: 40 20% 92%;
+    --card: 200 16% 13%;
+    --muted: 200 14% 17%;
+    --muted-foreground: 200 10% 68%;
+    --border: 200 12% 23%;
+
+    --primary: 172 48% 58%;
+    --primary-foreground: 200 30% 9%;
+    --primary-soft: 174 30% 18%;
+
+    --honey: 41 85% 60%;
+    --honey-foreground: 35 70% 12%;
+    --honey-soft: 40 40% 18%;
+
+    --calm: 203 65% 72%;
+    --calm-soft: 203 35% 19%;
+    --warmth: 18 80% 72%;
+    --warmth-soft: 16 35% 19%;
+    --danger: 2 85% 74%;
+    --danger-soft: 2 40% 19%;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+
+  h1, h2, h3, h4 {
+    @apply font-extrabold tracking-tight;
+    text-wrap: balance;
+  }
+
+  /* One visible focus style everywhere, for people using a keyboard */
+  :focus-visible {
+    @apply outline-none ring-2 ring-primary ring-offset-2 ring-offset-background;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer utilities {
+  /* Keeps content clear of the phone's home indicator */
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
