@@ -25,9 +25,9 @@ const Login = () => {
     <AuthShell
       title="Welcome back"
       description="Sign in to pick up where you left off."
-      footer={<p>New here? <Link to="/signup" state={location.state} className="font-bold text-primary hover:underline">Create an account</Link></p>}
+      footer={<p>New here? <Link to="/signup" state={location.state} className="font-semibold text-primary hover:underline">Create an account</Link></p>}
     >
-      <form onSubmit={submit} className="space-y-4" noValidate>
+      <form onSubmit={submit} className="space-y-5" noValidate>
         <FormError error={mutation.error} />
         <Field label="Email">
           {(field) => <Input {...field} type="email" autoComplete="email" required placeholder="you@example.com" value={form.email} onChange={set('email')} />}
@@ -35,6 +35,9 @@ const Login = () => {
         <Field label="Password">
           {(field) => <PasswordInput {...field} autoComplete="current-password" required value={form.password} onChange={set('password')} />}
         </Field>
+        <p className="text-right">
+          <Link to="/forgot-password" className="font-semibold text-primary hover:underline">Forgot your password?</Link>
+        </p>
         <Button type="submit" size="lg" className="w-full" loading={mutation.isPending}>Sign in</Button>
       </form>
     </AuthShell>
