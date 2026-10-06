@@ -8,10 +8,13 @@ import env from "../../config/env.js";
 
 const router = express.Router();
 
-// Slows down password guessing. Counted per IP address.
+// Slows down password guessing. Counted per IP address, and only failed
+// attempts count: mobile networks and campuses put many people behind one
+// address, and they must not be locked out by each other's normal sign-ins.
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     limit: 20,
+    skipSuccessfulRequests: true,
     standardHeaders: "draft-7",
     legacyHeaders: false,
     skip: () => env.isTest,
