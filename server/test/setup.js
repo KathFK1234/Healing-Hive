@@ -2,7 +2,7 @@
 process.env.NODE_ENV = "test";
 process.env.JWT_SECRET = "test-secret-test-secret-test-secret-1234";
 process.env.MONGO_URI = "mongodb://placeholder/overridden-below";
-process.env.OPENAI_API_KEY = "";
+process.env.ANTHROPIC_API_KEY = "";
 
 import { MongoMemoryServer } from "mongodb-memory-server";
 import mongoose from "mongoose";
