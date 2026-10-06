@@ -30,12 +30,12 @@ const Signup = () => {
       description="Free to join. You choose what to share."
       footer={
         <>
-          <p>Already have an account? <Link to="/login" state={location.state} className="font-bold text-primary hover:underline">Sign in</Link></p>
-          <p>A mental health professional? <Link to="/professionals" className="font-bold text-primary hover:underline">Join the network</Link></p>
+          <p>Already have an account? <Link to="/login" state={location.state} className="font-semibold text-primary hover:underline">Sign in</Link></p>
+          <p>A therapist, peer counsellor or institution? <Link to="/professionals/signup" className="font-semibold text-primary hover:underline">Sign up as a professional</Link></p>
         </>
       }
     >
-      <form onSubmit={submit} className="space-y-4" noValidate>
+      <form onSubmit={submit} className="space-y-5" noValidate>
         {!hasFieldErrors && <FormError error={mutation.error} />}
         <Field label="What should we call you?" error={fieldError('fullName')}>
           {(field) => <Input {...field} autoComplete="name" required placeholder="Your name" value={form.fullName} onChange={set('fullName')} />}
