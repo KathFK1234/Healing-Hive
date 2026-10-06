@@ -5,6 +5,7 @@
 //                           the people are made up and would show in the public directory)
 //
 // Safe to run more than once: existing records are left alone.
+import { fileURLToPath } from "node:url";
 import bcrypt from "bcryptjs";
 import env from "../src/config/env.js";
 import { connectDb, disconnectDb } from "../src/config/db.js";
@@ -158,8 +159,15 @@ async function seedDemo() {
     console.log("Demo data: sample professionals and event are in place");
 }
 
-await connectDb();
-await seedNuggets();
-await seedAdmin();
-if (process.argv.includes("--demo")) await seedDemo();
-await disconnectDb();
+export async function seed({ demo = false } = {}) {
+    await connectDb();
+    await seedNuggets();
+    await seedAdmin();
+    if (demo) await seedDemo();
+    await disconnectDb();
+}
+
+// Run directly (npm run seed), as opposed to imported by the dev database script
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+    await seed({ demo: process.argv.includes("--demo") });
+}

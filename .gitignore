@@ -13,3 +13,6 @@ coverage/
 Thumbs.db
 .vscode/
 .idea/
+
+# Local development database (npm run dev)
+server/.data/

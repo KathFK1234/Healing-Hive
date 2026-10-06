@@ -49,6 +49,12 @@ async function request(method, path, body) {
   const data = await response.json().catch(() => null);
   if (response.ok) return data;
 
+  // A gateway error with no body means the web app is up but the API behind it
+  // is not (in development: the server isn't running).
+  if (!data && response.status >= 502 && response.status <= 504) {
+    throw new ApiError(response.status, 'SERVER_DOWN', "We can't reach the Healing Hive server right now. Please try again in a moment");
+  }
+
   // An expired or invalid session: tell the auth context so it can sign out.
   if (response.status === 401 && token) window.dispatchEvent(new Event('hh:signed-out'));
 
