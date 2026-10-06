@@ -13,18 +13,19 @@ const Help = () => {
         description="If you are thinking about harming yourself, or you are in danger, please reach a person right now. These lines are staffed by people who want to help."
       />
 
-      <ul className="space-y-3">
+      <ul className="space-y-4">
         {CRISIS_CONTACTS.map((contact, index) => (
           <li key={contact.phone}>
-            <Card className={index === 0 ? 'border-danger/40 bg-danger-soft' : ''}>
+            <Card className={index === 0 ? 'border-transparent bg-danger-soft' : ''}>
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="min-w-0">
                   <h2 className="text-lg">{contact.name}</h2>
-                  <p className="text-sm text-muted-foreground">{contact.note}</p>
+                  <p className="font-semibold text-primary">{contact.hours}</p>
+                  <p className="text-muted-foreground">{contact.note}</p>
                 </div>
                 <a
                   href={telHref(contact.phone)}
-                  className="inline-flex h-12 items-center gap-2 rounded-xl bg-danger px-5 text-base font-extrabold text-white hover:bg-danger/90 dark:text-background"
+                  className="inline-flex h-14 items-center gap-2 rounded-full bg-danger px-6 text-lg font-bold text-white hover:bg-danger/90 dark:text-background"
                 >
                   <Phone className="h-5 w-5" aria-hidden="true" />
                   Call {contact.phone}
@@ -35,9 +36,9 @@ const Help = () => {
         ))}
       </ul>
 
-      <Card className="mt-6">
+      <Card className="mt-8">
         <h2 className="text-lg">While you wait, or if you can't call</h2>
-        <ul className="mt-3 list-disc space-y-2 pl-5 text-sm leading-relaxed text-muted-foreground">
+        <ul className="mt-4 list-disc space-y-3 pl-5 text-muted-foreground">
           <li>Tell someone near you that you trust how you are feeling, and ask them to stay with you.</li>
           <li>Move away from anything you could use to hurt yourself.</li>
           <li>Breathe out slowly, longer than you breathe in. Do it five times.</li>
@@ -45,7 +46,7 @@ const Help = () => {
         </ul>
       </Card>
 
-      <div className="mt-6 grid gap-3 sm:grid-cols-2">
+      <div className="mt-8 grid gap-4 sm:grid-cols-2">
         <Button to="/therapists" variant="outline" size="lg"><HeartHandshake className="h-5 w-5" aria-hidden="true" /> Book a professional</Button>
         <Button to="/companion" variant="outline" size="lg"><MessageCircle className="h-5 w-5" aria-hidden="true" /> Talk to the AI companion</Button>
       </div>
