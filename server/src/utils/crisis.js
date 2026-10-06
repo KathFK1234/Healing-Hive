@@ -1,12 +1,14 @@
-// Crisis contacts for Kenya. The web app keeps its own copy in
-// client/src/lib/crisis.js so the help page still works when the API is down.
-// Keep the two in step, and re-check the numbers before every release.
+// Crisis contacts for Kenya, ordered so the lines that answer at any hour come
+// first. Last checked against each organisation's published details in
+// October 2026. The web app keeps its own copy in client/src/lib/crisis.js so
+// the help page still works when the API is down: keep the two in step, and
+// re-check the numbers before every release.
 export const CRISIS_CONTACTS = [
-    { name: "Emergency services", phone: "999", note: "Police, ambulance and fire. 112 also works from mobile phones" },
-    { name: "Kenya Red Cross", phone: "1199", note: "Toll-free counselling and emergency line" },
-    { name: "Befrienders Kenya", phone: "+254 722 178 177", note: "Confidential emotional support for people in distress" },
-    { name: "GBV helpline", phone: "1195", note: "Toll-free support for gender-based violence, any hour" },
-    { name: "Childline Kenya", phone: "116", note: "Toll-free helpline for children and young people" },
+    { name: "Emergency services", phone: "999", hours: "Any time", note: "Police, ambulance and fire. 112 also works from mobile phones" },
+    { name: "Kenya Red Cross", phone: "1199", hours: "Any time, free", note: "Free counselling by phone, day or night" },
+    { name: "GBV helpline", phone: "1195", hours: "Any time, free", note: "Support for anyone facing sexual or gender-based violence" },
+    { name: "Child helpline", phone: "116", hours: "Any time, free", note: "For children and young people. Also on WhatsApp: 0722 116 116" },
+    { name: "Befrienders Kenya", phone: "+254 722 178 177", hours: "Weekdays, 9am to 5pm", note: "Confidential emotional support by call, SMS or WhatsApp" },
 ];
 
 // A deliberately broad first screen. It will have false positives; the cost of
@@ -37,5 +39,6 @@ export const CRISIS_REPLY =
     "I'm really glad you told me, and I'm sorry you're carrying this much pain. " +
     "You deserve support from a person right now, and I'm not able to give you that on my own. " +
     "If you might act on these thoughts or you are in danger, please call 999 or 112 now. " +
-    "You can also reach Befrienders Kenya on +254 722 178 177 or the Kenya Red Cross toll-free on 1199. " +
+    "You can talk to a counsellor for free at any hour by calling the Kenya Red Cross on 1199. " +
+    "Befrienders Kenya is also there on weekdays from 9am to 5pm on +254 722 178 177. " +
     "If you can, tell someone near you that you trust how you are feeling. I'm still here if you want to keep talking.";
