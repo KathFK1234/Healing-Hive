@@ -4,7 +4,7 @@ An inclusive mental health support platform for Kenyan youth, offering therapy, 
 
 **Tagline:** _"St;ll Here"_, inspired by the semicolon movement: your story isn't over yet.
 
-This is the second version of the [MindConnect](https://github.com/KathFK1234/mindconnect) platform, rebuilt from the skeleton the original team put together.
+This is the second version of the [MindConnect](https://github.com/derick-macharia/mindconnect-platform) platform, rebuilt from the skeleton the original team put together.
 
 ## What's in it
 
