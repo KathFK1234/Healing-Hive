@@ -9,6 +9,9 @@ import nuggetRoutes from "./modules/nuggets/nugget.routes.js";
 import eventRoutes from "./modules/events/event.routes.js";
 import aiRoutes from "./modules/ai/ai.routes.js";
 import adminRoutes from "./modules/admin/admin.routes.js";
+import reviewRoutes from "./modules/reviews/review.routes.js";
+import institutionRoutes from "./modules/institutions/institution.routes.js";
+import googleRoutes from "./modules/google/google.routes.js";
 import { CRISIS_CONTACTS } from "./utils/crisis.js";
 
 const router = express.Router();
@@ -26,5 +29,8 @@ router.use("/nuggets", nuggetRoutes);
 router.use("/events", eventRoutes);
 router.use("/ai", aiRoutes);
 router.use("/admin", adminRoutes);
+router.use("/reviews", reviewRoutes);
+router.use("/institutions", institutionRoutes);
+router.use("/google", googleRoutes);
 
 export default router;

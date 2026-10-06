@@ -7,6 +7,8 @@ import Nugget from "../nuggets/nugget.model.js";
 import ApiError from "../../utils/ApiError.js";
 import { authenticate, requireRole } from "../../middleware/auth.js";
 import { validate, validateId } from "../../middleware/validate.js";
+import env from "../../config/env.js";
+import { sendMail } from "../../utils/mailer.js";
 
 const router = express.Router();
 
@@ -56,8 +58,27 @@ router.patch("/applications/:id", validateId, validate({ body: reviewSchema }), 
     application.reviewNote = req.body.reviewNote;
     await application.save();
 
-    const role = req.body.status === "approved" ? application.type : "user";
+    const approved = req.body.status === "approved";
+    const role = approved ? application.type : "user";
     await User.updateOne({ _id: application.user, role: { $ne: "admin" } }, { role });
+
+    // Being removed from the directory also ends any institution membership,
+    // and an institution that is removed no longer has members.
+    if (!approved) {
+        await Professional.updateOne({ _id: application._id }, { $unset: { institution: 1, institutionStatus: 1 } });
+        await Professional.updateMany({ institution: application._id }, { $unset: { institution: 1, institutionStatus: 1 } });
+    }
+
+    const applicant = await User.findById(application.user).select("fullName email");
+    if (applicant) {
+        await sendMail({
+            to: applicant.email,
+            subject: approved ? "You are approved on Healing Hive" : "Your Healing Hive application needs changes",
+            text: approved
+                ? `Hello ${applicant.fullName},\n\nGood news: your application has been approved. Sign in to finish setting up:\n${env.clientUrl}/login`
+                : `Hello ${applicant.fullName},\n\nWe could not approve your application yet.${req.body.reviewNote ? `\n\nWhat needs to change: ${req.body.reviewNote}` : ""}\n\nYou can update it and send it again here:\n${env.clientUrl}/apply`,
+        });
+    }
 
     res.json(application);
 });
