@@ -29,6 +29,22 @@ const userSchema = new mongoose.Schema({
         enum: ROLES,
         default: "user"
     },
+    // Which experience the account gets: a person looking for support, or a
+    // professional (therapist, peer counsellor, institution) offering it.
+    accountType: {
+        type: String,
+        enum: ["client", "professional"],
+        default: "client"
+    },
+    // Password reset: only a hash of the emailed token is stored.
+    passwordReset: {
+        type: {
+            _id: false,
+            tokenHash: String,
+            expiresAt: Date
+        },
+        select: false
+    },
     preferredLanguage: {
         type: String,
         default: "English"
@@ -45,6 +61,7 @@ const userSchema = new mongoose.Schema({
 userSchema.set("toJSON", {
     transform(doc, ret) {
         delete ret.password;
+        delete ret.passwordReset;
         delete ret.__v;
         return ret;
     },
