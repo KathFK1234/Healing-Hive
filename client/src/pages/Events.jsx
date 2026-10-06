@@ -112,7 +112,7 @@ const Events = () => {
                               : <Button size="sm" onClick={() => join.mutate(event)}>Register</Button>
                       )}
                       {event.joinLink && (
-                        <a href={event.joinLink} target="_blank" rel="noopener noreferrer" className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-primary-soft px-3 text-sm font-bold text-primary hover:bg-primary-soft/70">
+                        <a href={event.joinLink} target="_blank" rel="noopener noreferrer" className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-primary-soft px-3 text-sm font-semibold text-primary hover:bg-primary-soft/70">
                           Open join link <ExternalLink className="h-4 w-4" aria-hidden="true" />
                         </a>
                       )}

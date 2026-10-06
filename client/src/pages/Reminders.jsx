@@ -79,7 +79,7 @@ const Reminders = () => {
               <li key={reminder._id}>
                 <Card className="flex items-center gap-4">
                   <div className={reminder.enabled ? 'min-w-0 flex-1' : 'min-w-0 flex-1 opacity-60'}>
-                    <p className="text-lg font-extrabold">{formatClock(reminder.time)}</p>
+                    <p className="text-lg font-bold">{formatClock(reminder.time)}</p>
                     <p className="truncate">{reminder.message}</p>
                     <p className="text-sm text-muted-foreground">{describeDays(reminder.days)}</p>
                   </div>
@@ -131,7 +131,7 @@ const Reminders = () => {
               {(field) => <Input {...field} type="time" required className="w-40" value={draft.time} onChange={(event) => setDraft({ ...draft, time: event.target.value })} />}
             </Field>
             <fieldset>
-              <legend className="mb-2 text-sm font-bold">On</legend>
+              <legend className="mb-2 text-sm font-semibold">On</legend>
               <div className="flex flex-wrap gap-2">
                 {everyDay.map((day) => (
                   <Chip

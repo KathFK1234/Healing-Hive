@@ -64,7 +64,7 @@ const Mood = () => {
                   <li key={mood._id} className="flex items-start gap-3 rounded-xl border border-border bg-card px-4 py-3">
                     <span className="text-2xl" aria-hidden="true">{moodFor(mood.score).emoji}</span>
                     <div className="min-w-0 flex-1">
-                      <p className="font-bold">{moodFor(mood.score).label} <span className="font-semibold text-muted-foreground">· {formatDateTime(mood.createdAt)}</span></p>
+                      <p className="font-semibold">{moodFor(mood.score).label} <span className="font-semibold text-muted-foreground">· {formatDateTime(mood.createdAt)}</span></p>
                       {mood.note && <p className="text-sm text-muted-foreground">{mood.note}</p>}
                       {mood.tags?.length > 0 && (
                         <div className="mt-1.5 flex flex-wrap gap-1">{mood.tags.map((tag) => <Badge key={tag}>{tag}</Badge>)}</div>

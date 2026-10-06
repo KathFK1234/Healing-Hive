@@ -123,7 +123,7 @@ const Journal = () => {
               </div>
             )}
             <fieldset>
-              <legend className="mb-2 text-sm font-bold">Mood (optional)</legend>
+              <legend className="mb-2 text-sm font-semibold">Mood (optional)</legend>
               <div className="flex flex-wrap gap-2">
                 {MOODS.map((mood) => (
                   <Chip key={mood.score} selected={draft.mood === mood.score} onClick={() => setDraft({ ...draft, mood: draft.mood === mood.score ? null : mood.score })}>

@@ -89,29 +89,29 @@ const Companion = () => {
 
               {off && !showContacts && (
                 <div className="rounded-xl bg-muted p-4 text-sm">
-                  <p className="flex items-center gap-2 font-extrabold"><PowerOff className="h-4 w-4" aria-hidden="true" /> The companion isn't switched on yet</p>
+                  <p className="flex items-center gap-2 font-bold"><PowerOff className="h-4 w-4" aria-hidden="true" /> The companion isn't switched on yet</p>
                   <p className="mt-1 text-muted-foreground">
-                    We're still setting it up. In the meantime you can <Link to="/therapists" className="font-bold text-primary hover:underline">book a person</Link>,
-                    write in your <Link to="/journal" className="font-bold text-primary hover:underline">journal</Link>, or
-                    {' '}<Link to="/help" className="font-bold text-danger hover:underline">get help now</Link> if things feel urgent.
+                    We're still setting it up. In the meantime you can <Link to="/therapists" className="font-semibold text-primary hover:underline">book a person</Link>,
+                    write in your <Link to="/journal" className="font-semibold text-primary hover:underline">journal</Link>, or
+                    {' '}<Link to="/help" className="font-semibold text-danger hover:underline">get help now</Link> if things feel urgent.
                   </p>
                 </div>
               )}
 
               {showContacts && (
                 <div className="rounded-xl border border-danger/40 bg-danger-soft p-4">
-                  <p className="font-extrabold text-danger">Please reach a person now</p>
+                  <p className="font-bold text-danger">Please reach a person now</p>
                   <ul className="mt-2 space-y-2">
                     {CRISIS_CONTACTS.slice(0, 3).map((contact) => (
                       <li key={contact.phone}>
-                        <a href={telHref(contact.phone)} className="flex items-center gap-2 text-sm font-bold hover:underline">
+                        <a href={telHref(contact.phone)} className="flex items-center gap-2 text-sm font-semibold hover:underline">
                           <Phone className="h-4 w-4 text-danger" aria-hidden="true" />
                           {contact.name}: {contact.phone}
                         </a>
                       </li>
                     ))}
                   </ul>
-                  <Link to="/help" className="mt-2 inline-block text-sm font-bold text-danger hover:underline">More help contacts</Link>
+                  <Link to="/help" className="mt-2 inline-block text-sm font-semibold text-danger hover:underline">More help contacts</Link>
                 </div>
               )}
               <div ref={bottom} />
