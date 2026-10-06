@@ -13,7 +13,7 @@ const tones = {
 
 export function Badge({ tone = 'neutral', icon: Icon, className, children }) {
   return (
-    <span className={classNames('inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-bold', tones[tone], className)}>
+    <span className={classNames('inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold', tones[tone], className)}>
       {Icon && <Icon className="h-3.5 w-3.5" aria-hidden="true" />}
       {children}
     </span>
@@ -33,7 +33,7 @@ export function Avatar({ name = '', size = 'md', className }) {
   return (
     <span
       aria-hidden="true"
-      className={classNames('inline-flex shrink-0 items-center justify-center rounded-full bg-primary-soft font-extrabold text-primary', sizes[size], className)}
+      className={classNames('inline-flex shrink-0 items-center justify-center rounded-full bg-primary-soft font-bold text-primary', sizes[size], className)}
     >
       {initials || '?'}
     </span>
@@ -51,9 +51,9 @@ export function Spinner({ label = 'Loading', className }) {
 
 export function EmptyState({ icon: Icon, title, children, action }) {
   return (
-    <div className="rounded-2xl border border-dashed border-border px-6 py-10 text-center">
+    <div className="rounded-3xl bg-muted px-6 py-14 text-center">
       {Icon && <Icon className="mx-auto mb-3 h-8 w-8 text-muted-foreground" aria-hidden="true" />}
-      <p className="font-extrabold">{title}</p>
+      <p className="font-bold">{title}</p>
       {children && <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">{children}</p>}
       {action && <div className="mt-4">{action}</div>}
     </div>
@@ -62,9 +62,9 @@ export function EmptyState({ icon: Icon, title, children, action }) {
 
 export function ErrorState({ error, onRetry }) {
   return (
-    <div role="alert" className="rounded-2xl bg-danger-soft px-6 py-8 text-center">
+    <div role="alert" className="rounded-3xl bg-danger-soft px-6 py-12 text-center">
       <CircleAlert className="mx-auto mb-3 h-8 w-8 text-danger" aria-hidden="true" />
-      <p className="font-extrabold text-danger">{error?.message || 'Something went wrong'}</p>
+      <p className="font-bold text-danger">{error?.message || 'Something went wrong'}</p>
       {onRetry && <Button variant="outline" size="sm" className="mt-4" onClick={onRetry}>Try again</Button>}
     </div>
   );

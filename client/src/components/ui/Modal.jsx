@@ -18,18 +18,18 @@ export function Modal({ open, onClose, title, children, footer }) {
       ref={ref}
       onClose={onClose}
       onClick={(event) => { if (event.target === ref.current) onClose(); }}
-      className="m-auto w-[calc(100%-2rem)] max-w-lg rounded-2xl border border-border bg-card p-0 text-foreground shadow-soft backdrop:bg-black/50"
+      className="m-auto w-[calc(100%-2rem)] max-w-lg rounded-3xl border border-border bg-card p-0 text-foreground backdrop:bg-black/40"
     >
       {open && (
         <div className="flex max-h-[85vh] flex-col">
-          <div className="flex items-center justify-between gap-4 border-b border-border px-5 py-4">
+          <div className="flex items-center justify-between gap-4 px-6 pb-2 pt-6">
             <h2 className="text-lg">{title}</h2>
             <button type="button" onClick={onClose} aria-label="Close" className="rounded-lg p-2 text-muted-foreground hover:bg-muted">
               <X className="h-5 w-5" aria-hidden="true" />
             </button>
           </div>
-          <div className="overflow-y-auto px-5 py-4">{children}</div>
-          {footer && <div className="flex flex-wrap justify-end gap-2 border-t border-border px-5 py-4">{footer}</div>}
+          <div className="overflow-y-auto px-6 py-4">{children}</div>
+          {footer && <div className="flex flex-wrap justify-end gap-2 px-6 pb-6 pt-2">{footer}</div>}
         </div>
       )}
     </dialog>

@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 
 const base =
-  'inline-flex items-center justify-center gap-2 rounded-xl font-bold transition-colors ' +
+  'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full font-semibold transition-colors ' +
   'disabled:opacity-60 disabled:cursor-not-allowed select-none';
 
 const variants = {
@@ -15,11 +15,11 @@ const variants = {
   danger: 'bg-danger text-white dark:text-background hover:bg-danger/90',
 };
 
-// 44px is the smallest comfortable touch target, so `md` is the default.
+// Generous sizes: nothing here is smaller than a comfortable touch target.
 const sizes = {
-  sm: 'h-9 px-3 text-sm',
-  md: 'h-11 px-5 text-sm',
-  lg: 'h-12 px-6 text-base',
+  sm: 'h-10 px-4 text-sm',
+  md: 'h-12 px-6 text-base',
+  lg: 'h-14 px-8 text-lg',
 };
 
 // Renders a <button>, or a router <Link> when `to` is given.

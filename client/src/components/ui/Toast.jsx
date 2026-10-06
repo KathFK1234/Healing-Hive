@@ -24,7 +24,7 @@ export function ToastProvider({ children }) {
             <div
               key={id}
               className={classNames(
-                'pointer-events-auto flex items-center gap-2 rounded-xl px-4 py-3 text-sm font-bold shadow-soft',
+                'pointer-events-auto flex items-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold',
                 tone === 'error' ? 'bg-danger text-white dark:text-background' : 'bg-foreground text-background',
               )}
             >

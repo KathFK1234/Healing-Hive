@@ -42,7 +42,7 @@ export function MoodCheckIn({ onDone }) {
             )}
           >
             <span className="text-2xl sm:text-3xl" aria-hidden="true">{mood.emoji}</span>
-            <span className="text-xs font-bold">{mood.label}</span>
+            <span className="text-xs font-semibold">{mood.label}</span>
           </button>
         ))}
       </div>

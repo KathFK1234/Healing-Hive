@@ -9,8 +9,8 @@ module.exports = {
   theme: {
     container: {
       center: true,
-      padding: '1rem',
-      screens: { xl: '1120px' },
+      padding: '1.25rem',
+      screens: { xl: '1040px' },
     },
     extend: {
       colors: {
@@ -41,9 +41,7 @@ module.exports = {
       borderRadius: {
         xl: '0.875rem',
         '2xl': '1.25rem',
-      },
-      boxShadow: {
-        soft: '0 1px 2px hsl(200 25% 14% / 0.04), 0 4px 16px hsl(200 25% 14% / 0.06)',
+        '3xl': '1.75rem',
       },
     },
   },

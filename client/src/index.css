@@ -9,9 +9,9 @@
     --background: 40 33% 98%;
     --foreground: 200 25% 14%;
     --card: 0 0% 100%;
-    --muted: 40 20% 94%;
+    --muted: 40 24% 95%;
     --muted-foreground: 200 10% 38%;
-    --border: 40 16% 87%;
+    --border: 40 18% 90%;
 
     --primary: 174 46% 28%;
     --primary-foreground: 0 0% 100%;
@@ -55,14 +55,16 @@
 
   html {
     -webkit-text-size-adjust: 100%;
+    /* Slightly larger than the browser default: easier to read when tired or upset */
+    font-size: 106.25%;
   }
 
   body {
-    @apply bg-background text-foreground font-sans antialiased;
+    @apply bg-background text-foreground font-sans antialiased leading-relaxed;
   }
 
   h1, h2, h3, h4 {
-    @apply font-extrabold tracking-tight;
+    @apply font-bold tracking-tight leading-snug;
     text-wrap: balance;
   }
 
