@@ -26,11 +26,11 @@ const Admin = () => {
 
       <QueryState query={stats}>
         {() => (
-          <dl className="mb-8 grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <dl className="mb-12 grid gap-4 sm:grid-cols-2">
             {tiles.map((tile) => (
-              <Card key={tile.label} className="p-4">
-                <dt className="text-sm font-bold text-muted-foreground">{tile.label}</dt>
-                <dd className="mt-1 text-3xl font-extrabold">{tile.value.toLocaleString()}</dd>
+              <Card key={tile.label} className="sm:p-6">
+                <dt className="text-sm font-semibold text-muted-foreground">{tile.label}</dt>
+                <dd className="mt-1 text-3xl font-bold">{tile.value.toLocaleString()}</dd>
                 <dd className="text-xs text-muted-foreground">{tile.note}</dd>
               </Card>
             ))}
@@ -88,14 +88,15 @@ function Applications() {
         {(applications) => applications.length === 0 ? (
           <EmptyState icon={ClipboardCheck} title={status === 'pending' ? 'No applications waiting' : `No ${status} applications`} />
         ) : (
-          <ul className="space-y-3">
+          <ul className="space-y-5">
             {applications.map((application) => (
               <li key={application._id}>
                 <Card>
                   <div className="flex flex-wrap items-start gap-3">
                     <Avatar name={application.user?.fullName} />
                     <div className="min-w-0 flex-1">
-                      <h2 className="text-base">{application.user?.fullName}</h2>
+                      <h2 className="text-lg">{application.organisationName || application.user?.fullName}</h2>
+                      {application.organisationName && <p className="text-sm">Contact: {application.user?.fullName}</p>}
                       <p className="text-sm text-muted-foreground">{application.user?.email}{application.user?.phone ? ` · ${application.user.phone}` : ''}</p>
                       <div className="mt-2 flex flex-wrap gap-1.5">
                         <Badge tone="primary">{PROFESSIONAL_TYPES[application.type]}</Badge>
@@ -112,17 +113,21 @@ function Applications() {
                   </div>
 
                   <dl className="mt-4 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-2">
-                    <Detail label="Licence number">{application.licenseNumber || 'Not given'}</Detail>
                     <Detail label="Location">{application.location || 'Not given'}</Detail>
-                    <Detail label="Experience">{application.yearsExperience != null ? `${application.yearsExperience} years` : 'Not given'}</Detail>
-                    <Detail label="Rate">{formatMoney(application.rate?.amount)} for {application.sessionMinutes} min</Detail>
-                    <Detail label="Helps with">{application.specialties.join(', ') || 'Not given'}</Detail>
-                    <Detail label="Languages">{application.languages.join(', ') || 'Not given'}</Detail>
-                    <Detail label="Hours" wide>
-                      {application.availability.length
-                        ? application.availability.map((window) => `${DAY_SHORT[window.day]} ${formatClock(window.start)} to ${formatClock(window.end)}`).join(' · ')
-                        : 'None set'}
-                    </Detail>
+                    {application.type !== 'institution' && (
+                      <>
+                        <Detail label="Licence number">{application.licenseNumber || 'Not given'}</Detail>
+                        <Detail label="Experience">{application.yearsExperience != null ? `${application.yearsExperience} years` : 'Not given'}</Detail>
+                        <Detail label="Rate">{formatMoney(application.rate?.amount)} for {application.sessionMinutes} min</Detail>
+                        <Detail label="Helps with">{application.specialties.join(', ') || 'Not given'}</Detail>
+                        <Detail label="Languages">{application.languages.join(', ') || 'Not given'}</Detail>
+                        <Detail label="Hours" wide>
+                          {application.availability.length
+                            ? application.availability.map((window) => `${DAY_SHORT[window.day]} ${formatClock(window.start)} to ${formatClock(window.end)}`).join(' · ')
+                            : 'None set'}
+                        </Detail>
+                      </>
+                    )}
                     {application.bio && <Detail label="Bio" wide>{application.bio}</Detail>}
                     {application.reviewNote && <Detail label="Note sent to applicant" wide>{application.reviewNote}</Detail>}
                   </dl>
@@ -156,7 +161,7 @@ function Applications() {
 function Detail({ label, wide, children }) {
   return (
     <div className={wide ? 'sm:col-span-2' : undefined}>
-      <dt className="font-bold text-muted-foreground">{label}</dt>
+      <dt className="font-semibold text-muted-foreground">{label}</dt>
       <dd className="whitespace-pre-line">{children}</dd>
     </div>
   );
@@ -209,7 +214,7 @@ function NuggetReview() {
         {(data) => data.items.length === 0 ? (
           <EmptyState icon={Lightbulb} title={status === 'review' ? 'Nothing waiting for review' : 'Nothing here'} />
         ) : (
-          <ul className="space-y-3">
+          <ul className="space-y-5">
             {data.items.map((nugget) => (
               <li key={nugget._id}>
                 <Card>
@@ -265,16 +270,16 @@ function People() {
             <caption className="sr-only">The 50 most recent sign-ups</caption>
             <thead className="border-b border-border text-muted-foreground">
               <tr>
-                <th scope="col" className="px-4 py-3 font-bold">Name</th>
-                <th scope="col" className="px-4 py-3 font-bold">Email</th>
-                <th scope="col" className="px-4 py-3 font-bold">Account</th>
-                <th scope="col" className="px-4 py-3 font-bold">Joined</th>
+                <th scope="col" className="px-4 py-3 font-semibold">Name</th>
+                <th scope="col" className="px-4 py-3 font-semibold">Email</th>
+                <th scope="col" className="px-4 py-3 font-semibold">Account</th>
+                <th scope="col" className="px-4 py-3 font-semibold">Joined</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {users.map((person) => (
                 <tr key={person._id}>
-                  <td className="whitespace-nowrap px-4 py-3 font-bold">{person.fullName}</td>
+                  <td className="whitespace-nowrap px-4 py-3 font-semibold">{person.fullName}</td>
                   <td className="px-4 py-3">{person.email}</td>
                   <td className="px-4 py-3"><Badge tone={person.role === 'user' ? 'neutral' : 'primary'} className="capitalize">{person.role}</Badge></td>
                   <td className="whitespace-nowrap px-4 py-3 text-muted-foreground">{formatDate(person.createdAt)}</td>

@@ -8,6 +8,9 @@ import { Protected, Open, GuestOnly } from '@/components/layout/RouteGuards';
 const LandingPage = lazy(() => import('./pages/LandingPage.jsx'));
 const Login = lazy(() => import('./pages/Login.jsx'));
 const Signup = lazy(() => import('./pages/Signup.jsx'));
+const ProfessionalSignup = lazy(() => import('./pages/ProfessionalSignup.jsx'));
+const ForgotPassword = lazy(() => import('./pages/ForgotPassword.jsx'));
+const ResetPassword = lazy(() => import('./pages/ResetPassword.jsx'));
 const Help = lazy(() => import('./pages/Help.jsx'));
 const Therapists = lazy(() => import('./pages/Therapists.jsx'));
 const TherapistProfile = lazy(() => import('./pages/TherapistProfile.jsx'));
@@ -23,6 +26,7 @@ const Reminders = lazy(() => import('./pages/Reminders.jsx'));
 const SettingsPage = lazy(() => import('./pages/Settings.jsx'));
 const Apply = lazy(() => import('./pages/Apply.jsx'));
 const Practice = lazy(() => import('./pages/Practice.jsx'));
+const Institution = lazy(() => import('./pages/Institution.jsx'));
 const Admin = lazy(() => import('./pages/Admin.jsx'));
 const NotFound = lazy(() => import('./pages/NotFound.jsx'));
 
@@ -30,7 +34,8 @@ const NotFound = lazy(() => import('./pages/NotFound.jsx'));
 const moved = {
   '/auth': '/login',
   '/client-signup': '/signup',
-  '/professional-signup': '/professionals',
+  '/professional-signup': '/professionals/signup',
+  '/institution-dashboard': '/institution',
   '/professional-onboarding': '/apply',
   '/ai-support': '/companion',
   '/user-dashboard': '/home',
@@ -45,6 +50,9 @@ const App = () => (
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/professionals/signup" element={<ProfessionalSignup />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
       </Route>
 
       <Route element={<Open />}>
@@ -69,6 +77,10 @@ const App = () => (
 
       <Route element={<Protected roles={['therapist', 'peer']} />}>
         <Route path="/practice" element={<Practice />} />
+      </Route>
+
+      <Route element={<Protected roles={['institution']} />}>
+        <Route path="/institution" element={<Institution />} />
       </Route>
 
       <Route element={<Protected roles={['admin']} />}>
