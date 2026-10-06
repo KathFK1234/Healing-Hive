@@ -1,0 +1,15 @@
+node_modules/
+dist/
+build/
+coverage/
+
+# Environment variables: never commit real values, see .env.example
+.env
+.env.*
+!.env.example
+
+*.log
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

@@ -1,0 +1,21 @@
+{
+  "name": "healing-hive",
+  "private": true,
+  "version": "2.0.0",
+  "description": "Mental health support platform for Kenyan youth: therapy, peer counselling, an AI companion and bite-sized education.",
+  "workspaces": [
+    "server",
+    "client"
+  ],
+  "scripts": {
+    "dev:server": "npm run dev -w server",
+    "dev:client": "npm run dev -w client",
+    "build": "npm run build -w client",
+    "test": "npm test -w server",
+    "lint": "npm run lint -w client",
+    "seed": "npm run seed -w server"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
