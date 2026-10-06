@@ -25,8 +25,16 @@ if (process.env.MONGO_URI !== LOCAL_DB_URI) {
 
     // Starter nuggets, the admin account and sample professionals. Skips
     // anything already there, so it is safe on every start.
-    const { seed } = await import("./seed.js");
+    const { seed, DEMO_ACCOUNTS, DEMO_PASSWORD } = await import("./seed.js");
     await seed({ demo: true });
+
+    console.log(`
+Sample accounts to explore with (password for all three: ${DEMO_PASSWORD})
+  Looking for support   ${DEMO_ACCOUNTS.client}
+  Therapist             ${DEMO_ACCOUNTS.therapist}
+  Institution           ${DEMO_ACCOUNTS.institution}
+Your admin account is ${process.env.ADMIN_EMAIL || "not set"}; its password is in server/.env
+`);
 
     for (const signal of ["SIGINT", "SIGTERM"]) {
         process.on(signal, async () => {
