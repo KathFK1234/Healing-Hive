@@ -1,18 +1,18 @@
 import { useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, BadgeCheck, MapPin, Clock, Languages, Video, Phone, MessageSquare, CalendarX } from 'lucide-react';
+import { ArrowLeft, BadgeCheck, Building2, MapPin, Clock, Languages, Video, Phone, CalendarX } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
-import { formatDay, formatLongDate, formatMoney, formatTime, localDay } from '@/lib/format';
+import { formatDate, formatDay, formatLongDate, formatMoney, formatTime, localDay } from '@/lib/format';
 import { PROFESSIONAL_TYPES } from '@/lib/options';
 import { Avatar, Badge, Button, Card, Chip, EmptyState, Field, FormError, QueryState, Textarea, useToast } from '@/components/ui';
+import { RatingSummary, Stars } from '@/components/Stars';
 import { usePageTitle } from '@/hooks/usePageTitle';
 
 const modes = [
   { value: 'video', label: 'Video call', icon: Video },
   { value: 'audio', label: 'Voice call', icon: Phone },
-  { value: 'chat', label: 'Text chat', icon: MessageSquare },
 ];
 
 const TherapistProfile = () => {
@@ -22,14 +22,15 @@ const TherapistProfile = () => {
 
   return (
     <>
-      <Link to="/therapists" className="mb-4 inline-flex items-center gap-1 rounded-lg text-sm font-bold text-muted-foreground hover:text-foreground">
+      <Link to="/therapists" className="mb-8 inline-flex items-center gap-1 rounded-lg text-sm font-semibold text-muted-foreground hover:text-foreground">
         <ArrowLeft className="h-4 w-4" aria-hidden="true" /> All professionals
       </Link>
       <QueryState query={query}>
         {(professional) => (
-          <div className="grid gap-6 lg:grid-cols-5">
+          <div className="mx-auto max-w-2xl space-y-8">
             <About professional={professional} />
             <Booking professional={professional} />
+            <Reviews professional={professional} />
           </div>
         )}
       </QueryState>
@@ -38,30 +39,34 @@ const TherapistProfile = () => {
 };
 
 function About({ professional }) {
-  const { user, type, title, bio, specialties, languages, location, yearsExperience } = professional;
+  const { user, type, title, bio, specialties, languages, location, yearsExperience, institution, ratingAverage, ratingCount } = professional;
   return (
-    <Card className="lg:col-span-2 lg:self-start">
-      <div className="flex items-center gap-4">
+    <Card>
+      <div className="flex items-center gap-5">
         <Avatar name={user?.fullName} size="lg" />
         <div className="min-w-0">
           <h1 className="text-2xl">{user?.fullName}</h1>
           <p className="text-muted-foreground">{title || PROFESSIONAL_TYPES[type]}</p>
-          <Badge tone="primary" icon={BadgeCheck} className="mt-2">Verified by Healing Hive</Badge>
+          <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
+            <Badge tone="primary" icon={BadgeCheck}>Verified by Healing Hive</Badge>
+            <RatingSummary average={ratingAverage} count={ratingCount} />
+          </div>
         </div>
       </div>
 
-      {bio && <p className="mt-5 whitespace-pre-line leading-relaxed">{bio}</p>}
+      {bio && <p className="mt-6 whitespace-pre-line">{bio}</p>}
 
       {specialties.length > 0 && (
         <>
-          <h2 className="mt-5 text-sm">Helps with</h2>
+          <h2 className="mt-6 text-base">Helps with</h2>
           <ul className="mt-2 flex flex-wrap gap-1.5">
             {specialties.map((specialty) => <li key={specialty}><Badge>{specialty}</Badge></li>)}
           </ul>
         </>
       )}
 
-      <ul className="mt-5 space-y-2 text-sm">
+      <ul className="mt-6 space-y-3">
+        {institution && <li className="flex items-center gap-3"><Building2 className="h-4 w-4 text-muted-foreground" aria-hidden="true" /> Part of {institution.organisationName}</li>}
         {location && <li className="flex items-center gap-2"><MapPin className="h-4 w-4 text-muted-foreground" aria-hidden="true" /> {location}</li>}
         {yearsExperience > 0 && <li className="flex items-center gap-2"><Clock className="h-4 w-4 text-muted-foreground" aria-hidden="true" /> {yearsExperience} {yearsExperience === 1 ? 'year' : 'years'} of experience</li>}
         {languages.length > 0 && <li className="flex items-center gap-2"><Languages className="h-4 w-4 text-muted-foreground" aria-hidden="true" /> {languages.join(', ')}</li>}
@@ -114,10 +119,10 @@ function Booking({ professional }) {
   const isOwnProfile = user && professional.user?._id === user._id;
 
   return (
-    <Card className="lg:col-span-3">
+    <Card>
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="text-xl">Book a session</h2>
-        <p className="font-extrabold">
+        <h2 className="text-2xl">Book a session</h2>
+        <p className="font-bold">
           {formatMoney(professional.rate?.amount, professional.rate?.currency)}
           <span className="text-sm font-semibold text-muted-foreground"> · {professional.sessionMinutes} minutes</span>
         </p>
@@ -131,11 +136,11 @@ function Booking({ professional }) {
         </div>
       ) : (
         <form
-          className="mt-5 space-y-6"
+          className="mt-8 space-y-8"
           onSubmit={(event) => { event.preventDefault(); book.mutate(); }}
         >
           <fieldset>
-            <legend className="mb-2 text-sm font-bold">1. Pick a day</legend>
+            <legend className="mb-3 font-semibold">1. Pick a day</legend>
             <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-2">
               {days.map(([key, slots]) => (
                 <Chip key={key} selected={key === day} onClick={() => { setDay(key); setSlot(null); }} className="shrink-0">
@@ -146,7 +151,7 @@ function Booking({ professional }) {
           </fieldset>
 
           <fieldset>
-            <legend className="mb-2 text-sm font-bold">2. Pick a time <span className="font-semibold text-muted-foreground">(East Africa Time)</span></legend>
+            <legend className="mb-3 font-semibold">2. Pick a time <span className="font-medium text-muted-foreground">(East Africa Time)</span></legend>
             <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
               {times.map((time) => (
                 <Chip key={time} selected={time === slot} onClick={() => setSlot(time)} className="justify-center">{formatTime(time)}</Chip>
@@ -155,7 +160,7 @@ function Booking({ professional }) {
           </fieldset>
 
           <fieldset>
-            <legend className="mb-2 text-sm font-bold">3. How would you like to meet?</legend>
+            <legend className="mb-3 font-semibold">3. How would you like to meet?</legend>
             <div className="flex flex-wrap gap-2">
               {modes.map(({ value, label, icon: Icon }) => (
                 <Chip key={value} selected={mode === value} onClick={() => setMode(value)}>
@@ -171,12 +176,12 @@ function Booking({ professional }) {
 
           <FormError error={book.error} />
 
-          <div className="rounded-xl bg-muted p-4 text-sm">
+          <div className="rounded-2xl bg-muted p-5">
             {slot
               ? <p><strong>{formatLongDate(slot)}</strong> at <strong>{formatTime(slot)}</strong> with {professional.user?.fullName}.</p>
               : <p className="text-muted-foreground">Pick a day and a time to continue.</p>}
             <p className="mt-1 text-muted-foreground">
-              You won't be charged now. Online payment is not available yet, and the session is confirmed once they accept your request.
+              You won't be charged now: online payment is not available yet. Once they accept, we'll email you a link to join.
             </p>
           </div>
 
@@ -189,6 +194,33 @@ function Booking({ professional }) {
           )}
         </form>
       )}
+    </Card>
+  );
+}
+
+function Reviews({ professional }) {
+  const query = useQuery({
+    queryKey: ['professional', professional._id, 'reviews'],
+    queryFn: () => api.get(`/professionals/${professional._id}/reviews`),
+    enabled: professional.ratingCount > 0,
+  });
+  if (!professional.ratingCount || !query.data?.length) return null;
+
+  return (
+    <Card>
+      <h2 className="text-2xl">What people say</h2>
+      <p className="mt-1 text-muted-foreground">Reviews are from people who completed a session, and are shown without names.</p>
+      <ul className="mt-6 divide-y divide-border">
+        {query.data.map((review) => (
+          <li key={review._id} className="py-5 first:pt-0 last:pb-0">
+            <div className="flex items-center justify-between gap-3">
+              <Stars value={review.rating} />
+              <span className="text-sm text-muted-foreground">{formatDate(review.createdAt)}</span>
+            </div>
+            {review.comment && <p className="mt-2">{review.comment}</p>}
+          </li>
+        ))}
+      </ul>
     </Card>
   );
 }
