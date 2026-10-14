@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { CalendarDays, Video } from 'lucide-react';
 import { api } from '@/lib/api';
 import { formatDateTime, formatMoney } from '@/lib/format';
-import { SESSION_STATUS, MODE_ICON, MODE_LABEL, isUpcoming, isLive, canJoin } from '@/lib/sessions';
+import { SESSION_STATUS, MODE_ICON, MODE_LABEL, isUpcoming, isCurrent, canJoin } from '@/lib/sessions';
 import { Avatar, Badge, Button, Card, Chip, EmptyState, Field, FormError, Modal, PageHeader, QueryState, Textarea, useToast } from '@/components/ui';
 import { Stars } from '@/components/Stars';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -59,8 +59,7 @@ const Sessions = () => {
         {(sessions) => {
           // "Upcoming" keeps a session until it has finished, so the Join
           // button does not vanish the moment the start time passes.
-          const current = (session) => isUpcoming(session) || isLive(session);
-          const shown = tab === 'upcoming' ? sessions.filter(current).reverse() : sessions.filter((session) => !current(session));
+          const shown = tab === 'upcoming' ? sessions.filter(isCurrent).reverse() : sessions.filter((session) => !isCurrent(session));
           if (shown.length === 0) {
             return tab === 'upcoming' ? (
               <EmptyState icon={CalendarDays} title="Nothing booked yet" action={<Button to="/therapists">Find support</Button>}>

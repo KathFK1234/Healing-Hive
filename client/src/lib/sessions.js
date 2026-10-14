@@ -31,3 +31,7 @@ export function isLive(session) {
   const end = new Date(session.scheduledAt).getTime() + (session.durationMinutes || 60) * 60 * 1000;
   return Date.now() <= end;
 }
+
+// Not finished yet: still to come, or confirmed and under way. Used wherever a
+// session should stay on screen (with its Join button) until it has ended.
+export const isCurrent = (session) => isUpcoming(session) || isLive(session);

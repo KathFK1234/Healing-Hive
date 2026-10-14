@@ -6,7 +6,7 @@ import { api } from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
 import { firstName, formatClock, formatDateTime, greeting, localDay } from '@/lib/format';
 import { moodFor } from '@/lib/moods';
-import { isUpcoming, canJoin } from '@/lib/sessions';
+import { isCurrent, canJoin } from '@/lib/sessions';
 import { Badge, Button, Card } from '@/components/ui';
 import { MoodCheckIn } from '@/components/MoodCheckIn';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -45,7 +45,9 @@ const Home = () => {
   const today = localDay(Date.now());
   const todaysMood = moods.data?.find((mood) => localDay(mood.createdAt) === today);
   const streak = moods.data ? streakOf(moods.data) : 0;
-  const nextSession = sessions.data?.filter(isUpcoming).at(-1);
+  // Sessions come newest first; the last one not yet finished is the next one,
+  // and it stays here until it ends so its Join button does too.
+  const nextSession = sessions.data?.filter(isCurrent).at(-1);
   // Midday on the EAT calendar day, so the weekday is right in any device timezone
   const weekday = new Date(`${today}T12:00:00Z`).getUTCDay();
   const todaysReminders = reminders.data?.filter((reminder) => reminder.enabled && reminder.days.includes(weekday)) || [];
