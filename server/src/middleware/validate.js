@@ -3,6 +3,13 @@ import ApiError from "../utils/ApiError.js";
 
 export const objectId = z.string().regex(/^[a-f\d]{24}$/i, "Invalid id");
 
+// A link other people will open (a meeting room, an event). zod's url()
+// accepts any scheme, including javascript: and data:, so only web addresses
+// get through.
+export const webLink = (max) => z.string().trim().max(max)
+    .url("Enter a full link, starting with https://")
+    .refine((value) => /^https?:\/\//i.test(value), "Enter a full link, starting with https://");
+
 // Parses the request against zod schemas and replaces req.body with the parsed
 // result, so controllers only ever see fields the schema allows. This is what
 // stops a client from setting fields such as `role` or `status` on create.

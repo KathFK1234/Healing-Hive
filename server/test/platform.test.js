@@ -111,6 +111,10 @@ test("a professional's own meeting link is used when they set one, and is not pu
     const client = await signUp(api);
 
     assert.equal((await api.patch("/api/v1/professionals/me").set(therapist.auth).send({ meetingLink: "not a link" })).status, 400);
+    // It becomes the client's Join link, so only web addresses are accepted
+    for (const meetingLink of ["javascript:alert(1)", "data:text/html,<p>hi</p>", "ftp://files.example.com/room"]) {
+        assert.equal((await api.patch("/api/v1/professionals/me").set(therapist.auth).send({ meetingLink })).status, 400, meetingLink);
+    }
     await api.patch("/api/v1/professionals/me").set(therapist.auth).send({ meetingLink: "https://meet.example.com/dr-room" });
 
     const profile = await api.get(`/api/v1/professionals/${therapist.profileId}`);

@@ -2,7 +2,7 @@ import express from "express";
 import { z } from "zod";
 import eventController from "./event.controller.js";
 import { authenticate, optionalAuth, requireRole } from "../../middleware/auth.js";
-import { validate, validateId } from "../../middleware/validate.js";
+import { validate, validateId, webLink } from "../../middleware/validate.js";
 
 const router = express.Router();
 
@@ -15,7 +15,7 @@ const eventSchema = z.object({
     durationMinutes: z.number().int().min(10).max(600).optional(),
     price: z.number().min(0).max(1000000).optional(),
     capacity: z.number().int().min(1).max(100000).optional(),
-    joinLink: z.string().trim().url().max(500).optional(),
+    joinLink: webLink(500).optional(),
 });
 
 const listSchema = z.object({

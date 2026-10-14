@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { PROFESSIONAL_TYPES } from "./professional.model.js";
+import { webLink } from "../../middleware/validate.js";
 
 const tags = z.array(z.string().trim().min(1).max(40)).max(12);
 
@@ -21,7 +22,7 @@ export const profileFields = {
     rate: z.object({ amount: z.number().min(0).max(1000000) }).optional(),
     sessionMinutes: z.number().int().min(15).max(180).optional(),
     availability: availability.optional(),
-    meetingLink: z.string().trim().url("Enter a full link, starting with https://").max(300).or(z.literal("")).optional(),
+    meetingLink: webLink(300).or(z.literal("")).optional(),
 };
 
 export const applySchema = z.object({
