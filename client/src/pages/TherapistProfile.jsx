@@ -93,10 +93,13 @@ function Booking({ professional }) {
     return [...grouped.entries()];
   }, [professional.slots]);
 
-  const [day, setDay] = useState(days[0]?.[0]);
+  const [chosenDay, setDay] = useState(days[0]?.[0]);
   const [slot, setSlot] = useState(null);
   const [mode, setMode] = useState('video');
   const [note, setNote] = useState('');
+  // The open times reload after someone else takes one. If that emptied the
+  // chosen day, it is no longer listed: fall back to the first day with times.
+  const day = days.some(([key]) => key === chosenDay) ? chosenDay : days[0]?.[0];
   const times = days.find(([key]) => key === day)?.[1] || [];
 
   const book = useMutation({
