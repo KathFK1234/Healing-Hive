@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Bell, Plus, Trash2 } from 'lucide-react';
+import { Bell, Pencil, Plus, Trash2 } from 'lucide-react';
 import { api } from '@/lib/api';
-import { DAY_SHORT, clockToMinutes, formatClock } from '@/lib/format';
+import { DAY_SHORT, clockToMinutes, formatClock, minutesToClock } from '@/lib/format';
 import { Button, Card, Chip, ConfirmModal, EmptyState, Field, FormError, Input, Modal, PageHeader, QueryState, useToast } from '@/components/ui';
 import { usePageTitle } from '@/hooks/usePageTitle';
 
@@ -28,12 +28,16 @@ const Reminders = () => {
   const query = useQuery({ queryKey: ['reminders'], queryFn: () => api.get('/reminders') });
   const refresh = () => queryClient.invalidateQueries({ queryKey: ['reminders'] });
 
-  const create = useMutation({
-    mutationFn: () => api.post('/reminders', { message: draft.message, time: clockToMinutes(draft.time), days: draft.days }),
+  // One form for adding and changing a reminder: a draft with an _id is an edit
+  const save = useMutation({
+    mutationFn: () => {
+      const body = { message: draft.message, time: clockToMinutes(draft.time), days: draft.days };
+      return draft._id ? api.patch(`/reminders/${draft._id}`, body) : api.post('/reminders', body);
+    },
     onSuccess: () => {
       refresh();
+      toast(draft._id ? 'Reminder updated' : 'Reminder added');
       setDraft(null);
-      toast('Reminder added');
     },
   });
 
@@ -52,10 +56,19 @@ const Reminders = () => {
     },
   });
 
-  const openNew = () => {
-    create.reset();
-    setDraft(blank);
+  const openDraft = (values) => {
+    save.reset();
+    setDraft(values);
   };
+  const openNew = () => openDraft(blank);
+  const openEdit = (reminder) =>
+    openDraft({ _id: reminder._id, message: reminder.message, time: minutesToClock(reminder.time), days: reminder.days });
+
+  // The draft as it was opened, to tell whether anything has changed
+  const original = draft?._id ? query.data?.find((reminder) => reminder._id === draft._id) : null;
+  const dirty = !!draft && (original
+    ? draft.message !== original.message || clockToMinutes(draft.time) !== original.time || [...draft.days].sort().join() !== [...original.days].sort().join()
+    : !!draft.message.trim());
 
   return (
     <>
@@ -94,6 +107,9 @@ const Reminders = () => {
                   >
                     <span className={`absolute top-1 h-5 w-5 rounded-full bg-white transition-all ${reminder.enabled ? 'left-6' : 'left-1'}`} />
                   </button>
+                  <button type="button" onClick={() => openEdit(reminder)} aria-label={`Edit reminder: ${reminder.message}`} className="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground">
+                    <Pencil className="h-4 w-4" aria-hidden="true" />
+                  </button>
                   <button type="button" onClick={() => { remove.reset(); setDeleting(reminder); }} aria-label={`Delete reminder: ${reminder.message}`} className="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-danger">
                     <Trash2 className="h-4 w-4" aria-hidden="true" />
                   </button>
@@ -107,18 +123,18 @@ const Reminders = () => {
       <Modal
         open={!!draft}
         onClose={() => setDraft(null)}
-        dirty={!!draft?.message.trim()}
-        title="New reminder"
+        dirty={dirty}
+        title={draft?._id ? 'Edit reminder' : 'New reminder'}
         footer={
           <>
             <Button variant="outline" onClick={() => setDraft(null)}>Cancel</Button>
-            <Button type="submit" form="reminder-form" loading={create.isPending} disabled={!draft?.message.trim() || !draft?.days.length}>Add reminder</Button>
+            <Button type="submit" form="reminder-form" loading={save.isPending} disabled={!draft?.message.trim() || !draft?.days.length}>{draft?._id ? 'Save changes' : 'Add reminder'}</Button>
           </>
         }
       >
         {draft && (
-          <form id="reminder-form" className="space-y-4" onSubmit={(event) => { event.preventDefault(); create.mutate(); }}>
-            <FormError error={create.error} />
+          <form id="reminder-form" className="space-y-4" onSubmit={(event) => { event.preventDefault(); save.mutate(); }}>
+            <FormError error={save.error} />
             <Field label="Remind me to…">
               {(field) => <Input {...field} required maxLength={140} value={draft.message} onChange={(event) => setDraft({ ...draft, message: event.target.value })} />}
             </Field>
