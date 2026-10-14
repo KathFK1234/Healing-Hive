@@ -185,3 +185,11 @@ test("an event stays upcoming, and open to join, until it has ended", async () =
     assert.deepEqual(await titles("past"), ["Finished"]);
     assert.equal((await api.post(`/api/v1/events/${running._id}/join`).set(person.auth)).body.joined, true);
 });
+
+test("today's nugget turns over at midnight in Kenya", async () => {
+    const { eatDayNumber } = await import("../src/modules/nuggets/nugget.controller.js");
+    // 23:59 and 00:01 East Africa Time are different days...
+    assert.equal(eatDayNumber(new Date("2026-10-14T00:01:00+03:00")) - eatDayNumber(new Date("2026-10-13T23:59:00+03:00")), 1);
+    // ...while 00:01 and 02:59 are the same one (in UTC they straddle midnight)
+    assert.equal(eatDayNumber(new Date("2026-10-14T00:01:00+03:00")), eatDayNumber(new Date("2026-10-14T02:59:00+03:00")));
+});

@@ -21,12 +21,17 @@ async function getNuggets(req, res) {
     res.json({ items, total, page, pages: Math.max(1, Math.ceil(total / limit)) });
 }
 
+// Days since 1970 on the East Africa Time calendar (UTC+3, all year), so
+// "today" turns over at midnight in Kenya rather than at 3 AM.
+const DAY_MS = 24 * 60 * 60 * 1000;
+export const eatDayNumber = (date = new Date()) => Math.floor((date.getTime() + 3 * 60 * 60 * 1000) / DAY_MS);
+
 // The same nugget for everyone on a given day, moving through the list daily.
 async function getTodaysNugget(req, res) {
     const total = await Nugget.countDocuments({ status: "published" });
     if (!total) return res.json(null);
 
-    const dayNumber = Math.floor(Date.now() / (24 * 60 * 60 * 1000));
+    const dayNumber = eatDayNumber();
     const nugget = await Nugget.findOne({ status: "published" }).sort({ _id: 1 }).skip(dayNumber % total);
     res.json(nugget);
 }
