@@ -115,6 +115,11 @@ async function updateStatus(req, res) {
     if (!allowed.includes(req.body.status)) {
         throw ApiError.badRequest(`A ${session.status} session cannot be marked ${req.body.status}`);
     }
+    // Once it has started, a session is part of both people's records: the
+    // client cannot cancel it away (the professional still can, for a no-show).
+    if (req.body.status === "cancelled" && as === "client" && session.scheduledAt <= new Date()) {
+        throw ApiError.badRequest("This session has already started, so it can't be cancelled");
+    }
     if (req.body.status === "completed" && session.scheduledAt > new Date()) {
         throw ApiError.badRequest("A session cannot be completed before it has started");
     }

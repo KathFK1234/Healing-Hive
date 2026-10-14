@@ -119,3 +119,21 @@ test("only the people in a session can see or change it", async () => {
     assert.equal(mine.body[0].privateNotes, undefined);
     assert.equal((await api.get("/api/v1/sessions/mine").set(stranger.auth)).body.length, 0);
 });
+
+test("a client cannot cancel a session once it has started, but the professional can", async () => {
+    const mongoose = (await import("mongoose")).default;
+    const admin = await makeAdmin(api);
+    const therapist = await makeProfessional(api, admin);
+    const client = await signUp(api);
+    const slot = (await api.get(`/api/v1/professionals/${therapist.profileId}`)).body.slots[0];
+    const session = (await api.post("/api/v1/sessions").set(client.auth).send({ professionalId: therapist.profileId, scheduledAt: slot })).body;
+    await api.patch(`/api/v1/sessions/${session._id}/status`).set(therapist.auth).send({ status: "confirmed" });
+
+    // It started ten minutes ago
+    await mongoose.model("Session").updateOne({ _id: session._id }, { scheduledAt: new Date(Date.now() - 10 * 60 * 1000) });
+
+    const byClient = await api.patch(`/api/v1/sessions/${session._id}/status`).set(client.auth).send({ status: "cancelled" });
+    assert.equal(byClient.status, 400);
+    const byProfessional = await api.patch(`/api/v1/sessions/${session._id}/status`).set(therapist.auth).send({ status: "cancelled" });
+    assert.equal(byProfessional.status, 200);
+});
