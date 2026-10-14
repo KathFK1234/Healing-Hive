@@ -52,6 +52,9 @@ function Applications() {
   const [rejecting, setRejecting] = useState(null);
   const [note, setNote] = useState('');
 
+  // Opened from the Approved tab: taking someone out of the directory
+  const removing = rejecting?.status === 'approved';
+
   const query = useQuery({ queryKey: ['admin', 'applications', status], queryFn: () => api.get('/admin/applications', { status }) });
 
   const review = useMutation({
@@ -129,20 +132,30 @@ function Applications() {
         )}
       </QueryState>
 
+      {/* Sending back a pending application and removing an approved
+          professional are the same API call, but very different for the person */}
       <Modal
         open={!!rejecting}
         onClose={() => setRejecting(null)}
         dirty={!!note.trim()}
-        title={`Send back ${rejecting?.user?.fullName || 'application'}?`}
+        title={removing
+          ? `Remove ${rejecting?.organisationName || rejecting?.user?.fullName || 'this professional'} from the directory?`
+          : `Send back ${rejecting?.user?.fullName || 'application'}?`}
         footer={
           <>
             <Button variant="outline" onClick={() => setRejecting(null)}>Cancel</Button>
-            <Button variant="danger" loading={review.isPending} onClick={() => review.mutate({ application: rejecting, decision: 'rejected', reviewNote: note })}>Send back</Button>
+            <Button variant="danger" loading={review.isPending} onClick={() => review.mutate({ application: rejecting, decision: 'rejected', reviewNote: note })}>
+              {removing ? 'Remove' : 'Send back'}
+            </Button>
           </>
         }
       >
-        <p className="mb-4 text-sm text-muted-foreground">They will not be listed in the directory, and can update their application and send it again.</p>
-        <Field label="What needs to change?" hint="The applicant will see this.">
+        <p className="mb-4 text-sm text-muted-foreground">
+          {removing
+            ? 'They disappear from the directory and lose their practice page. Their upcoming sessions are cancelled and each client is emailed. They can update their application and send it again.'
+            : 'They will not be listed in the directory, and can update their application and send it again.'}
+        </p>
+        <Field label={removing ? 'Why are they being removed?' : 'What needs to change?'} hint="The applicant will see this.">
           {(field) => <Textarea {...field} rows={4} maxLength={500} value={note} onChange={(event) => setNote(event.target.value)} />}
         </Field>
       </Modal>
