@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { CalendarDays, Video } from 'lucide-react';
 import { api } from '@/lib/api';
 import { formatDateTime, formatMoney } from '@/lib/format';
-import { SESSION_STATUS, MODE_ICON, MODE_LABEL, isUpcoming, isCurrent, canJoin } from '@/lib/sessions';
+import { SESSION_STATUS, MODE_ICON, MODE_LABEL, isUpcoming, isCurrent, canJoin, displayStatus } from '@/lib/sessions';
 import { Avatar, Badge, Button, Card, Chip, EmptyState, Field, FormError, Modal, PageHeader, QueryState, Textarea, useToast } from '@/components/ui';
 import { Stars } from '@/components/Stars';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -81,6 +81,9 @@ const Sessions = () => {
                       )}
                       {isUpcoming(session) && (
                         <Button variant="ghost" size="sm" className="ml-auto" onClick={() => { cancel.reset(); setCancelling(session); }}>Cancel session</Button>
+                      )}
+                      {displayStatus(session) === 'expired' && session.professional?._id && (
+                        <Button to={`/therapists/${session.professional._id}`} variant="soft" size="sm">Book another time</Button>
                       )}
                       {session.status === 'completed' && (
                         session.review ? (
@@ -173,7 +176,7 @@ export function SessionActions({ children }) {
 
 // Shared with the professional's practice page.
 export function SessionCard({ session, name, subtitle, children }) {
-  const status = SESSION_STATUS[session.status];
+  const status = SESSION_STATUS[displayStatus(session)];
   const ModeIcon = MODE_ICON[session.mode] || Video;
   return (
     <Card>

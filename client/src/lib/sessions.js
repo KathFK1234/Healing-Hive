@@ -5,6 +5,9 @@ export const SESSION_STATUS = {
   confirmed: { label: 'Confirmed', tone: 'primary' },
   completed: { label: 'Completed', tone: 'neutral' },
   cancelled: { label: 'Cancelled', tone: 'danger' },
+  // A request nobody answered before its time came. Still `pending` on the
+  // server, but it can no longer happen.
+  expired: { label: 'Not confirmed in time', tone: 'neutral' },
 };
 
 export const MODE_ICON = { video: Video, audio: Phone, chat: MessageSquare };
@@ -35,3 +38,7 @@ export function isLive(session) {
 // Not finished yet: still to come, or confirmed and under way. Used wherever a
 // session should stay on screen (with its Join button) until it has ended.
 export const isCurrent = (session) => isUpcoming(session) || isLive(session);
+
+// The status to show: a request whose time has passed reads as expired.
+export const displayStatus = (session) =>
+  session.status === 'pending' && !isUpcoming(session) ? 'expired' : session.status;
