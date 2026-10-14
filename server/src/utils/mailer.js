@@ -18,6 +18,15 @@ function getTransport() {
 // Tests read what would have been sent from here.
 export const outbox = [];
 
+// What to log for an email that could not be sent because no provider is set
+// up. Locally the whole email is shown, so reset links can be followed. In
+// production only the subject: the body can hold a password reset link, and
+// anyone who can read the host's logs could use it to take over the account.
+export function unsentLog({ to, subject, text }, production = env.isProduction) {
+    if (production) return `Email not sent, SMTP is not configured: "${subject}"`;
+    return `\n--- Email (not sent, SMTP is not configured) ---\nTo: ${to}\nSubject: ${subject}\n\n${text}\n---\n`;
+}
+
 // Sends one email. Never throws: a failed notification must not fail the
 // booking or sign-up that triggered it.
 export async function sendMail({ to, subject, text }) {
@@ -30,9 +39,7 @@ export async function sendMail({ to, subject, text }) {
 
     const smtp = getTransport();
     if (!smtp) {
-        // No email provider configured (local development): show it in the log
-        // so links such as password resets can still be followed.
-        console.log(`\n--- Email (not sent, SMTP is not configured) ---\nTo: ${to}\nSubject: ${subject}\n\n${text}\n---\n`);
+        console.log(unsentLog({ to, subject, text }));
         return;
     }
 

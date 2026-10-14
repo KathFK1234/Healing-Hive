@@ -155,3 +155,13 @@ test("editing a nugget or event leaves the fields you did not send alone", async
     assert.equal(moved.body.price, 500);
     assert.equal(moved.body.durationMinutes, 90);
 });
+
+test("emails that cannot be sent never put their content in production logs", async () => {
+    const { unsentLog } = await import("../src/utils/mailer.js");
+    const mail = { to: "someone@example.com", subject: "Reset your Healing Hive password", text: "https://app.example/reset-password?token=secret-token" };
+    const production = unsentLog(mail, true);
+    assert.match(production, /Reset your Healing Hive password/);
+    assert.doesNotMatch(production, /secret-token|someone@example\.com/);
+    // Locally the whole email is shown, so the link can be followed
+    assert.match(unsentLog(mail, false), /secret-token/);
+});
