@@ -16,7 +16,7 @@ if (process.env.MONGO_URI !== LOCAL_DB_URI) {
     idle();
 } else {
     const dbPath = path.join(serverDir, ".data", "db");
-    fs.mkdirSync(dbPath, { recursive: true });
+    fs.mkdirSync(dbPath, { recursive: true, mode: 0o700 });
 
     const mongo = await MongoMemoryServer.create({
         instance: { port: LOCAL_DB_PORT, dbPath, storageEngine: "wiredTiger" },

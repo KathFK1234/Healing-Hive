@@ -32,7 +32,17 @@ if (!fs.existsSync(envPath)) {
         "# Paste a key from https://console.anthropic.com to switch the AI companion on",
         "ANTHROPIC_API_KEY=",
         "",
-    ].join("\n"));
+    ].join("\n"), { mode: 0o600 });
     console.log("Created server/.env for local development.");
     console.log(`  Admin sign-in: admin@healinghive.local / ${adminPassword}`);
+}
+
+// .env holds JWT_SECRET (enough to sign in as anyone) and the admin password,
+// and .data holds everyone's journals: readable by this user only. Also fixes
+// copies made before this check, which were readable by every account here.
+for (const [file, mode] of [[envPath, 0o600], [path.join(serverDir, ".data"), 0o700]]) {
+    if (fs.existsSync(file) && (fs.statSync(file).mode & 0o077)) {
+        fs.chmodSync(file, mode);
+        console.log(`Made ${path.relative(serverDir, file)} private to your user account.`);
+    }
 }
