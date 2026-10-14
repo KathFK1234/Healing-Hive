@@ -75,8 +75,10 @@ async function changePassword(req, res) {
     if (!isMatch) throw ApiError.badRequest("Your current password is incorrect");
 
     user.password = await bcrypt.hash(newPassword, 12);
+    user.passwordChangedAt = new Date();
     await user.save();
-    res.json({ message: "Password updated" });
+    // Every other device is now signed out; this one gets a fresh session.
+    res.json({ message: "Password updated", token: signToken(user), user });
 }
 
 const RESET_MINUTES = 60;
@@ -106,6 +108,7 @@ async function resetPassword(req, res) {
     if (!user) throw ApiError.badRequest("This reset link has expired or was already used. Please ask for a new one");
 
     user.password = await bcrypt.hash(req.body.newPassword, 12);
+    user.passwordChangedAt = new Date();
     user.passwordReset = undefined;
     await user.save();
 

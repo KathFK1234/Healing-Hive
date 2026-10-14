@@ -104,3 +104,30 @@ test("demo accounts are only ever seeded into a database on this machine", async
     for (const host of ["localhost", "127.0.0.1", "::1"]) assert.equal(isLocalHost(host), true, host);
     for (const host of ["cluster0-shard-00-00.abcde.mongodb.net", "10.0.0.5", "db.example.com", undefined]) assert.equal(isLocalHost(host), false, host);
 });
+
+test("changing or resetting the password signs out every other device", async () => {
+    const person = await signUp(api);
+    const otherDevice = person.auth;
+    // Tokens record their time to the second
+    await new Promise((resolve) => setTimeout(resolve, 1100));
+
+    const changed = await api.post("/api/v1/auth/change-password").set(person.auth)
+        .send({ currentPassword: person.password, newPassword: "a-brand-new-pass" });
+    assert.equal(changed.status, 200);
+    assert.ok(changed.body.token);
+    assert.equal(changed.body.user.passwordChangedAt, undefined);
+
+    const stale = await api.get("/api/v1/auth/me").set(otherDevice);
+    assert.equal(stale.status, 401);
+    assert.equal((await api.get("/api/v1/auth/me").set({ Authorization: `Bearer ${changed.body.token}` })).status, 200);
+
+    // A reset does the same to the session from the change above
+    await new Promise((resolve) => setTimeout(resolve, 1100));
+    const { outbox } = await import("../src/utils/mailer.js");
+    await api.post("/api/v1/auth/forgot-password").send({ email: person.user.email });
+    const token = outbox.findLast((mail) => mail.to === person.user.email).text.match(/token=([\w-]+)/)[1];
+    const reset = await api.post("/api/v1/auth/reset-password").send({ token, newPassword: "another-new-pass" });
+    assert.equal(reset.status, 200);
+    assert.equal((await api.get("/api/v1/auth/me").set({ Authorization: `Bearer ${changed.body.token}` })).status, 401);
+    assert.equal((await api.get("/api/v1/auth/me").set({ Authorization: `Bearer ${reset.body.token}` })).status, 200);
+});

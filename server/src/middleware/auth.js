@@ -28,6 +28,10 @@ async function userFromRequest(req) {
     // token, so approving or removing a professional takes effect immediately.
     const user = await User.findById(payload.sub);
     if (!user) throw ApiError.unauthorized();
+    // Issued before the password last changed: another device's old session
+    if (user.passwordChangedAt && payload.iat < Math.floor(user.passwordChangedAt.getTime() / 1000)) {
+        throw ApiError.unauthorized("Your password was changed. Please sign in again");
+    }
     return user;
 }
 

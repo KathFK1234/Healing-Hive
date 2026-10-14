@@ -36,6 +36,9 @@ const userSchema = new mongoose.Schema({
         enum: ["client", "professional"],
         default: "client"
     },
+    // When the password last changed. Sign-in tokens issued before this are
+    // refused, so changing or resetting a password signs out other devices.
+    passwordChangedAt: Date,
     // Password reset: only a hash of the emailed token is stored.
     passwordReset: {
         type: {
@@ -62,6 +65,7 @@ userSchema.set("toJSON", {
     transform(doc, ret) {
         delete ret.password;
         delete ret.passwordReset;
+        delete ret.passwordChangedAt;
         delete ret.__v;
         return ret;
     },

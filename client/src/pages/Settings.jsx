@@ -9,7 +9,7 @@ import { usePageTitle } from '@/hooks/usePageTitle';
 
 const SettingsPage = () => {
   usePageTitle('Settings');
-  const { user, signOut } = useAuth();
+  const { user, signOut, acceptSession } = useAuth();
   const toast = useToast();
   const queryClient = useQueryClient();
 
@@ -25,9 +25,11 @@ const SettingsPage = () => {
   const [passwords, setPasswords] = useState({ currentPassword: '', newPassword: '' });
   const savePassword = useMutation({
     mutationFn: () => api.post('/auth/change-password', passwords),
-    onSuccess: () => {
+    // Other devices are signed out by the change; this one gets a new session
+    onSuccess: (session) => {
+      acceptSession(session);
       setPasswords({ currentPassword: '', newPassword: '' });
-      toast('Password updated');
+      toast('Password updated. Other devices are signed out');
     },
   });
 
