@@ -131,3 +131,11 @@ test("changing or resetting the password signs out every other device", async ()
     assert.equal((await api.get("/api/v1/auth/me").set({ Authorization: `Bearer ${changed.body.token}` })).status, 401);
     assert.equal((await api.get("/api/v1/auth/me").set({ Authorization: `Bearer ${reset.body.token}` })).status, 200);
 });
+
+test("new passwords are limited to what bcrypt actually reads", async () => {
+    const register = (password) => api.post("/api/v1/auth/register").send({ fullName: "Amina", email: `amina${Math.random()}@example.com`, password });
+    assert.equal((await register("a".repeat(72))).status, 201);
+    assert.equal((await register("a".repeat(73))).status, 400);
+    // 30 characters, but 90 bytes
+    assert.equal((await register("€".repeat(30))).status, 400);
+});

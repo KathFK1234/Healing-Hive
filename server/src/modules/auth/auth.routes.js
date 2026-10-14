@@ -46,7 +46,11 @@ const signupLimiter = rateLimit({
 });
 
 const email = z.string().trim().toLowerCase().email("Enter a valid email address");
-const password = z.string().min(8, "Use at least 8 characters for your password").max(128);
+// bcrypt only reads the first 72 bytes, so anything past that would be
+// silently ignored. Counted in bytes: letters outside English take more than one.
+const password = z.string()
+    .min(8, "Use at least 8 characters for your password")
+    .refine((value) => Buffer.byteLength(value, "utf8") <= 72, "Use a password of at most 72 characters");
 const phone = z.string().trim().regex(/^\+?[\d\s-]{9,15}$/, "Enter a valid phone number");
 
 const registerSchema = z.object({
