@@ -92,6 +92,8 @@ test("events respect capacity and hide who else is going", async () => {
         joinLink: "https://meet.example.com/abc",
     });
     assert.equal(event.status, 201);
+    const inThePast = await api.post("/api/v1/events").set(admin.auth).send({ title: "Last week", eventDate: new Date(Date.now() - 7 * 86400000).toISOString() });
+    assert.equal(inThePast.status, 400);
     const scriptLink = await api.post("/api/v1/events").set(admin.auth).send({ title: "Bad link", eventDate: new Date(Date.now() + 86400000).toISOString(), joinLink: "javascript:alert(1)" });
     assert.equal(scriptLink.status, 400);
     assert.equal((await api.post("/api/v1/events").set(first.auth).send({ title: "Not allowed", eventDate: new Date().toISOString() })).status, 403);

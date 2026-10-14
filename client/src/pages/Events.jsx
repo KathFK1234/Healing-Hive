@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { CalendarDays, Clock, ExternalLink, Mic, Plus, Ticket, Trash2, Users } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
-import { formatLongDate, formatMoney, formatTime } from '@/lib/format';
+import { formatLongDate, formatMoney, formatTime, localDay } from '@/lib/format';
 import { Badge, Button, Card, Chip, ConfirmModal, EmptyState, Field, FormError, Input, Modal, PageHeader, QueryState, Textarea, useToast } from '@/components/ui';
 import { usePageTitle } from '@/hooks/usePageTitle';
 
@@ -153,7 +153,7 @@ const Events = () => {
             <Field label="What is it about?">{(field) => <Textarea {...field} rows={3} maxLength={2000} value={draft.description} onChange={set('description')} />}</Field>
             <Field label="Speaker or host name">{(field) => <Input {...field} maxLength={80} value={draft.speaker} onChange={set('speaker')} />}</Field>
             <div className="grid grid-cols-2 gap-4">
-              <Field label="Date">{(field) => <Input {...field} type="date" required value={draft.date} onChange={set('date')} />}</Field>
+              <Field label="Date">{(field) => <Input {...field} type="date" required min={localDay(Date.now())} value={draft.date} onChange={set('date')} />}</Field>
               <Field label="Time (EAT)">{(field) => <Input {...field} type="time" required value={draft.time} onChange={set('time')} />}</Field>
               <Field label="Length (minutes)">{(field) => <Input {...field} type="number" min={10} max={600} required value={draft.durationMinutes} onChange={set('durationMinutes')} />}</Field>
               <Field label="Price (KSh)" hint="0 for free">{(field) => <Input {...field} type="number" min={0} value={draft.price} onChange={set('price')} />}</Field>

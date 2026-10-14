@@ -52,6 +52,9 @@ async function getEvent(req, res) {
 
 //Create event (therapist, peer counsellor or admin)
 async function createEvent(req, res) {
+    if (req.body.eventDate <= new Date()) {
+        throw ApiError.badRequest("Pick a date and time that hasn't passed yet", [{ field: "eventDate", message: "This time has already passed" }]);
+    }
     const event = await Event.create({ ...req.body, host: req.user._id });
     res.status(201).json(present(event, req.user));
 }
