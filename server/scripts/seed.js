@@ -9,6 +9,7 @@
 import crypto from "node:crypto";
 import { fileURLToPath } from "node:url";
 import bcrypt from "bcryptjs";
+import mongoose from "mongoose";
 import env from "../src/config/env.js";
 import { connectDb, disconnectDb } from "../src/config/db.js";
 import User from "../src/modules/users/user.model.js";
@@ -218,9 +219,19 @@ export async function seedAdmin({ email: adminEmail = env.ADMIN_EMAIL, password:
     console.log(`Admin: created ${email}`);
 }
 
+// True for a database on this machine. Demo accounts share a password that
+// is published in the README, so they must never reach a hosted database,
+// even if NODE_ENV was left unset (it defaults to development).
+export const isLocalHost = (host) => ["localhost", "127.0.0.1", "::1", "[::1]"].includes(String(host).toLowerCase());
+
 async function seedDemo() {
     if (env.isProduction) {
         console.log("Demo data: refused, NODE_ENV is production");
+        return;
+    }
+    const host = mongoose.connection.host;
+    if (!isLocalHost(host)) {
+        console.warn(`Demo data: refused. The database is on ${host}, not this machine, and the sample accounts share a public password.`);
         return;
     }
     if (await User.exists({ email: DEMO_ACCOUNTS.client })) {

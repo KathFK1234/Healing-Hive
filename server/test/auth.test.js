@@ -98,3 +98,9 @@ test("seeding the admin never promotes an account someone already registered", a
     const login = await api.post("/api/v1/auth/login").send({ email: "real-admin@example.com", password: "a-long-admin-password" });
     assert.equal(login.body.user.role, "admin");
 });
+
+test("demo accounts are only ever seeded into a database on this machine", async () => {
+    const { isLocalHost } = await import("../scripts/seed.js");
+    for (const host of ["localhost", "127.0.0.1", "::1"]) assert.equal(isLocalHost(host), true, host);
+    for (const host of ["cluster0-shard-00-00.abcde.mongodb.net", "10.0.0.5", "db.example.com", undefined]) assert.equal(isLocalHost(host), false, host);
+});

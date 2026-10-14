@@ -115,7 +115,7 @@ To add a feature: create a folder in `server/src/modules/`, mount its routes in 
 - Google Calendar uses "sensitive" permissions. While the Google Cloud project is in testing, only the test users you list can connect; opening it to all professionals needs Google's verification.
 - Have a qualified clinician review the AI companion's instructions in `server/src/modules/ai/ai.service.js` and the crisis wording.
 - Generate a fresh `JWT_SECRET` for production, and set `NODE_ENV=production` and `CLIENT_ORIGIN` to the real web address.
-- Do not run `npm run seed -- --demo` against the production database: the sample accounts share a public password and would appear in the directory. (It refuses when `NODE_ENV=production`.)
+- Do not run `npm run seed -- --demo` against the production database: the sample accounts share a public password and would appear in the directory. (It refuses unless the database is on your own machine, and when `NODE_ENV=production`.)
 
 ## Contributors
 
