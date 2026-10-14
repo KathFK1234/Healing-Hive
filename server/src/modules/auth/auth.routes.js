@@ -33,6 +33,18 @@ const resetLimiter = rateLimit({
     message: { error: { code: "TOO_MANY_REQUESTS", message: "Too many reset requests. Please wait an hour and try again" } },
 });
 
+// New accounts, counted whether or not they succeed: the limit above skips
+// successful requests, which left sign-ups unlimited (and each professional
+// sign-up sends an email). Generous enough for a campus behind one address.
+const signupLimiter = rateLimit({
+    windowMs: 60 * 60 * 1000,
+    limit: 20,
+    standardHeaders: "draft-7",
+    legacyHeaders: false,
+    skip: () => env.isTest,
+    message: { error: { code: "TOO_MANY_REQUESTS", message: "Too many new accounts from this connection. Please try again in an hour" } },
+});
+
 const email = z.string().trim().toLowerCase().email("Enter a valid email address");
 const password = z.string().min(8, "Use at least 8 characters for your password").max(128);
 const phone = z.string().trim().regex(/^\+?[\d\s-]{9,15}$/, "Enter a valid phone number");
@@ -74,8 +86,8 @@ const passwordSchema = z.object({
     newPassword: password,
 });
 
-router.post("/register", authLimiter, validate({ body: registerSchema }), authController.register);
-router.post("/register-professional", authLimiter, validate({ body: registerProfessionalSchema }), authController.registerProfessional);
+router.post("/register", signupLimiter, authLimiter, validate({ body: registerSchema }), authController.register);
+router.post("/register-professional", signupLimiter, authLimiter, validate({ body: registerProfessionalSchema }), authController.registerProfessional);
 router.post("/forgot-password", resetLimiter, validate({ body: forgotSchema }), authController.forgotPassword);
 router.post("/reset-password", authLimiter, validate({ body: resetSchema }), authController.resetPassword);
 router.post("/login", authLimiter, validate({ body: loginSchema }), authController.login);
