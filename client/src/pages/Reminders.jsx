@@ -106,6 +106,7 @@ const Reminders = () => {
       <Modal
         open={!!draft}
         onClose={() => setDraft(null)}
+        dirty={!!draft?.message.trim()}
         title="New reminder"
         footer={
           <>

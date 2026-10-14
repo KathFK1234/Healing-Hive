@@ -47,6 +47,10 @@ const Journal = () => {
     },
   });
 
+  // Unsaved changes: anything that differs from the entry as it was opened
+  const original = draft?._id ? query.data?.find((entry) => entry._id === draft._id) : blank;
+  const dirty = !!draft && ((draft.title || '') !== (original?.title || '') || draft.content !== (original?.content || '') || (draft.mood ?? null) !== (original?.mood ?? null));
+
   const open = (entry) => {
     save.reset();
     setDraft(entry);
@@ -96,6 +100,7 @@ const Journal = () => {
       <Modal
         open={!!draft}
         onClose={() => setDraft(null)}
+        dirty={dirty}
         title={draft?._id ? 'Edit entry' : 'New entry'}
         footer={
           <>

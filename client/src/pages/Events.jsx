@@ -136,6 +136,7 @@ const Events = () => {
       <Modal
         open={!!draft}
         onClose={() => setDraft(null)}
+        dirty={!!draft && Boolean(draft.title || draft.description || draft.speaker || draft.date || draft.joinLink)}
         title="New event"
         footer={
           <>

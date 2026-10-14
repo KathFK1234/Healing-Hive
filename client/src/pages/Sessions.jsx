@@ -128,6 +128,7 @@ const Sessions = () => {
       <Modal
         open={!!rating}
         onClose={() => setRating(null)}
+        dirty={!!rating && rating.comment !== (rating.session.review?.comment || '')}
         title="How was your session?"
         footer={
           <>

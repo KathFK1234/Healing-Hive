@@ -217,6 +217,7 @@ function AssignedSessions() {
       <Modal
         open={!!notesFor}
         onClose={() => setNotesFor(null)}
+        dirty={!!notesFor && notes !== (notesFor.privateNotes || '')}
         title={`Private notes: ${notesFor?.client?.fullName || ''}`}
         footer={
           <>

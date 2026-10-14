@@ -142,6 +142,7 @@ function Applications() {
       <Modal
         open={!!rejecting}
         onClose={() => setRejecting(null)}
+        dirty={!!note.trim()}
         title={`Send back ${rejecting?.user?.fullName || 'application'}?`}
         footer={
           <>

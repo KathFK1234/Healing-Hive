@@ -31,6 +31,7 @@ export function NuggetForm({ open, onClose }) {
     <Modal
       open={open}
       onClose={onClose}
+      dirty={Boolean(form.title || form.content)}
       title="Write a nugget"
       footer={
         <>
