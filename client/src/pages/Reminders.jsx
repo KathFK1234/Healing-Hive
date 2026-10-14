@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Bell, Plus, Trash2 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { DAY_SHORT, clockToMinutes, formatClock } from '@/lib/format';
-import { Button, Card, Chip, EmptyState, Field, FormError, Input, Modal, PageHeader, QueryState, useToast } from '@/components/ui';
+import { Button, Card, Chip, ConfirmModal, EmptyState, Field, FormError, Input, Modal, PageHeader, QueryState, useToast } from '@/components/ui';
 import { usePageTitle } from '@/hooks/usePageTitle';
 
 const suggestions = ['Drink some water', 'Step outside for 10 minutes', 'Take your medication', 'Wind down for bed', 'Write in your journal'];
@@ -23,6 +23,7 @@ const Reminders = () => {
   const toast = useToast();
   const queryClient = useQueryClient();
   const [draft, setDraft] = useState(null);
+  const [deleting, setDeleting] = useState(null);
 
   const query = useQuery({ queryKey: ['reminders'], queryFn: () => api.get('/reminders') });
   const refresh = () => queryClient.invalidateQueries({ queryKey: ['reminders'] });
@@ -46,9 +47,9 @@ const Reminders = () => {
     mutationFn: (reminder) => api.delete(`/reminders/${reminder._id}`),
     onSuccess: () => {
       refresh();
+      setDeleting(null);
       toast('Reminder deleted');
     },
-    onError: (error) => toast(error.message, 'error'),
   });
 
   const openNew = () => {
@@ -93,7 +94,7 @@ const Reminders = () => {
                   >
                     <span className={`absolute top-1 h-5 w-5 rounded-full bg-white transition-all ${reminder.enabled ? 'left-6' : 'left-1'}`} />
                   </button>
-                  <button type="button" onClick={() => remove.mutate(reminder)} aria-label={`Delete reminder: ${reminder.message}`} className="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-danger">
+                  <button type="button" onClick={() => { remove.reset(); setDeleting(reminder); }} aria-label={`Delete reminder: ${reminder.message}`} className="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-danger">
                     <Trash2 className="h-4 w-4" aria-hidden="true" />
                   </button>
                 </Card>
@@ -151,6 +152,18 @@ const Reminders = () => {
           </form>
         )}
       </Modal>
+
+      <ConfirmModal
+        open={!!deleting}
+        onClose={() => setDeleting(null)}
+        title="Delete this reminder?"
+        confirmLabel="Delete"
+        loading={remove.isPending}
+        error={remove.error}
+        onConfirm={() => remove.mutate(deleting)}
+      >
+        <p>"{deleting?.message}" will no longer show on your home page.</p>
+      </ConfirmModal>
     </>
   );
 };

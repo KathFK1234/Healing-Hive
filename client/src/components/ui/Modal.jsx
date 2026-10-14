@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { X } from 'lucide-react';
 import { Button } from './Button';
+import { FormError } from './Form';
 
 // Built on the browser's <dialog>, which handles focus trapping, Escape to
 // close and screen-reader semantics for us.
@@ -74,5 +75,28 @@ export function Modal({ open, onClose, title, children, footer, dirty = false })
         </div>
       )}
     </dialog>
+  );
+}
+
+// "Are you sure?" before anything that can't be undone: deleting, cancelling,
+// leaving. Shows the request's error inside, so a failure is seen where it happened.
+export function ConfirmModal({ open, onClose, title, confirmLabel, cancelLabel = 'Keep it', onConfirm, loading, error, children }) {
+  return (
+    <Modal
+      open={open}
+      onClose={onClose}
+      title={title}
+      footer={
+        <>
+          <Button variant="outline" onClick={onClose}>{cancelLabel}</Button>
+          <Button variant="danger" loading={loading} onClick={onConfirm}>{confirmLabel}</Button>
+        </>
+      }
+    >
+      <div className="space-y-4">
+        {children}
+        <FormError error={error} />
+      </div>
+    </Modal>
   );
 }

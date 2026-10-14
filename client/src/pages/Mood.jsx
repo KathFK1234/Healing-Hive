@@ -1,9 +1,10 @@
+import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Activity, Trash2 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { formatDateTime, localDay } from '@/lib/format';
 import { moodFor } from '@/lib/moods';
-import { Badge, Card, EmptyState, PageHeader, QueryState, Section, useToast } from '@/components/ui';
+import { Badge, Card, ConfirmModal, EmptyState, PageHeader, QueryState, Section, useToast } from '@/components/ui';
 import { MoodCheckIn } from '@/components/MoodCheckIn';
 import { usePageTitle } from '@/hooks/usePageTitle';
 
@@ -28,14 +29,15 @@ const Mood = () => {
   const toast = useToast();
   const queryClient = useQueryClient();
   const query = useQuery({ queryKey: ['moods', DAYS], queryFn: () => api.get('/moods', { days: DAYS }) });
+  const [deleting, setDeleting] = useState(null);
 
   const remove = useMutation({
     mutationFn: (id) => api.delete(`/moods/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['moods'] });
+      setDeleting(null);
       toast('Check-in deleted');
     },
-    onError: (error) => toast(error.message, 'error'),
   });
 
   return (
@@ -72,7 +74,7 @@ const Mood = () => {
                     </div>
                     <button
                       type="button"
-                      onClick={() => remove.mutate(mood._id)}
+                      onClick={() => { remove.reset(); setDeleting(mood); }}
                       aria-label={`Delete check-in from ${formatDateTime(mood.createdAt)}`}
                       className="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-danger"
                     >
@@ -85,6 +87,18 @@ const Mood = () => {
           </div>
         )}
       </QueryState>
+
+      <ConfirmModal
+        open={!!deleting}
+        onClose={() => setDeleting(null)}
+        title="Delete this check-in?"
+        confirmLabel="Delete"
+        loading={remove.isPending}
+        error={remove.error}
+        onConfirm={() => remove.mutate(deleting._id)}
+      >
+        {deleting && <p>Your check-in from {formatDateTime(deleting.createdAt)} will be permanently deleted.</p>}
+      </ConfirmModal>
     </>
   );
 };

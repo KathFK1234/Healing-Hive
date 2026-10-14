@@ -5,7 +5,7 @@ import { CalendarDays, Clock, ExternalLink, Mic, Plus, Ticket, Trash2, Users } f
 import { api } from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
 import { formatLongDate, formatMoney, formatTime } from '@/lib/format';
-import { Badge, Button, Card, Chip, EmptyState, Field, FormError, Input, Modal, PageHeader, QueryState, Textarea, useToast } from '@/components/ui';
+import { Badge, Button, Card, Chip, ConfirmModal, EmptyState, Field, FormError, Input, Modal, PageHeader, QueryState, Textarea, useToast } from '@/components/ui';
 import { usePageTitle } from '@/hooks/usePageTitle';
 
 const blank = { title: '', description: '', speaker: '', date: '', time: '18:00', durationMinutes: 60, price: 0, capacity: '', joinLink: '' };
@@ -18,6 +18,7 @@ const Events = () => {
   const queryClient = useQueryClient();
   const [when, setWhen] = useState('upcoming');
   const [draft, setDraft] = useState(null);
+  const [deleting, setDeleting] = useState(null);
   const canHost = ['therapist', 'peer', 'admin'].includes(user?.role);
 
   const query = useQuery({ queryKey: ['events', when, !!user], queryFn: () => api.get('/events', { when }) });
@@ -37,9 +38,9 @@ const Events = () => {
     mutationFn: (event) => api.delete(`/events/${event._id}`),
     onSuccess: () => {
       refresh();
+      setDeleting(null);
       toast('Event deleted');
     },
-    onError,
   });
 
   const create = useMutation({
@@ -117,7 +118,7 @@ const Events = () => {
                         </a>
                       )}
                       {canManage && (
-                        <button type="button" onClick={() => { if (window.confirm(`Delete "${event.title}"? People who registered will no longer see it.`)) remove.mutate(event); }} aria-label={`Delete ${event.title}`} className="ml-auto rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-danger">
+                        <button type="button" onClick={() => { remove.reset(); setDeleting(event); }} aria-label={`Delete ${event.title}`} className="ml-auto rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-danger">
                           <Trash2 className="h-4 w-4" aria-hidden="true" />
                         </button>
                       )}
@@ -162,6 +163,18 @@ const Events = () => {
           </form>
         )}
       </Modal>
+
+      <ConfirmModal
+        open={!!deleting}
+        onClose={() => setDeleting(null)}
+        title="Delete this event?"
+        confirmLabel="Delete event"
+        loading={remove.isPending}
+        error={remove.error}
+        onConfirm={() => remove.mutate(deleting)}
+      >
+        <p>"{deleting?.title}" will be removed, and people who registered will no longer see it.</p>
+      </ConfirmModal>
     </>
   );
 };

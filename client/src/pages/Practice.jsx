@@ -3,8 +3,9 @@ import { useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Building2, CalendarCheck, CalendarDays, ExternalLink, Inbox, NotebookPen } from 'lucide-react';
 import { api } from '@/lib/api';
+import { formatDateTime } from '@/lib/format';
 import { isUpcoming, isLive } from '@/lib/sessions';
-import { Button, Card, Chip, EmptyState, Field, FormError, Modal, PageHeader, QueryState, Section, Textarea, useToast } from '@/components/ui';
+import { Button, Card, Chip, ConfirmModal, EmptyState, Field, FormError, Modal, PageHeader, QueryState, Section, Textarea, useToast } from '@/components/ui';
 import { ProfessionalForm } from '@/components/ProfessionalForm';
 import { RatingSummary } from '@/components/Stars';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -92,6 +93,7 @@ function AssignedSessions() {
   const queryClient = useQueryClient();
   const [notesFor, setNotesFor] = useState(null);
   const [notes, setNotes] = useState('');
+  const [cancelling, setCancelling] = useState(null);
 
   const query = useQuery({ queryKey: ['sessions', 'assigned'], queryFn: () => api.get('/sessions/assigned') });
   const refresh = () => queryClient.invalidateQueries({ queryKey: ['sessions'] });
@@ -100,6 +102,7 @@ function AssignedSessions() {
     mutationFn: ({ session, status }) => api.patch(`/sessions/${session._id}/status`, { status }),
     onSuccess: (_, { status }) => {
       refresh();
+      setCancelling(null);
       toast({ confirmed: 'Confirmed. We have emailed them the link to join', cancelled: 'Session cancelled', completed: 'Marked as completed' }[status]);
     },
     onError: (error) => toast(error.message, 'error'),
@@ -196,7 +199,7 @@ function AssignedSessions() {
                         <JoinButton session={session} />
                         {notesButton(session)}
                         {isUpcoming(session) && (
-                          <Button variant="ghost" size="sm" className="ml-auto" onClick={() => { if (window.confirm('Cancel this confirmed session? We will email the client.')) setStatus.mutate({ session, status: 'cancelled' }); }}>Cancel session</Button>
+                          <Button variant="ghost" size="sm" className="ml-auto" onClick={() => { setStatus.reset(); setCancelling(session); }}>Cancel session</Button>
                         )}
                       </>
                     )))}
@@ -213,6 +216,23 @@ function AssignedSessions() {
           );
         }}
       </QueryState>
+
+      <ConfirmModal
+        open={!!cancelling}
+        onClose={() => setCancelling(null)}
+        title="Cancel this confirmed session?"
+        confirmLabel="Cancel session"
+        loading={setStatus.isPending}
+        error={setStatus.error}
+        onConfirm={() => setStatus.mutate({ session: cancelling, status: 'cancelled' })}
+      >
+        {cancelling && (
+          <p>
+            Your session with <strong>{cancelling.client?.fullName || 'this client'}</strong> on{' '}
+            <strong>{formatDateTime(cancelling.scheduledAt)}</strong> will be cancelled. We'll email them to let them know.
+          </p>
+        )}
+      </ConfirmModal>
 
       <Modal
         open={!!notesFor}
@@ -304,13 +324,14 @@ function EditProfile({ profile }) {
       toast('Profile saved');
     },
   });
+  const [leaving, setLeaving] = useState(false);
   const leave = useMutation({
     mutationFn: () => api.post('/professionals/me/institution', { accept: false }),
     onSuccess: (updated) => {
       queryClient.setQueryData(['professionals', 'me'], updated);
+      setLeaving(false);
       toast('You have left the institution');
     },
-    onError: (error) => toast(error.message, 'error'),
   });
 
   if (!profile) return <EmptyState title="No profile found">Contact support so we can set your profile up.</EmptyState>;
@@ -323,12 +344,25 @@ function EditProfile({ profile }) {
             <Building2 className="h-5 w-5 text-primary" aria-hidden="true" />
             You are part of <strong>{profile.institution?.organisationName}</strong>
           </p>
-          <Button variant="outline" size="sm" loading={leave.isPending} onClick={() => { if (window.confirm(`Leave ${profile.institution?.organisationName}?`)) leave.mutate(); }}>Leave</Button>
+          <Button variant="outline" size="sm" onClick={() => { leave.reset(); setLeaving(true); }}>Leave</Button>
         </Card>
       )}
       <Card>
         <ProfessionalForm profile={profile} mode="edit" mutation={save} submitLabel="Save profile" />
       </Card>
+
+      <ConfirmModal
+        open={leaving}
+        onClose={() => setLeaving(false)}
+        title={`Leave ${profile.institution?.organisationName || 'this institution'}?`}
+        cancelLabel="Stay"
+        confirmLabel="Leave"
+        loading={leave.isPending}
+        error={leave.error}
+        onConfirm={() => leave.mutate()}
+      >
+        <p>Their name comes off your profile and they stop seeing your session numbers. Your bookings and clients are not affected.</p>
+      </ConfirmModal>
     </>
   );
 }
