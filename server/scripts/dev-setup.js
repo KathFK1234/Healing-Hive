@@ -34,7 +34,8 @@ if (!fs.existsSync(envPath)) {
         "",
     ].join("\n"), { mode: 0o600 });
     console.log("Created server/.env for local development.");
-    console.log(`  Admin sign-in: admin@healinghive.local / ${adminPassword}`);
+    // Not printed: terminal scrollback, screen shares and recordings keep it
+    console.log("  Admin sign-in: admin@healinghive.local, password in server/.env (ADMIN_PASSWORD)");
 }
 
 // .env holds JWT_SECRET (enough to sign in as anyone) and the admin password,
