@@ -254,3 +254,18 @@ test("the Google Calendar option reports as unavailable until it is configured",
     const client = await signUp(api);
     assert.equal((await api.get("/api/v1/google/connect").set(client.auth)).status, 403);
 });
+
+test("a booking blocks every slot it overlaps, even after the session length changes", () => {
+    // Monday 5 Jan 2026, 06:00 EAT, working hours 09:00 to 13:00 on Mondays
+    const now = new Date("2026-01-05T03:00:00Z");
+    const times = (sessionMinutes, taken) => openSlots({ sessionMinutes, availability: [{ day: 1, start: 540, end: 780 }] }, taken, now)
+        .filter((slot) => slot < new Date("2026-01-05T10:00:00Z"))
+        .map((slot) => slot.toISOString().slice(11, 16));
+
+    // Booked 09:50 to 10:40 EAT while sessions were 50 minutes long
+    const booked = [{ scheduledAt: new Date("2026-01-05T06:50:00Z"), durationMinutes: 50 }];
+    assert.deepEqual(times(50, booked), ["06:00", "07:40", "08:30"]);
+    // Now 60 minutes long: 09:00 (until 10:00) and 10:00 EAT both overlap the
+    // booking, so only 11:00 and 12:00 EAT are offered
+    assert.deepEqual(times(60, booked), ["08:00", "09:00"]);
+});

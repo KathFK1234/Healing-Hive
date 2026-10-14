@@ -28,8 +28,8 @@ async function bookSession(req, res) {
     if (!professional) throw ApiError.notFound("Professional");
     if (professional.user._id.equals(req.user._id)) throw ApiError.badRequest("You cannot book a session with yourself");
 
-    const taken = await Session.find({ professional: professional._id, active: true, scheduledAt: { $gte: new Date() } })
-        .distinct("scheduledAt");
+    const taken = await Session.find({ professional: professional._id, active: true, scheduledAt: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) } })
+        .select("scheduledAt durationMinutes");
     const busy = await busyTimes(professional);
     const isOpen = openSlots(professional, taken, new Date(), busy).some((slot) => slot.getTime() === scheduledAt.getTime());
     if (!isOpen) throw ApiError.conflict("That time is no longer available. Please pick another");

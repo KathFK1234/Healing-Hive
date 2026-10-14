@@ -11,18 +11,20 @@ function escapeRegex(text) {
     return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+// Each professional's pending and confirmed sessions that have not ended yet
 async function takenTimes(professionalIds) {
     const sessions = await Session.find({
         professional: { $in: professionalIds },
         active: true,
-        scheduledAt: { $gte: new Date() },
-    }).select("professional scheduledAt");
+        // a session that started up to a day ago may still be running
+        scheduledAt: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) },
+    }).select("professional scheduledAt durationMinutes");
 
     const byProfessional = new Map();
     for (const session of sessions) {
         const key = session.professional.toString();
         if (!byProfessional.has(key)) byProfessional.set(key, []);
-        byProfessional.get(key).push(session.scheduledAt);
+        byProfessional.get(key).push(session);
     }
     return byProfessional;
 }
