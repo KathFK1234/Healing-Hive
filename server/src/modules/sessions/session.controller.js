@@ -10,7 +10,7 @@ import { arrangeMeeting, cancelMeeting } from "./meeting.js";
 import { sendMail } from "../../utils/mailer.js";
 
 // Always East Africa Time in emails, whatever the server's own clock is set to.
-const when = (date) => new Intl.DateTimeFormat("en-KE", {
+export const when = (date) => new Intl.DateTimeFormat("en-KE", {
     timeZone: "Africa/Nairobi", weekday: "long", day: "numeric", month: "long", hour: "numeric", minute: "2-digit", hour12: true,
 }).format(date) + " (East Africa Time)";
 

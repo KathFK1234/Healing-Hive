@@ -269,3 +269,25 @@ test("a booking blocks every slot it overlaps, even after the session length cha
     // booking, so only 11:00 and 12:00 EAT are offered
     assert.deepEqual(times(60, booked), ["08:00", "09:00"]);
 });
+
+test("removing a professional cancels their upcoming sessions and tells each client", async () => {
+    const admin = await makeAdmin(api);
+    const therapist = await makeProfessional(api, admin);
+    const first = await signUp(api);
+    const second = await signUp(api);
+    const [slotA, slotB] = (await api.get(`/api/v1/professionals/${therapist.profileId}`)).body.slots;
+
+    const confirmed = (await api.post("/api/v1/sessions").set(first.auth).send({ professionalId: therapist.profileId, scheduledAt: slotA })).body;
+    await api.patch(`/api/v1/sessions/${confirmed._id}/status`).set(therapist.auth).send({ status: "confirmed" });
+    await api.post("/api/v1/sessions").set(second.auth).send({ professionalId: therapist.profileId, scheduledAt: slotB });
+
+    const removed = await api.patch(`/api/v1/admin/applications/${therapist.profileId}`).set(admin.auth).send({ status: "rejected", reviewNote: "Licence expired" });
+    assert.equal(removed.status, 200);
+
+    for (const client of [first, second]) {
+        const [session] = (await api.get("/api/v1/sessions/mine").set(client.auth)).body;
+        assert.equal(session.status, "cancelled");
+        assert.equal(session.meetingUrl, undefined);
+        assert.match(lastMailTo(client.user.email).text, /no longer listed/);
+    }
+});

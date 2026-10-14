@@ -9,6 +9,8 @@ import { authenticate, requireRole } from "../../middleware/auth.js";
 import { validate, validateId } from "../../middleware/validate.js";
 import env from "../../config/env.js";
 import { sendMail } from "../../utils/mailer.js";
+import { cancelMeeting } from "../sessions/meeting.js";
+import { when } from "../sessions/session.controller.js";
 
 const router = express.Router();
 
@@ -22,6 +24,30 @@ const listSchema = z.object({
 });
 
 router.use(authenticate, requireRole("admin"));
+
+// A professional taken out of the directory loses their practice page, so
+// nobody would be left to confirm or hold their upcoming sessions. Cancel
+// them and tell each client, as a cancellation by the professional would.
+async function cancelUpcomingSessions(professional, professionalName) {
+    const sessions = await Session.find({ professional: professional._id, active: true, scheduledAt: { $gte: new Date() } })
+        .select("+googleEventId")
+        .populate("client", "fullName email");
+    for (const session of sessions) {
+        await cancelMeeting(session);
+        session.status = "cancelled";
+        session.meetingUrl = undefined;
+        session.googleEventId = undefined;
+        await session.save();
+        if (session.client) {
+            await sendMail({
+                to: session.client.email,
+                subject: "A Healing Hive session was cancelled",
+                text: `Hello ${session.client.fullName},\n\nYour session with ${professionalName} on ${when(session.scheduledAt)} has been cancelled, because they are no longer listed on Healing Hive.\n\nYou can book someone else here:\n${env.clientUrl}/therapists`,
+            });
+        }
+    }
+    return sessions.length;
+}
 
 // Headline numbers for the admin dashboard. Counts only: admins have no route
 // into anyone's journal, mood log or AI conversation.
@@ -54,6 +80,7 @@ router.patch("/applications/:id", validateId, validate({ body: reviewSchema }), 
     const application = await Professional.findById(req.params.id);
     if (!application) throw ApiError.notFound("Application");
 
+    const wasListed = application.status === "approved";
     application.status = req.body.status;
     application.reviewNote = req.body.reviewNote;
     await application.save();
@@ -70,6 +97,7 @@ router.patch("/applications/:id", validateId, validate({ body: reviewSchema }), 
     }
 
     const applicant = await User.findById(application.user).select("fullName email");
+    if (!approved && wasListed) await cancelUpcomingSessions(application, applicant?.fullName || "your professional");
     if (applicant) {
         await sendMail({
             to: applicant.email,
