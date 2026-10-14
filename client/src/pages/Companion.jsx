@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import classNames from 'classnames';
@@ -23,6 +23,19 @@ const Companion = () => {
   const [input, setInput] = useState('');
   const [confirmClear, setConfirmClear] = useState(false);
   const bottom = useRef(null);
+  const box = useRef(null);
+
+  // The message box grows with what is typed (up to its max height), and
+  // shrinks back once the message is sent.
+  useLayoutEffect(() => {
+    const el = box.current;
+    if (!el) return;
+    el.style.height = '';
+    // Empty: keep the one-line height (the placeholder can wrap on a phone)
+    if (!input) return;
+    el.style.height = 'auto';
+    el.style.height = `${el.scrollHeight + el.offsetHeight - el.clientHeight}px`;
+  }, [input]);
 
   const query = useQuery({ queryKey: ['ai', 'messages'], queryFn: () => api.get('/ai/messages') });
 
@@ -134,6 +147,7 @@ const Companion = () => {
               <FormError error={send.error} />
               <div className="flex items-end gap-2">
                 <textarea
+                  ref={box}
                   aria-label="Your message"
                   rows={1}
                   maxLength={2000}
