@@ -92,16 +92,19 @@ const Institution = () => {
                   {members.map((member) => (
                     <li key={member._id}>
                       <Card>
-                        <div className="flex flex-wrap items-start gap-4">
+                        <div className="flex items-start gap-4">
                           <Avatar name={member.user?.fullName} />
                           <div className="min-w-0 flex-1">
-                            <h2 className="text-xl">{member.user?.fullName}</h2>
-                            <p className="text-muted-foreground">{member.title || PROFESSIONAL_TYPES[member.type]} · {member.user?.email}</p>
+                            <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
+                              <h2 className="text-xl">{member.user?.fullName}</h2>
+                              {member.institutionStatus === 'invited'
+                                ? <Badge tone="honey">Invited, waiting for them</Badge>
+                                : <Badge tone="primary">Active</Badge>}
+                            </div>
+                            <p className="text-muted-foreground">{member.title || PROFESSIONAL_TYPES[member.type]}</p>
+                            <p className="break-words text-muted-foreground">{member.user?.email}</p>
                             {member.institutionStatus === 'active' && <p className="mt-2"><RatingSummary average={member.ratingAverage} count={member.ratingCount} /></p>}
                           </div>
-                          {member.institutionStatus === 'invited'
-                            ? <Badge tone="honey">Invited, waiting for them</Badge>
-                            : <Badge tone="primary">Active</Badge>}
                         </div>
 
                         {member.institutionStatus === 'active' && (

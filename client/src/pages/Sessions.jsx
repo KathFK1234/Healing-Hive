@@ -178,10 +178,14 @@ export function SessionCard({ session, name, subtitle, children }) {
   const ModeIcon = MODE_ICON[session.mode] || Video;
   return (
     <Card>
-      <div className="flex flex-wrap items-start gap-4">
+      <div className="flex items-start gap-4">
         <Avatar name={name} />
         <div className="min-w-0 flex-1">
-          <p className="text-xl font-bold">{formatDateTime(session.scheduledAt)}</p>
+          {/* The badge wraps under the date on a narrow phone instead of squeezing it */}
+          <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
+            <p className="text-xl font-bold">{formatDateTime(session.scheduledAt)}</p>
+            <Badge tone={status.tone}>{status.label}</Badge>
+          </div>
           <p className="mt-1">with <span className="font-semibold">{name}</span>{subtitle ? `, ${subtitle}` : ''}</p>
           <p className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-muted-foreground">
             <span className="inline-flex items-center gap-1.5"><ModeIcon className="h-4 w-4" aria-hidden="true" /> {MODE_LABEL[session.mode]}</span>
@@ -189,7 +193,6 @@ export function SessionCard({ session, name, subtitle, children }) {
             <span>{formatMoney(session.price?.amount, session.price?.currency)}</span>
           </p>
         </div>
-        <Badge tone={status.tone}>{status.label}</Badge>
       </div>
       {children}
     </Card>
