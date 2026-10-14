@@ -184,26 +184,35 @@ async function seedNuggets() {
     console.log(`Nuggets: ${added} added, ${nuggets.length - added} already there`);
 }
 
-async function seedAdmin() {
-    if (!env.ADMIN_EMAIL || !env.ADMIN_PASSWORD) {
+// Creates the admin account. It never promotes an account that already exists:
+// sign-up does not confirm email addresses, so whoever registered the admin's
+// address first would otherwise become the admin, with a password they chose.
+export async function seedAdmin({ email: adminEmail = env.ADMIN_EMAIL, password: adminPassword = env.ADMIN_PASSWORD } = {}) {
+    if (!adminEmail || !adminPassword) {
         console.log("Admin: skipped (set ADMIN_EMAIL and ADMIN_PASSWORD in .env to create one)");
         return;
     }
-    if (env.ADMIN_PASSWORD.length < 12) {
+    if (adminPassword.length < 12) {
         console.log("Admin: skipped (ADMIN_PASSWORD must be at least 12 characters)");
         return;
     }
-    const email = env.ADMIN_EMAIL.toLowerCase();
+    const email = adminEmail.toLowerCase();
     const existing = await User.findOne({ email });
+    if (existing?.role === "admin") {
+        console.log(`Admin: ${email} already exists`);
+        return;
+    }
     if (existing) {
-        if (existing.role !== "admin") await User.updateOne({ _id: existing._id }, { role: "admin" });
-        console.log(`Admin: ${email} already exists, role is admin`);
+        console.warn(
+            `Admin: NOT created. ${email} is already used by an ordinary account, which was not made an admin.\n` +
+            "  If that account is not yours, someone registered the admin address first: remove it, or choose a different ADMIN_EMAIL.",
+        );
         return;
     }
     await User.create({
         fullName: "Healing Hive Admin",
         email,
-        password: await bcrypt.hash(env.ADMIN_PASSWORD, 12),
+        password: await bcrypt.hash(adminPassword, 12),
         role: "admin",
     });
     console.log(`Admin: created ${email}`);

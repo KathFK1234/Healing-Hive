@@ -82,3 +82,19 @@ test("only sign-in tokens sign you in, not the Google connect state or unsigned 
 
     assert.equal((await api.get("/api/v1/auth/me").set(person.auth)).status, 200);
 });
+
+test("seeding the admin never promotes an account someone already registered", async () => {
+    const { seedAdmin } = await import("../scripts/seed.js");
+    const squatter = await signUp(api, { email: "admin@example.com" });
+
+    await seedAdmin({ email: "Admin@Example.com", password: "a-long-admin-password" });
+    const me = await api.get("/api/v1/auth/me").set(squatter.auth);
+    assert.equal(me.body.role, "user");
+    const asAdmin = await api.post("/api/v1/auth/login").send({ email: "admin@example.com", password: "a-long-admin-password" });
+    assert.equal(asAdmin.status, 401);
+
+    // A fresh address is created as an admin
+    await seedAdmin({ email: "real-admin@example.com", password: "a-long-admin-password" });
+    const login = await api.post("/api/v1/auth/login").send({ email: "real-admin@example.com", password: "a-long-admin-password" });
+    assert.equal(login.body.user.role, "admin");
+});
