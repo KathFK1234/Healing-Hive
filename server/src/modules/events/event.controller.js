@@ -18,16 +18,26 @@ function present(event, user) {
     };
 }
 
+// An event stays upcoming until it has ended, not just started, so people
+// arriving late still find it (and its join link) under Upcoming.
+const MAX_DURATION_MS = 600 * 60 * 1000;
+const endsAt = (event) => new Date(event.eventDate.getTime() + (event.durationMinutes || 60) * 60 * 1000);
+
+function upcomingFilter(now, upcoming) {
+    const end = { $add: ["$eventDate", { $multiply: [{ $ifNull: ["$durationMinutes", 60] }, 60 * 1000] }] };
+    return upcoming
+        // The date bound keeps the eventDate index useful; the $expr is exact
+        ? { eventDate: { $gte: new Date(now.getTime() - MAX_DURATION_MS) }, $expr: { $gt: [end, now] } }
+        : { eventDate: { $lt: now }, $expr: { $lte: [end, now] } };
+}
+
 function canManage(event, user) {
     return user.role === "admin" || event.host?.equals(user._id);
 }
 
 // Get all events (Public)
 async function getEvents(req, res) {
-    const filter = req.filters.when === "past"
-        ? { eventDate: { $lt: new Date() } }
-        : { eventDate: { $gte: new Date() } };
-    const events = await Event.find(filter)
+    const events = await Event.find(upcomingFilter(new Date(), req.filters.when !== "past"))
         .sort({ eventDate: req.filters.when === "past" ? -1 : 1 })
         .limit(50);
     res.json(events.map((event) => present(event, req.user)));
@@ -70,7 +80,7 @@ async function deleteEvent(req, res) {
 async function joinEvent(req, res) {
     const event = await Event.findById(req.params.id);
     if (!event) throw ApiError.notFound("Event");
-    if (event.eventDate < new Date()) throw ApiError.badRequest("This event has already happened");
+    if (endsAt(event) <= new Date()) throw ApiError.badRequest("This event has already happened");
 
     // One atomic update, so two people cannot take the last seat at once and
     // nobody is added twice.

@@ -169,3 +169,17 @@ test("emails that cannot be sent never put their content in production logs", as
     // Locally the whole email is shown, so the link can be followed
     assert.match(unsentLog(mail, false), /secret-token/);
 });
+
+test("an event stays upcoming, and open to join, until it has ended", async () => {
+    const admin = await makeAdmin(api);
+    const person = await signUp(api);
+    const Event = (await import("../src/modules/events/event.model.js")).default;
+    const minutesAgo = (minutes) => new Date(Date.now() - minutes * 60 * 1000);
+    const running = await Event.create({ title: "Under way", eventDate: minutesAgo(10), durationMinutes: 60 });
+    await Event.create({ title: "Finished", eventDate: minutesAgo(90), durationMinutes: 60 });
+
+    const titles = async (when) => (await api.get("/api/v1/events").query({ when }).set(admin.auth)).body.map((event) => event.title);
+    assert.deepEqual(await titles("upcoming"), ["Under way"]);
+    assert.deepEqual(await titles("past"), ["Finished"]);
+    assert.equal((await api.post(`/api/v1/events/${running._id}/join`).set(person.auth)).body.joined, true);
+});
