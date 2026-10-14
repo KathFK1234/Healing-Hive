@@ -4,12 +4,16 @@ import { CircleCheck, CircleAlert } from 'lucide-react';
 
 const ToastContext = createContext(() => {});
 
+// A counter is enough for an id. (crypto.randomUUID only exists on HTTPS and
+// localhost, so it threw when the app was opened on a phone over plain http.)
+let nextId = 0;
+
 // Short confirmations ("Saved") that appear briefly and go away on their own.
 export function ToastProvider({ children }) {
   const [toasts, setToasts] = useState([]);
 
   const toast = useCallback((message, tone = 'success') => {
-    const id = crypto.randomUUID();
+    const id = ++nextId;
     setToasts((current) => [...current, { id, message, tone }]);
     setTimeout(() => setToasts((current) => current.filter((t) => t.id !== id)), 4000);
   }, []);
