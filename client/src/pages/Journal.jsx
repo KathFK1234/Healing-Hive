@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import classNames from 'classnames';
 import { Lock, NotebookPen, Pencil, Plus, Trash2 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { formatDateTime } from '@/lib/format';
@@ -89,7 +90,7 @@ const Journal = () => {
                       <Trash2 className="h-4 w-4" aria-hidden="true" />
                     </button>
                   </div>
-                  <p className="mt-3 line-clamp-4 whitespace-pre-line leading-relaxed">{entry.content}</p>
+                  <EntryText content={entry.content} />
                 </Card>
               </li>
             ))}
@@ -158,5 +159,22 @@ const Journal = () => {
     </>
   );
 };
+
+// Long entries show a few lines with "Read more", so they can be read in full
+// without opening the editor. Roughly what fits in four lines on a phone.
+function EntryText({ content }) {
+  const [expanded, setExpanded] = useState(false);
+  const isLong = content.length > 240 || content.split('\n').length > 4;
+  return (
+    <>
+      <p className={classNames('mt-3 whitespace-pre-line leading-relaxed', isLong && !expanded && 'line-clamp-4')}>{content}</p>
+      {isLong && (
+        <button type="button" aria-expanded={expanded} onClick={() => setExpanded(!expanded)} className="mt-2 rounded-lg text-sm font-semibold text-primary hover:underline">
+          {expanded ? 'Show less' : 'Read more'}
+        </button>
+      )}
+    </>
+  );
+}
 
 export default Journal;
