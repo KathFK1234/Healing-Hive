@@ -119,7 +119,10 @@ test("a professional's own meeting link is used when they set one, and is not pu
 
     const profile = await api.get(`/api/v1/professionals/${therapist.profileId}`);
     assert.equal(profile.body.meetingLink, undefined);
-    assert.equal((await api.get("/api/v1/professionals")).body.items[0].meetingLink, undefined);
+    assert.equal(profile.body.calendarConnected, undefined);
+    const listed = (await api.get("/api/v1/professionals")).body.items[0];
+    assert.equal(listed.meetingLink, undefined);
+    assert.equal(listed.calendarConnected, undefined);
 
     const session = (await api.post("/api/v1/sessions").set(client.auth).send({ professionalId: therapist.profileId, scheduledAt: profile.body.slots[0] })).body;
     const confirmed = await api.patch(`/api/v1/sessions/${session._id}/status`).set(therapist.auth).send({ status: "confirmed" });

@@ -2,16 +2,18 @@ import Event from "./event.model.js";
 import ApiError from "../../utils/ApiError.js";
 
 // What anyone may see. The participant list is private, so it is reduced to a
-// count plus whether the person asking is on it.
+// count plus whether the person asking is on it, and the host's account id is
+// reduced to whether the person asking may edit or delete it.
 function present(event, user) {
     const joined = !!user && event.participants.some((p) => p.equals(user._id));
-    const isHost = !!user && (user.role === "admin" || event.host?.equals(user._id));
-    const { participants, joinLink, __v, ...rest } = event.toObject();
+    const isHost = !!user && canManage(event, user);
+    const { participants, joinLink, host, __v, ...rest } = event.toObject();
     return {
         ...rest,
         participantCount: participants.length,
         isFull: !!event.capacity && participants.length >= event.capacity,
         joined,
+        canManage: isHost,
         joinLink: joined || isHost ? joinLink : undefined,
     };
 }

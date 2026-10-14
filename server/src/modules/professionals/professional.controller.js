@@ -35,7 +35,7 @@ async function listProfessionals(req, res) {
     if (language) filter.languages = language;
 
     let professionals = await Professional.find(filter)
-        .select("-institution -institutionStatus -meetingLink -reviewNote")
+        .select("-institution -institutionStatus -meetingLink -reviewNote -calendarConnected")
         .populate("user", PUBLIC_USER_FIELDS)
         .lean();
 
@@ -91,6 +91,8 @@ async function getProfessional(req, res) {
     const [taken, busy] = await Promise.all([takenTimes([professional._id]), busyTimes(professional)]);
     professional.slots = openSlots(professional, taken.get(professional._id.toString()), new Date(), busy);
     professional.nextAvailable = professional.slots[0] || null;
+    // Needed above to read their calendar; nobody else needs to know they linked one
+    delete professional.calendarConnected;
     res.json(professional);
 }
 

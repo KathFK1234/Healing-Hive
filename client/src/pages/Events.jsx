@@ -85,7 +85,6 @@ const Events = () => {
         ) : (
           <ul className="grid gap-4 md:grid-cols-2">
             {events.map((event) => {
-              const canManage = user && (user.role === 'admin' || event.host === user._id);
               return (
                 <li key={event._id}>
                   <Card as="article" className="flex h-full flex-col">
@@ -117,7 +116,7 @@ const Events = () => {
                           Open join link <ExternalLink className="h-4 w-4" aria-hidden="true" />
                         </a>
                       )}
-                      {canManage && (
+                      {event.canManage && (
                         <button type="button" onClick={() => { remove.reset(); setDeleting(event); }} aria-label={`Delete ${event.title}`} className="ml-auto rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-danger">
                           <Trash2 className="h-4 w-4" aria-hidden="true" />
                         </button>

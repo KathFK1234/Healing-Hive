@@ -99,6 +99,10 @@ test("events respect capacity and hide who else is going", async () => {
     const publicView = await api.get(`/api/v1/events/${event.body._id}`);
     assert.equal(publicView.body.participants, undefined);
     assert.equal(publicView.body.joinLink, undefined);
+    // Whose account made it is not shown; only whether you may manage it
+    assert.equal(publicView.body.host, undefined);
+    assert.equal(publicView.body.canManage, false);
+    assert.equal((await api.get(`/api/v1/events/${event.body._id}`).set(admin.auth)).body.canManage, true);
 
     const joined = await api.post(`/api/v1/events/${event.body._id}/join`).set(first.auth);
     assert.equal(joined.body.joined, true);
