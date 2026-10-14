@@ -46,7 +46,9 @@ export function decrypt(stored) {
 
 // `state` proves the callback belongs to the person who started the flow.
 export function connectUrl(userId) {
-    const state = jwt.sign({ sub: userId.toString(), purpose: "google" }, env.JWT_SECRET, { expiresIn: "10m" });
+    // Marked as a Google state, which the sign-in check refuses, so it cannot
+    // be used as a session even though it travels in the address bar.
+    const state = jwt.sign({ sub: userId.toString(), purpose: "google" }, env.JWT_SECRET, { algorithm: "HS256", expiresIn: "10m" });
     const params = new URLSearchParams({
         client_id: env.GOOGLE_CLIENT_ID,
         redirect_uri: redirectUri(),
@@ -61,7 +63,7 @@ export function connectUrl(userId) {
 }
 
 export function readState(state) {
-    const payload = jwt.verify(state, env.JWT_SECRET);
+    const payload = jwt.verify(state, env.JWT_SECRET, { algorithms: ["HS256"] });
     if (payload.purpose !== "google") throw new Error("Wrong kind of token");
     return payload.sub;
 }

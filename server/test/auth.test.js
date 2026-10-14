@@ -62,3 +62,23 @@ test("profile updates cannot change the role", async () => {
     assert.equal(res.body.fullName, "New Name");
     assert.equal(res.body.role, "user");
 });
+
+test("only sign-in tokens sign you in, not the Google connect state or unsigned tokens", async () => {
+    const jwt = (await import("jsonwebtoken")).default;
+    const { connectUrl, readState } = await import("../src/modules/google/google.service.js");
+    const person = await signUp(api);
+    const bearer = (token) => ({ Authorization: `Bearer ${token}` });
+
+    // The state travels in the address bar to Google and back
+    const state = new URL(connectUrl(person.user._id)).searchParams.get("state");
+    assert.equal(readState(state), person.user._id);
+    assert.equal((await api.get("/api/v1/auth/me").set(bearer(state))).status, 401);
+
+    const noPurpose = jwt.sign({ sub: person.user._id }, process.env.JWT_SECRET);
+    assert.equal((await api.get("/api/v1/auth/me").set(bearer(noPurpose))).status, 401);
+
+    const unsigned = jwt.sign({ sub: person.user._id, purpose: "session" }, null, { algorithm: "none" });
+    assert.equal((await api.get("/api/v1/auth/me").set(bearer(unsigned))).status, 401);
+
+    assert.equal((await api.get("/api/v1/auth/me").set(person.auth)).status, 200);
+});
