@@ -61,7 +61,7 @@ const Journal = () => {
     <>
       <PageHeader
         title="Journal"
-        description={<span className="inline-flex items-center gap-1.5"><Lock className="h-4 w-4" aria-hidden="true" /> Only you can read what you write here.</span>}
+        description={<><Lock className="-mt-1 mr-1.5 inline h-4 w-4" aria-hidden="true" />Only you can read what you write here.</>}
         action={<Button onClick={() => open(blank)}><Plus className="h-4 w-4" aria-hidden="true" /> New entry</Button>}
       />
 
