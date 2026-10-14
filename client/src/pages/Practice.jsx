@@ -105,7 +105,8 @@ function AssignedSessions() {
       setCancelling(null);
       toast({ confirmed: 'Confirmed. We have emailed them the link to join', cancelled: 'Session cancelled', completed: 'Marked as completed' }[status]);
     },
-    onError: (error) => toast(error.message, 'error'),
+    // The cancel dialog shows its own error; everything else gets a toast
+    onError: (error) => { if (!cancelling) toast(error.message, 'error'); },
   });
 
   // Which button is waiting on the server: the one pressed shows a spinner and
