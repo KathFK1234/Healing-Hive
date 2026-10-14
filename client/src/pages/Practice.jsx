@@ -78,8 +78,8 @@ function Invitation({ profile }) {
             They never see who your clients are or your notes.
           </p>
           <div className="mt-5 flex flex-wrap gap-3">
-            <Button loading={answer.isPending && answer.variables} onClick={() => answer.mutate(true)}>Accept</Button>
-            <Button variant="outline" onClick={() => answer.mutate(false)}>Decline</Button>
+            <Button loading={answer.isPending && answer.variables} disabled={answer.isPending} onClick={() => answer.mutate(true)}>Accept</Button>
+            <Button variant="outline" loading={answer.isPending && !answer.variables} disabled={answer.isPending} onClick={() => answer.mutate(false)}>Decline</Button>
           </div>
         </div>
       </div>
@@ -104,6 +104,11 @@ function AssignedSessions() {
     },
     onError: (error) => toast(error.message, 'error'),
   });
+
+  // Which button is waiting on the server: the one pressed shows a spinner and
+  // the others on the same session are held until it answers.
+  const pending = (session, status) =>
+    setStatus.isPending && setStatus.variables?.session._id === session._id && (!status || setStatus.variables.status === status);
 
   const saveNotes = useMutation({
     mutationFn: () => api.put(`/sessions/${notesFor._id}/notes`, { privateNotes: notes }),
@@ -162,8 +167,8 @@ function AssignedSessions() {
                   <ul className="space-y-5">
                     {requests.map((session) => renderSession(session, (
                       <>
-                        <Button onClick={() => setStatus.mutate({ session, status: 'confirmed' })}>Accept</Button>
-                        <Button variant="outline" onClick={() => setStatus.mutate({ session, status: 'cancelled' })}>Decline</Button>
+                        <Button loading={pending(session, 'confirmed')} disabled={pending(session)} onClick={() => setStatus.mutate({ session, status: 'confirmed' })}>Accept</Button>
+                        <Button variant="outline" loading={pending(session, 'cancelled')} disabled={pending(session)} onClick={() => setStatus.mutate({ session, status: 'cancelled' })}>Decline</Button>
                       </>
                     )))}
                   </ul>
@@ -175,7 +180,7 @@ function AssignedSessions() {
                   <ul className="space-y-5">
                     {toWrapUp.map((session) => renderSession(session, (
                       <>
-                        <Button onClick={() => setStatus.mutate({ session, status: 'completed' })}>Mark completed</Button>
+                        <Button loading={pending(session, 'completed')} onClick={() => setStatus.mutate({ session, status: 'completed' })}>Mark completed</Button>
                         {notesButton(session)}
                       </>
                     )))}

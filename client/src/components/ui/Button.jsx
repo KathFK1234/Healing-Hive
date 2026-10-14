@@ -23,14 +23,16 @@ const sizes = {
 };
 
 // Renders a <button>, or a router <Link> when `to` is given.
-export function Button({ variant = 'primary', size = 'md', loading = false, to, className, children, ...props }) {
+// While `loading`, the button is always disabled, whatever `disabled` says, so a
+// second tap cannot send the same request twice.
+export function Button({ variant = 'primary', size = 'md', loading = false, disabled, to, className, children, ...props }) {
   const classes = classNames(base, variants[variant], sizes[size], className);
 
   if (to) {
     return <Link to={to} className={classes} {...props}>{children}</Link>;
   }
   return (
-    <button type="button" className={classes} disabled={loading || props.disabled} {...props}>
+    <button type="button" {...props} className={classes} disabled={loading || disabled} aria-busy={loading || undefined}>
       {loading && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
       {children}
     </button>
