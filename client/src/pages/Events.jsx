@@ -90,7 +90,7 @@ const Events = () => {
                   <Card as="article" className="flex h-full flex-col">
                     <div className="flex flex-wrap items-start gap-2">
                       <Badge tone={event.price ? 'calm' : 'primary'}>{formatMoney(event.price)}</Badge>
-                      {new Date(event.eventDate) <= new Date() && <Badge tone="warmth">Happening now</Badge>}
+                      {when === 'upcoming' && new Date(event.eventDate) <= new Date() && <Badge tone="warmth">Happening now</Badge>}
                       {event.joined && <Badge tone="honey">You're going</Badge>}
                     </div>
                     <h2 className="mt-3 text-lg">{event.title}</h2>
