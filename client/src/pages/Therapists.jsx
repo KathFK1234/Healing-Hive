@@ -41,6 +41,13 @@ const Therapists = () => {
 
   // The search box updates the address a moment after typing stops.
   const [search, setSearch] = useState(filters.q);
+  // When the address changes some other way (Back, or a link to a search),
+  // show its search in the box too
+  const [seenQ, setSeenQ] = useState(filters.q);
+  if (filters.q !== seenQ) {
+    setSeenQ(filters.q);
+    if (filters.q !== search.trim()) setSearch(filters.q);
+  }
   useEffect(() => {
     if (search === filters.q) return undefined;
     const timer = setTimeout(() => setFilter('q', search.trim()), 350);
