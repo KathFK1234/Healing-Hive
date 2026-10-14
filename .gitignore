@@ -16,3 +16,6 @@ Thumbs.db
 
 # Local development database (npm run dev)
 server/.data/
+
+# Local working notes: where the project is up to, kept off GitHub
+context.md
