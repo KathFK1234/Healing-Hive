@@ -4,7 +4,7 @@ import { ClipboardCheck, Lightbulb, Users } from 'lucide-react';
 import { api } from '@/lib/api';
 import { DAY_SHORT, formatClock, formatDate, formatMoney } from '@/lib/format';
 import { NUGGET_TYPES, PROFESSIONAL_TYPES } from '@/lib/options';
-import { Avatar, Badge, Button, Card, Chip, EmptyState, Field, FormError, Modal, PageHeader, QueryState, Textarea, useToast } from '@/components/ui';
+import { Avatar, Badge, Button, Card, Chip, EmptyState, Field, FormError, Modal, PageHeader, QueryState, StatTiles, Textarea, useToast } from '@/components/ui';
 import { NuggetForm } from '@/components/NuggetForm';
 import { usePageTitle } from '@/hooks/usePageTitle';
 
@@ -25,17 +25,7 @@ const Admin = () => {
       <PageHeader title="Admin" description="Review applications and content, and keep an eye on how the platform is doing." />
 
       <QueryState query={stats}>
-        {() => (
-          <dl className="mb-12 grid gap-4 sm:grid-cols-2">
-            {tiles.map((tile) => (
-              <Card key={tile.label} className="sm:p-6">
-                <dt className="text-sm font-semibold text-muted-foreground">{tile.label}</dt>
-                <dd className="mt-1 text-3xl font-bold">{tile.value.toLocaleString()}</dd>
-                <dd className="text-xs text-muted-foreground">{tile.note}</dd>
-              </Card>
-            ))}
-          </dl>
-        )}
+        {() => <StatTiles tiles={tiles} />}
       </QueryState>
 
       <div className="mb-6 flex flex-wrap gap-2" role="group" aria-label="Section">

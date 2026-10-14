@@ -4,7 +4,7 @@ import { UserPlus, Users } from 'lucide-react';
 import { api } from '@/lib/api';
 import { formatMoney } from '@/lib/format';
 import { PROFESSIONAL_TYPES } from '@/lib/options';
-import { Avatar, Badge, Button, Card, Chip, EmptyState, Field, FormError, Input, Modal, PageHeader, QueryState, useToast } from '@/components/ui';
+import { Avatar, Badge, Button, Card, Chip, EmptyState, Field, FormError, Input, Modal, PageHeader, QueryState, StatTiles, useToast } from '@/components/ui';
 import { ProfessionalForm } from '@/components/ProfessionalForm';
 import { RatingSummary } from '@/components/Stars';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -65,15 +65,7 @@ const Institution = () => {
               action={<Button onClick={() => { invite.reset(); setInviting(true); }}><UserPlus className="h-5 w-5" aria-hidden="true" /> Invite a professional</Button>}
             />
 
-            <dl className="mb-12 grid gap-4 sm:grid-cols-2">
-              {tiles.map((tile) => (
-                <Card key={tile.label} className="sm:p-6">
-                  <dt className="font-semibold text-muted-foreground">{tile.label}</dt>
-                  <dd className="mt-2 text-3xl font-bold">{typeof tile.value === 'number' ? tile.value.toLocaleString() : tile.value}</dd>
-                  <dd className="mt-1 text-sm text-muted-foreground">{tile.note}</dd>
-                </Card>
-              ))}
-            </dl>
+            <StatTiles tiles={tiles} />
 
             <div className="mb-8 flex gap-2" role="group" aria-label="Section">
               <Chip selected={tab === 'team'} onClick={() => setTab('team')}>Team</Chip>

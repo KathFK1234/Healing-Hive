@@ -35,3 +35,19 @@ export function PageHeader({ title, description, action }) {
     </header>
   );
 }
+
+// One headline number with a label and a short note, for a <dl> of tiles.
+// Two to a row even on a phone, so a dashboard's numbers fit on one screen.
+export function StatTiles({ tiles }) {
+  return (
+    <dl className="mb-12 grid grid-cols-2 gap-3 sm:gap-4">
+      {tiles.map((tile) => (
+        <div key={tile.label} className="flex flex-col rounded-3xl border border-border bg-card p-4 sm:p-6">
+          <dt className="text-sm font-semibold text-muted-foreground">{tile.label}</dt>
+          <dd className="mt-1 text-2xl font-bold sm:text-3xl">{typeof tile.value === 'number' ? tile.value.toLocaleString() : tile.value}</dd>
+          <dd className="mt-1 text-xs text-muted-foreground sm:text-sm">{tile.note}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
