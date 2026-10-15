@@ -7,7 +7,7 @@ import { useAuth } from '@/context/AuthContext';
 import { firstName, formatClock, formatDateTime, greeting, localDay } from '@/lib/format';
 import { moodFor } from '@/lib/moods';
 import { isCurrent, canJoin } from '@/lib/sessions';
-import { Badge, Button, Card } from '@/components/ui';
+import { Badge, Button, Card, Spinner } from '@/components/ui';
 import { MoodCheckIn } from '@/components/MoodCheckIn';
 import { usePageTitle } from '@/hooks/usePageTitle';
 
@@ -97,7 +97,14 @@ const Home = () => {
           <Link to="/sessions" className="font-semibold text-primary hover:underline">All sessions</Link>
         </div>
         <Card>
-          {nextSession ? (
+          {sessions.isPending ? (
+            <Spinner label="Checking your sessions" className="py-2" />
+          ) : sessions.isError ? (
+            <div role="alert" className="flex flex-wrap items-center justify-between gap-5">
+              <p className="text-danger">We couldn't load your sessions.</p>
+              <Button variant="outline" size="sm" onClick={() => sessions.refetch()}>Try again</Button>
+            </div>
+          ) : nextSession ? (
             <div className="flex flex-wrap items-center justify-between gap-5">
               <div>
                 <p className="text-xl font-bold">{formatDateTime(nextSession.scheduledAt)}</p>
