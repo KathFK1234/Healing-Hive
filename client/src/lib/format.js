@@ -53,8 +53,12 @@ export function formatClock(minutes) {
 export const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 export const DAY_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
+// Titles are skipped, so "Dr. Amani Njeri" is greeted as Amani, not "Dr."
+const TITLES = new Set(['dr', 'prof', 'mr', 'mrs', 'ms', 'miss', 'mx', 'rev', 'pastor', 'sr', 'fr']);
+
 export function firstName(fullName = '') {
-  return fullName.trim().split(/\s+/)[0] || 'friend';
+  const words = fullName.trim().split(/\s+/).filter(Boolean);
+  return words.find((word) => !TITLES.has(word.toLowerCase().replace(/\.$/, ''))) || words[0] || 'friend';
 }
 
 export function greeting() {
