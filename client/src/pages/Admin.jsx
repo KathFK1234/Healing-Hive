@@ -180,19 +180,20 @@ function NuggetReview() {
   const [deleting, setDeleting] = useState(null);
 
   const query = useQuery({ queryKey: ['admin', 'nuggets', status], queryFn: () => api.get('/nuggets', { status, limit: 50 }) });
-  const refresh = () => {
-    queryClient.invalidateQueries({ queryKey: ['admin'] });
-    queryClient.invalidateQueries({ queryKey: ['nuggets'] });
-  };
+  const refresh = () => Promise.all([
+    queryClient.invalidateQueries({ queryKey: ['admin'] }),
+    queryClient.invalidateQueries({ queryKey: ['nuggets'] }),
+  ]);
 
   const setNuggetStatus = useMutation({
     mutationFn: ({ nugget, next }) => api.patch(`/nuggets/${nugget._id}`, { status: next }),
-    onSuccess: (_, { next }) => {
-      refresh();
+    onSuccess: async (_, { next }) => {
       toast(next === 'published' ? 'Published' : 'Unpublished');
+      await refresh();
     },
     onError: (error) => toast(error.message, 'error'),
   });
+  const changing = (nugget) => setNuggetStatus.isPending && setNuggetStatus.variables?.nugget._id === nugget._id;
 
   const remove = useMutation({
     mutationFn: (nugget) => api.delete(`/nuggets/${nugget._id}`),
@@ -235,8 +236,8 @@ function NuggetReview() {
                     <div className="flex gap-2">
                       <Button variant="outline" size="sm" onClick={() => { remove.reset(); setDeleting(nugget); }}>Delete</Button>
                       {nugget.status === 'published'
-                        ? <Button variant="outline" size="sm" onClick={() => setNuggetStatus.mutate({ nugget, next: 'draft' })}>Unpublish</Button>
-                        : <Button size="sm" onClick={() => setNuggetStatus.mutate({ nugget, next: 'published' })}>Publish</Button>}
+                        ? <Button variant="outline" size="sm" loading={changing(nugget)} onClick={() => setNuggetStatus.mutate({ nugget, next: 'draft' })}>Unpublish</Button>
+                        : <Button size="sm" loading={changing(nugget)} onClick={() => setNuggetStatus.mutate({ nugget, next: 'published' })}>Publish</Button>}
                     </div>
                   </div>
                   <p className="mt-3 whitespace-pre-line leading-relaxed">{nugget.content}</p>

@@ -27,12 +27,17 @@ const Events = () => {
 
   const join = useMutation({
     mutationFn: (event) => event.joined ? api.delete(`/events/${event._id}/join`) : api.post(`/events/${event._id}/join`),
-    onSuccess: (event) => {
-      refresh();
+    // Waits for the list to reload, so the button keeps its spinner until
+    // it can show the new state instead of flicking back to the old one
+    onSuccess: async (event) => {
       toast(event.joined ? "You're registered" : 'Registration cancelled');
+      await refresh();
     },
     onError,
   });
+
+  // The button pressed shows a spinner and holds until the server answers
+  const joining = (event) => join.isPending && join.variables?._id === event._id;
 
   const remove = useMutation({
     mutationFn: (event) => api.delete(`/events/${event._id}`),
@@ -108,9 +113,9 @@ const Events = () => {
                     <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-border pt-4">
                       {when === 'upcoming' && (
                         !user ? <Button to="/login" state={{ from: location.pathname }} size="sm">Sign in to register</Button>
-                          : event.joined ? <Button variant="outline" size="sm" onClick={() => join.mutate(event)}>Cancel registration</Button>
+                          : event.joined ? <Button variant="outline" size="sm" loading={joining(event)} onClick={() => join.mutate(event)}>Cancel registration</Button>
                             : event.isFull ? <Badge>Fully booked</Badge>
-                              : <Button size="sm" onClick={() => join.mutate(event)}>Register</Button>
+                              : <Button size="sm" loading={joining(event)} onClick={() => join.mutate(event)}>Register</Button>
                       )}
                       {event.joinLink && (
                         <a href={event.joinLink} target="_blank" rel="noopener noreferrer" className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-primary-soft px-3 text-sm font-semibold text-primary hover:bg-primary-soft/70">
