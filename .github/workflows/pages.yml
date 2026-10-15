@@ -1,0 +1,71 @@
+# Tests every push to main, then publishes the web app (client/) to GitHub
+# Pages at https://<owner>.github.io/<repo>/. The API is hosted separately
+# (Railway); its public address comes from the repository variable
+# VITE_API_URL (Settings > Secrets and variables > Actions > Variables).
+name: Test and deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run lint
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+        env:
+          # The test database binary is not needed to build the web app
+          MONGOMS_DISABLE_POSTINSTALL: "1"
+      - name: Build the web app
+        run: npm run build
+        env:
+          BASE_PATH: /${{ github.event.repository.name }}/
+          VITE_API_URL: ${{ vars.VITE_API_URL }}
+      - name: Warn when the API address is not set
+        if: ${{ vars.VITE_API_URL == '' }}
+        run: echo "::warning::VITE_API_URL is not set, so the published app cannot reach the API. Add it as a repository variable and re-run."
+      # Pages has no rewrite rules: 404.html is served for any other path, so
+      # a copy of the app there lets links like /therapists/123 open directly.
+      - run: cp client/dist/index.html client/dist/404.html
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: client/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5
