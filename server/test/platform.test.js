@@ -281,13 +281,28 @@ test("removing a professional cancels their upcoming sessions and tells each cli
     await api.patch(`/api/v1/sessions/${confirmed._id}/status`).set(therapist.auth).send({ status: "confirmed" });
     await api.post("/api/v1/sessions").set(second.auth).send({ professionalId: therapist.profileId, scheduledAt: slotB });
 
+    // a confirmed session that started ten minutes ago is stopped too,
+    // and one that has already ended is left as it was
+    const Session = mongoose.model("Session");
+    const third = await signUp(api);
+    const fourth = await signUp(api);
+    const [slotC, slotD] = (await api.get(`/api/v1/professionals/${therapist.profileId}`)).body.slots;
+    const underWay = (await api.post("/api/v1/sessions").set(third.auth).send({ professionalId: therapist.profileId, scheduledAt: slotC })).body;
+    const ended = (await api.post("/api/v1/sessions").set(fourth.auth).send({ professionalId: therapist.profileId, scheduledAt: slotD })).body;
+    for (const session of [underWay, ended]) await api.patch(`/api/v1/sessions/${session._id}/status`).set(therapist.auth).send({ status: "confirmed" });
+    await Session.updateOne({ _id: underWay._id }, { scheduledAt: new Date(Date.now() - 10 * 60 * 1000) });
+    await Session.updateOne({ _id: ended._id }, { scheduledAt: new Date(Date.now() - 3 * 60 * 60 * 1000) });
+
     const removed = await api.patch(`/api/v1/admin/applications/${therapist.profileId}`).set(admin.auth).send({ status: "rejected", reviewNote: "Licence expired" });
     assert.equal(removed.status, 200);
 
-    for (const client of [first, second]) {
+    for (const client of [first, second, third]) {
         const [session] = (await api.get("/api/v1/sessions/mine").set(client.auth)).body;
         assert.equal(session.status, "cancelled");
         assert.equal(session.meetingUrl, undefined);
         assert.match(lastMailTo(client.user.email).text, /no longer listed/);
     }
+    const [past] = (await api.get("/api/v1/sessions/mine").set(fourth.auth)).body;
+    assert.equal(past.status, "confirmed");
+    assert.doesNotMatch(lastMailTo(fourth.user.email)?.text || "", /no longer listed/);
 });

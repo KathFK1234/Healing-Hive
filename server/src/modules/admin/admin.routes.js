@@ -26,10 +26,17 @@ const listSchema = z.object({
 router.use(authenticate, requireRole("admin"));
 
 // A professional taken out of the directory loses their practice page, so
-// nobody would be left to confirm or hold their upcoming sessions. Cancel
-// them and tell each client, as a cancellation by the professional would.
+// nobody would be left to confirm or hold their upcoming sessions, or one
+// that is under way. Cancel them and tell each client, as a cancellation by
+// the professional would. Sessions that have ended are left as they are.
 async function cancelUpcomingSessions(professional, professionalName) {
-    const sessions = await Session.find({ professional: professional._id, active: true, scheduledAt: { $gte: new Date() } })
+    const now = new Date();
+    const endsAt = { $add: ["$scheduledAt", { $multiply: ["$durationMinutes", 60 * 1000] }] };
+    const sessions = await Session.find({
+        professional: professional._id,
+        active: true,
+        $or: [{ scheduledAt: { $gte: now } }, { status: "confirmed", $expr: { $gt: [endsAt, now] } }],
+    })
         .select("+googleEventId")
         .populate("client", "fullName email");
     for (const session of sessions) {

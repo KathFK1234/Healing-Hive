@@ -152,7 +152,7 @@ function Applications() {
       >
         <p className="mb-4 text-sm text-muted-foreground">
           {removing
-            ? 'They disappear from the directory and lose their practice page. Their upcoming sessions are cancelled and each client is emailed. They can update their application and send it again.'
+            ? 'They disappear from the directory and lose their practice page. Their upcoming sessions, and any under way, are cancelled and each client is emailed. They can update their application and send it again.'
             : 'They will not be listed in the directory, and can update their application and send it again.'}
         </p>
         <Field label={removing ? 'Why are they being removed?' : 'What needs to change?'} hint="The applicant will see this.">
