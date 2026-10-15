@@ -118,9 +118,22 @@ router.patch("/applications/:id", validateId, validate({ body: reviewSchema }), 
     res.json(application);
 });
 
-router.get("/users", async (req, res) => {
-    const users = await User.find().sort({ createdAt: -1 }).limit(50).select("fullName email role createdAt");
-    res.json(users);
+const PEOPLE_PER_PAGE = 50;
+const peopleSchema = z.object({
+    q: z.string().trim().max(80).optional(),
+    page: z.coerce.number().int().min(1).default(1),
+});
+
+// Everyone, newest first, a page at a time; q matches a name or an email.
+router.get("/users", validate({ query: peopleSchema }), async (req, res) => {
+    const { q, page } = req.filters;
+    const pattern = q && new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
+    const filter = pattern ? { $or: [{ fullName: pattern }, { email: pattern }] } : {};
+    const [items, total] = await Promise.all([
+        User.find(filter).sort({ createdAt: -1 }).skip((page - 1) * PEOPLE_PER_PAGE).limit(PEOPLE_PER_PAGE).select("fullName email role createdAt"),
+        User.countDocuments(filter),
+    ]);
+    res.json({ items, total, page, pages: Math.max(1, Math.ceil(total / PEOPLE_PER_PAGE)) });
 });
 
 export default router;

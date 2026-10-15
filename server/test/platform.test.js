@@ -306,3 +306,26 @@ test("removing a professional cancels their upcoming sessions and tells each cli
     assert.equal(past.status, "confirmed");
     assert.doesNotMatch(lastMailTo(fourth.user.email)?.text || "", /no longer listed/);
 });
+
+test("admins can search everyone and page through them", async () => {
+    const admin = await makeAdmin(api);
+    const User = mongoose.model("User");
+    await User.insertMany(Array.from({ length: 55 }, (_, i) => ({ fullName: `Member ${i}`, email: `member${i}@paging.test`, password: "x".repeat(60) })));
+    await User.create({ fullName: "Achieng Otieno", email: "achieng@example.com", password: "x".repeat(60) });
+
+    const first = await api.get("/api/v1/admin/users").set(admin.auth);
+    assert.equal(first.status, 200);
+    assert.equal(first.body.items.length, 50);
+    assert.equal(first.body.items[0].email, "achieng@example.com");
+    assert.equal(first.body.pages, 2);
+    const second = await api.get("/api/v1/admin/users?page=2").set(admin.auth);
+    assert.equal(second.body.items.length, first.body.total - 50);
+
+    const found = await api.get("/api/v1/admin/users?q=ACHIENG").set(admin.auth);
+    assert.deepEqual(found.body.items.map((u) => u.fullName), ["Achieng Otieno"]);
+    const byEmail = await api.get("/api/v1/admin/users?q=member1").set(admin.auth);
+    assert.ok(byEmail.body.items.every((u) => u.email.startsWith("member1")));
+    // the search is text, not a pattern
+    assert.equal((await api.get("/api/v1/admin/users?q=.*").set(admin.auth)).body.total, 0);
+    assert.equal(byEmail.body.items[0].password, undefined);
+});

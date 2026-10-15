@@ -1,10 +1,10 @@
-import { useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ClipboardCheck, Lightbulb, Users } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { ClipboardCheck, Lightbulb, Search, Users } from 'lucide-react';
 import { api } from '@/lib/api';
 import { DAY_SHORT, formatClock, formatDate, formatMoney } from '@/lib/format';
 import { NUGGET_TYPES, PROFESSIONAL_TYPES } from '@/lib/options';
-import { Avatar, Badge, Button, Card, Chip, EmptyState, Field, FormError, Modal, PageHeader, QueryState, StatTiles, Textarea, useToast } from '@/components/ui';
+import { Avatar, Badge, Button, Card, Chip, EmptyState, Field, FormError, Input, Modal, PageHeader, QueryState, StatTiles, Textarea, useToast } from '@/components/ui';
 import { NuggetForm } from '@/components/NuggetForm';
 import { usePageTitle } from '@/hooks/usePageTitle';
 
@@ -179,7 +179,8 @@ function NuggetReview() {
   const [writing, setWriting] = useState(false);
   const [deleting, setDeleting] = useState(null);
 
-  const query = useQuery({ queryKey: ['admin', 'nuggets', status], queryFn: () => api.get('/nuggets', { status, limit: 50 }) });
+  const [page, setPage] = useState(1);
+  const query = useQuery({ queryKey: ['admin', 'nuggets', status, page], queryFn: () => api.get('/nuggets', { status, page, limit: 20 }) });
   const refresh = () => Promise.all([
     queryClient.invalidateQueries({ queryKey: ['admin'] }),
     queryClient.invalidateQueries({ queryKey: ['nuggets'] }),
@@ -208,9 +209,9 @@ function NuggetReview() {
     <>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
         <div className="flex gap-2" role="group" aria-label="Nugget status">
-          <Chip selected={status === 'review'} onClick={() => setStatus('review')}>Waiting for review</Chip>
-          <Chip selected={status === 'published'} onClick={() => setStatus('published')}>Published</Chip>
-          <Chip selected={status === 'draft'} onClick={() => setStatus('draft')}>Drafts</Chip>
+          <Chip selected={status === 'review'} onClick={() => { setStatus('review'); setPage(1); }}>Waiting for review</Chip>
+          <Chip selected={status === 'published'} onClick={() => { setStatus('published'); setPage(1); }}>Published</Chip>
+          <Chip selected={status === 'draft'} onClick={() => { setStatus('draft'); setPage(1); }}>Drafts</Chip>
         </div>
         <Button size="sm" onClick={() => setWriting(true)}>Write a nugget</Button>
       </div>
@@ -220,31 +221,34 @@ function NuggetReview() {
         {(data) => data.items.length === 0 ? (
           <EmptyState icon={Lightbulb} title={status === 'review' ? 'Nothing waiting for review' : 'Nothing here'} />
         ) : (
-          <ul className="space-y-5">
-            {data.items.map((nugget) => (
-              <li key={nugget._id}>
-                <Card>
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap gap-1.5">
-                        <Badge tone={NUGGET_TYPES[nugget.type]?.tone}>{NUGGET_TYPES[nugget.type]?.label}</Badge>
-                        <Badge>{nugget.topic}</Badge>
+          <>
+            <ul className="space-y-5">
+              {data.items.map((nugget) => (
+                <li key={nugget._id}>
+                  <Card>
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap gap-1.5">
+                          <Badge tone={NUGGET_TYPES[nugget.type]?.tone}>{NUGGET_TYPES[nugget.type]?.label}</Badge>
+                          <Badge>{nugget.topic}</Badge>
+                        </div>
+                        <h2 className="mt-2 text-base">{nugget.title}</h2>
+                        <p className="text-sm text-muted-foreground">by {nugget.author?.fullName || 'Healing Hive'} · {formatDate(nugget.createdAt)}</p>
                       </div>
-                      <h2 className="mt-2 text-base">{nugget.title}</h2>
-                      <p className="text-sm text-muted-foreground">by {nugget.author?.fullName || 'Healing Hive'} · {formatDate(nugget.createdAt)}</p>
+                      <div className="flex gap-2">
+                        <Button variant="outline" size="sm" onClick={() => { remove.reset(); setDeleting(nugget); }}>Delete</Button>
+                        {nugget.status === 'published'
+                          ? <Button variant="outline" size="sm" loading={changing(nugget)} onClick={() => setNuggetStatus.mutate({ nugget, next: 'draft' })}>Unpublish</Button>
+                          : <Button size="sm" loading={changing(nugget)} onClick={() => setNuggetStatus.mutate({ nugget, next: 'published' })}>Publish</Button>}
+                      </div>
                     </div>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm" onClick={() => { remove.reset(); setDeleting(nugget); }}>Delete</Button>
-                      {nugget.status === 'published'
-                        ? <Button variant="outline" size="sm" loading={changing(nugget)} onClick={() => setNuggetStatus.mutate({ nugget, next: 'draft' })}>Unpublish</Button>
-                        : <Button size="sm" loading={changing(nugget)} onClick={() => setNuggetStatus.mutate({ nugget, next: 'published' })}>Publish</Button>}
-                    </div>
-                  </div>
-                  <p className="mt-3 whitespace-pre-line leading-relaxed">{nugget.content}</p>
-                </Card>
-              </li>
-            ))}
-          </ul>
+                    <p className="mt-3 whitespace-pre-line leading-relaxed">{nugget.content}</p>
+                  </Card>
+                </li>
+              ))}
+            </ul>
+            <Pager page={page} pages={data.pages} onChange={setPage} />
+          </>
         )}
       </QueryState>
 
@@ -267,35 +271,80 @@ function NuggetReview() {
 }
 
 function People() {
-  const query = useQuery({ queryKey: ['admin', 'users'], queryFn: () => api.get('/admin/users') });
+  const [search, setSearch] = useState('');
+  const [q, setQ] = useState('');
+  const [page, setPage] = useState(1);
+  // Search once typing pauses, not on every keystroke
+  useEffect(() => {
+    const timer = setTimeout(() => { setQ(search.trim()); setPage(1); }, 300);
+    return () => clearTimeout(timer);
+  }, [search]);
+  const query = useQuery({
+    queryKey: ['admin', 'users', q, page],
+    queryFn: () => api.get('/admin/users', { q: q || undefined, page }),
+    placeholderData: keepPreviousData,
+  });
+
   return (
-    <QueryState query={query}>
-      {(users) => users.length === 0 ? <EmptyState icon={Users} title="Nobody has signed up yet" /> : (
-        <Card className="overflow-x-auto p-0">
-          <table className="w-full text-left text-sm">
-            <caption className="sr-only">The 50 most recent sign-ups</caption>
-            <thead className="border-b border-border text-muted-foreground">
-              <tr>
-                <th scope="col" className="px-4 py-3 font-semibold">Name</th>
-                <th scope="col" className="px-4 py-3 font-semibold">Email</th>
-                <th scope="col" className="px-4 py-3 font-semibold">Account</th>
-                <th scope="col" className="px-4 py-3 font-semibold">Joined</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {users.map((person) => (
-                <tr key={person._id}>
-                  <td className="whitespace-nowrap px-4 py-3 font-semibold">{person.fullName}</td>
-                  <td className="px-4 py-3">{person.email}</td>
-                  <td className="px-4 py-3"><Badge tone={person.role === 'user' ? 'neutral' : 'primary'} className="capitalize">{person.role}</Badge></td>
-                  <td className="whitespace-nowrap px-4 py-3 text-muted-foreground">{formatDate(person.createdAt)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </Card>
-      )}
-    </QueryState>
+    <>
+      <div className="relative mb-4">
+        <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+        <Input
+          type="search"
+          aria-label="Search people by name or email"
+          placeholder="Search by name or email"
+          className="pl-11"
+          maxLength={80}
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+        />
+      </div>
+      <QueryState query={query}>
+        {({ items: users, total, pages }) => users.length === 0 ? (
+          <EmptyState icon={Users} title={q ? 'Nobody matches that search' : 'Nobody has signed up yet'} />
+        ) : (
+          <>
+            <p className="mb-3 text-sm text-muted-foreground">{total} {total === 1 ? 'person' : 'people'}{q ? ' found' : ''}, newest first</p>
+            <Card className="overflow-x-auto p-0">
+              <table className="w-full text-left text-sm">
+                <caption className="sr-only">People who have signed up, newest first</caption>
+                <thead className="border-b border-border text-muted-foreground">
+                  <tr>
+                    <th scope="col" className="px-4 py-3 font-semibold">Name</th>
+                    <th scope="col" className="px-4 py-3 font-semibold">Email</th>
+                    <th scope="col" className="px-4 py-3 font-semibold">Account</th>
+                    <th scope="col" className="px-4 py-3 font-semibold">Joined</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {users.map((person) => (
+                    <tr key={person._id}>
+                      <td className="whitespace-nowrap px-4 py-3 font-semibold">{person.fullName}</td>
+                      <td className="px-4 py-3">{person.email}</td>
+                      <td className="px-4 py-3"><Badge tone={person.role === 'user' ? 'neutral' : 'primary'} className="capitalize">{person.role}</Badge></td>
+                      <td className="whitespace-nowrap px-4 py-3 text-muted-foreground">{formatDate(person.createdAt)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </Card>
+            <Pager page={page} pages={pages} onChange={setPage} />
+          </>
+        )}
+      </QueryState>
+    </>
+  );
+}
+
+// Previous / Next under a list that comes a page at a time
+function Pager({ page, pages, onChange }) {
+  if (pages <= 1) return null;
+  return (
+    <div className="mt-6 flex items-center justify-center gap-3">
+      <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => onChange(page - 1)}>Previous</Button>
+      <span className="text-sm text-muted-foreground">Page {page} of {pages}</span>
+      <Button variant="outline" size="sm" disabled={page >= pages} onClick={() => onChange(page + 1)}>Next</Button>
+    </div>
   );
 }
 
