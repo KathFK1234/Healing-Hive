@@ -1,0 +1,14 @@
+{
+  "$schema": "https://railway.com/railway.schema.json",
+  "build": {
+    "buildCommand": "echo 'API only: the web app is published to GitHub Pages'"
+  },
+  "deploy": {
+    "preDeployCommand": ["npm run seed -w server"],
+    "startCommand": "npm start -w server",
+    "healthcheckPath": "/api/v1/health",
+    "healthcheckTimeout": 60,
+    "restartPolicyType": "ON_FAILURE",
+    "restartPolicyMaxRetries": 5
+  }
+}

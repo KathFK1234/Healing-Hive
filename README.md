@@ -67,6 +67,21 @@ Everything below is optional locally. Each setting is explained in [`server/.env
 
 Not to build and test: everything above runs on your own machine, including Google sign-in (Google allows `localhost` redirect addresses). You need a deployed copy when other people have to reach it: real users, a professional connecting their calendar from their own device, or Safaricom's M-Pesa servers calling back with payment results.
 
+### How it is deployed
+
+The web app and the API are hosted separately:
+
+- **Web app: GitHub Pages**, at `https://<owner>.github.io/Healing-Hive/`. `.github/workflows/pages.yml` runs the tests and lint on every push to `main`, then builds `client/` with `BASE_PATH=/Healing-Hive/` and publishes it. Pages has no rewrite rules, so the workflow copies `index.html` to `404.html` and links such as `/therapists/123` still open the app.
+- **API: Railway**, from this repository. `railway.json` starts only the API (`npm start -w server`), checks `/api/v1/health`, and runs `npm run seed -w server` before each deploy (starter nuggets and the admin account; it skips anything already there).
+
+Setting it up once:
+
+1. **Database.** Create a MongoDB database (MongoDB Atlas, or Railway's MongoDB) and copy its connection string.
+2. **Railway.** New project > Deploy from GitHub repo > `Healing-Hive`. Under Settings > Networking, generate a domain. Under Variables, set:
+   `NODE_ENV=production`, `MONGO_URI`, `JWT_SECRET` (48 random bytes, see `.env.example`), `CLIENT_ORIGIN=https://<owner>.github.io`, `CLIENT_URL=https://<owner>.github.io/Healing-Hive`, `API_URL=https://<your Railway domain>`, `MONGOMS_DISABLE_POSTINSTALL=1` (skips downloading the test database), the SMTP settings, and optionally `ANTHROPIC_API_KEY`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `ADMIN_EMAIL` and `ADMIN_PASSWORD` (remove the password once the admin exists). Railway sets `PORT` itself.
+3. **GitHub.** Settings > Pages > Source: GitHub Actions. Settings > Secrets and variables > Actions > Variables: add `VITE_API_URL=https://<your Railway domain>`. Re-run the workflow (Actions > Test and deploy to GitHub Pages > Run workflow).
+4. If Google Calendar is used, add `https://<your Railway domain>/api/v1/google/callback` as an authorised redirect URI in Google Cloud.
+
 ## How it's organised
 
 ```text
@@ -115,7 +130,7 @@ To add a feature: create a folder in `server/src/modules/`, mount its routes in 
 - Google Calendar uses "sensitive" permissions. While the Google Cloud project is in testing, only the test users you list can connect; opening it to all professionals needs Google's verification.
 - Have a qualified clinician review the AI companion's instructions in `server/src/modules/ai/ai.service.js` and the crisis wording.
 - After `npm run seed` has created the admin account, sign in, change its password from Settings, and remove `ADMIN_PASSWORD` from the host's settings. It is only read by the seed.
-- Generate a fresh `JWT_SECRET` for production, and set `NODE_ENV=production` and `CLIENT_ORIGIN` to the real web address.
+- Generate a fresh `JWT_SECRET` for production, and set `NODE_ENV=production`, `CLIENT_ORIGIN` and `CLIENT_URL` to the real web address (see "How it is deployed").
 - Do not run `npm run seed -- --demo` against the production database: the sample accounts share a public password and would appear in the directory. (It refuses unless the database is on your own machine, and when `NODE_ENV=production`.)
 
 ## Contributors
