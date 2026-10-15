@@ -17,8 +17,10 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # Pinned: ubuntu-latest moves to Ubuntu 26 from 2026-10-19, and the tests'
+  # MongoDB download (mongodb-memory-server) is published per Ubuntu release.
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -31,7 +33,7 @@ jobs:
 
   build:
     needs: test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -59,7 +61,7 @@ jobs:
 
   deploy:
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       pages: write
       id-token: write
