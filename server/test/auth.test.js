@@ -153,3 +153,14 @@ test("signing in with an unknown email takes as long as a wrong password", async
     const unknown = await time("nobody-else@example.com");
     assert.ok(unknown > wrong / 3, `unknown email answered in ${unknown}ms, wrong password in ${wrong}ms`);
 });
+
+test("a broken reset link and a blank title get plain-language messages", async () => {
+    const broken = await api.post("/api/v1/auth/reset-password").send({ token: "cut-off", newPassword: "brand-new-pass-1" });
+    assert.equal(broken.status, 400);
+    assert.match(broken.body.error.message, /reset link is incomplete/);
+
+    const { auth } = await signUp(api);
+    const name = await api.patch("/api/v1/auth/me").set(auth).send({ fullName: " a " });
+    assert.equal(name.status, 400);
+    assert.equal(name.body.error.message, "Enter your name");
+});

@@ -8,8 +8,8 @@ import { NUGGET_STATUSES, NUGGET_TOPICS, NUGGET_TYPES } from "./nugget.model.js"
 const router = express.Router();
 
 const nuggetSchema = z.object({
-    title: z.string().trim().min(3).max(120),
-    content: z.string().trim().min(10).max(3000),
+    title: z.string().trim().min(3, "Give the nugget a title of at least 3 letters").max(120),
+    content: z.string().trim().min(10, "Write at least a sentence (10 characters)").max(3000),
     topic: z.enum(NUGGET_TOPICS),
     // no defaults here: the model supplies them, and updates must not reset fields
     type: z.enum(NUGGET_TYPES).optional(),

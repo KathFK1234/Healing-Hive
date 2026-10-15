@@ -7,7 +7,7 @@ import { validate, validateId, webLink } from "../../middleware/validate.js";
 const router = express.Router();
 
 const eventSchema = z.object({
-    title: z.string().trim().min(3).max(120),
+    title: z.string().trim().min(3, "Give the event a title of at least 3 letters").max(120),
     description: z.string().trim().max(2000).optional(),
     speaker: z.string().trim().max(80).optional(),
     eventDate: z.coerce.date(),

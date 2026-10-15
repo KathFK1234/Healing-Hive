@@ -70,7 +70,8 @@ const registerProfessionalSchema = registerSchema.extend({
 const forgotSchema = z.object({ email });
 
 const resetSchema = z.object({
-    token: z.string().min(20).max(200),
+    // Same answer as an expired link: a broken or cut-off link cannot be used either
+    token: z.string().min(20, "This reset link is incomplete. Open the link from your email again, or ask for a new one").max(200, "This reset link is not valid. Please ask for a new one"),
     newPassword: password,
 });
 
@@ -80,7 +81,7 @@ const loginSchema = z.object({
 });
 
 const profileSchema = z.object({
-    fullName: z.string().trim().min(2).max(80).optional(),
+    fullName: z.string().trim().min(2, "Enter your name").max(80).optional(),
     phone: phone.or(z.literal("")).optional(),
     preferredLanguage: z.string().trim().max(40).optional(),
 });

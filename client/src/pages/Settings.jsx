@@ -42,7 +42,7 @@ const SettingsPage = () => {
         <form className="mt-4 space-y-4" onSubmit={(event) => { event.preventDefault(); saveProfile.mutate(); }}>
           <FormError error={saveProfile.error} />
           <Field label="Name">
-            {(field) => <Input {...field} required autoComplete="name" value={profile.fullName} onChange={(event) => setProfile({ ...profile, fullName: event.target.value })} />}
+            {(field) => <Input {...field} required minLength={2} maxLength={80} autoComplete="name" value={profile.fullName} onChange={(event) => setProfile({ ...profile, fullName: event.target.value })} />}
           </Field>
           <Field label="Email" hint="Your email can't be changed here yet.">
             {(field) => <Input {...field} type="email" value={user.email} disabled readOnly />}
