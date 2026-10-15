@@ -63,14 +63,17 @@ export function Modal({ open, onClose, title, children, footer, dirty = false })
             </button>
           </div>
           <div className="overflow-y-auto px-6 py-4">{children}</div>
+          {/* Distinct keys, so React never turns a confirm button into a footer
+              button in place: the browser would then run the click's default
+              action on it, and "Keep editing" would submit the form. */}
           {confirming && dirty ? (
-            <div role="alert" className="flex flex-wrap items-center justify-end gap-2 border-t border-border px-6 pb-6 pt-4">
+            <div key="confirm" role="alert" className="flex flex-wrap items-center justify-end gap-2 border-t border-border px-6 pb-6 pt-4">
               <p className="mr-auto font-semibold">Discard what you wrote?</p>
               <Button variant="outline" onClick={() => setConfirming(false)}>Keep editing</Button>
               <Button variant="danger" onClick={onClose}>Discard</Button>
             </div>
           ) : (
-            footer && <div className="flex flex-wrap justify-end gap-2 px-6 pb-6 pt-2">{footer}</div>
+            footer && <div key="footer" className="flex flex-wrap justify-end gap-2 px-6 pb-6 pt-2">{footer}</div>
           )}
         </div>
       )}
