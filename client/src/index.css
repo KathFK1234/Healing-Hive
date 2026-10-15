@@ -63,6 +63,13 @@
     @apply bg-background text-foreground font-sans antialiased leading-relaxed;
   }
 
+  /* Browsers give a fieldset the width of its content by default, so a
+     sideways-scrolling row inside one (the booking days) widened the whole
+     page on phones */
+  fieldset {
+    min-width: 0;
+  }
+
   h1, h2, h3, h4 {
     @apply font-bold tracking-tight leading-snug;
     text-wrap: balance;
