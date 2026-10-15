@@ -31,7 +31,7 @@ export function AuthProvider({ children }) {
   // starts fresh instead of being sent to wherever the last person was.
   const signOut = useCallback(() => {
     tokenStore.set(null);
-    window.location.assign('/');
+    window.location.assign(import.meta.env.BASE_URL);
   }, []);
 
   // api.js fires this when the server says the session is no longer valid.

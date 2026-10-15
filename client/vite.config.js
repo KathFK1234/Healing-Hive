@@ -36,6 +36,9 @@ function contentSecurityPolicy(apiUrl) {
 }
 
 export default defineConfig(({ mode }) => ({
+  // Where the app is served from. '/' locally; the GitHub Pages build sets
+  // BASE_PATH=/Healing-Hive/ because Pages serves the repo under that path.
+  base: process.env.BASE_PATH || '/',
   plugins: [react(), contentSecurityPolicy(loadEnv(mode, import.meta.dirname, 'VITE_').VITE_API_URL)],
   resolve: {
     alias: {
