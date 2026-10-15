@@ -13,7 +13,7 @@ This is the second version of the [MindConnect](https://github.com/derick-machar
 | People looking for support | Directory of verified therapists and peer counsellors, booking, video sessions, ratings, daily mood check-ins, private journal, AI companion, nuggets, reminders, events |
 | Therapists and peer counsellors | Their own sign-up and verification, public profile, weekly hours, Google Calendar and Meet, accepting requests, private session notes, writing nuggets, hosting events |
 | Institutions | Their own sign-up, inviting verified professionals, a dashboard of sessions, ratings and value per team member |
-| Admins | Reviewing applications, reviewing and publishing nuggets, platform numbers |
+| Admins | Reviewing applications, reviewing and publishing nuggets, finding anyone who has signed up, platform numbers |
 
 A **Get help now** button with Kenyan crisis lines is on every page.
 
