@@ -137,3 +137,20 @@ test("a client cannot cancel a session once it has started, but the professional
     const byProfessional = await api.patch(`/api/v1/sessions/${session._id}/status`).set(therapist.auth).send({ status: "cancelled" });
     assert.equal(byProfessional.status, 200);
 });
+
+test("a request whose time has passed cannot be confirmed, only declined", async () => {
+    const mongoose = (await import("mongoose")).default;
+    const admin = await makeAdmin(api);
+    const therapist = await makeProfessional(api, admin);
+    const client = await signUp(api);
+    const [slot] = (await api.get(`/api/v1/professionals/${therapist.profileId}`)).body.slots;
+    const session = (await api.post("/api/v1/sessions").set(client.auth).send({ professionalId: therapist.profileId, scheduledAt: slot })).body;
+    await mongoose.model("Session").updateOne({ _id: session._id }, { scheduledAt: new Date(Date.now() - 10 * 60 * 1000) });
+
+    const late = await api.patch(`/api/v1/sessions/${session._id}/status`).set(therapist.auth).send({ status: "confirmed" });
+    assert.equal(late.status, 400);
+    assert.match(late.body.error.message, /time has passed/);
+
+    const declined = await api.patch(`/api/v1/sessions/${session._id}/status`).set(therapist.auth).send({ status: "cancelled" });
+    assert.equal(declined.status, 200);
+});

@@ -120,6 +120,11 @@ async function updateStatus(req, res) {
     if (req.body.status === "cancelled" && as === "client" && session.scheduledAt <= new Date()) {
         throw ApiError.badRequest("This session has already started, so it can't be cancelled");
     }
+    // A request nobody answered in time reads "Not confirmed in time" to the
+    // client; confirming it now would send a join link for a time that has gone.
+    if (req.body.status === "confirmed" && session.scheduledAt <= new Date()) {
+        throw ApiError.badRequest("This request's time has passed, so it can't be confirmed. You can still decline it");
+    }
     if (req.body.status === "completed" && session.scheduledAt > new Date()) {
         throw ApiError.badRequest("A session cannot be completed before it has started");
     }
