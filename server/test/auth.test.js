@@ -139,3 +139,17 @@ test("new passwords are limited to what bcrypt actually reads", async () => {
     // 30 characters, but 90 bytes
     assert.equal((await register("€".repeat(30))).status, 400);
 });
+
+test("signing in with an unknown email takes as long as a wrong password", async () => {
+    const { user } = await signUp(api);
+    const time = async (email) => {
+        const started = process.hrtime.bigint();
+        const res = await api.post("/api/v1/auth/login").send({ email, password: "wrong-password-123" });
+        assert.equal(res.status, 401);
+        return Number(process.hrtime.bigint() - started) / 1e6;
+    };
+    await time("nobody@example.com"); // the first call also waits for the dummy hash
+    const wrong = await time(user.email);
+    const unknown = await time("nobody-else@example.com");
+    assert.ok(unknown > wrong / 3, `unknown email answered in ${unknown}ms, wrong password in ${wrong}ms`);
+});

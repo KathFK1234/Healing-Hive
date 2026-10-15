@@ -45,13 +45,18 @@ async function registerProfessional(req, res) {
     res.status(201).json({ token: signToken(user), user });
 }
 
+// Checked against when the email has no account, so that answer takes as
+// long as a wrong password does. Made once, when the server starts.
+const unknownUserHash = bcrypt.hash(crypto.randomBytes(16).toString("hex"), 12);
+
 async function login(req, res) {
     const { email, password } = req.body;
 
     const user = await User.findOne({ email }).select("+password");
-    // Same answer whether the email or the password is wrong, so the form
-    // cannot be used to find out who has an account.
-    const isMatch = user ? await bcrypt.compare(password, user.password) : false;
+    // Same answer, after the same bcrypt work, whether the email or the
+    // password is wrong, so the form cannot be used to find out who has an
+    // account.
+    const isMatch = await bcrypt.compare(password, user ? user.password : await unknownUserHash) && !!user;
     if (!isMatch) throw ApiError.unauthorized("Incorrect email or password");
 
     res.json({ token: signToken(user), user });
