@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import classNames from 'classnames';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Bell, Pencil, Plus, Trash2 } from 'lucide-react';
 import { api } from '@/lib/api';
@@ -91,28 +92,32 @@ const Reminders = () => {
           <ul className="space-y-3">
             {reminders.map((reminder) => (
               <li key={reminder._id}>
-                <Card className="flex items-center gap-4">
-                  <div className={reminder.enabled ? 'min-w-0 flex-1' : 'min-w-0 flex-1 opacity-60'}>
-                    <p className="text-lg font-bold">{formatClock(reminder.time)}</p>
-                    <p className="truncate">{reminder.message}</p>
+                {/* The time shares a row with the controls, so the message has
+                    the card's full width to wrap in on a phone */}
+                <Card>
+                  <div className="flex items-center gap-2">
+                    <p className={classNames('min-w-0 flex-1 text-lg font-bold', !reminder.enabled && 'opacity-60')}>{formatClock(reminder.time)}</p>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={reminder.enabled}
+                      aria-label={`${reminder.message}: ${reminder.enabled ? 'on' : 'off'}`}
+                      onClick={() => toggle.mutate(reminder)}
+                      className={`relative mr-2 h-7 w-12 shrink-0 rounded-full transition-colors ${reminder.enabled ? 'bg-primary' : 'bg-border'}`}
+                    >
+                      <span className={`absolute top-1 h-5 w-5 rounded-full bg-white transition-all ${reminder.enabled ? 'left-6' : 'left-1'}`} />
+                    </button>
+                    <button type="button" onClick={() => openEdit(reminder)} aria-label={`Edit reminder: ${reminder.message}`} className="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground">
+                      <Pencil className="h-4 w-4" aria-hidden="true" />
+                    </button>
+                    <button type="button" onClick={() => { remove.reset(); setDeleting(reminder); }} aria-label={`Delete reminder: ${reminder.message}`} className="-mr-2 rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-danger">
+                      <Trash2 className="h-4 w-4" aria-hidden="true" />
+                    </button>
+                  </div>
+                  <div className={classNames('mt-1', !reminder.enabled && 'opacity-60')}>
+                    <p className="break-words">{reminder.message}</p>
                     <p className="text-sm text-muted-foreground">{describeDays(reminder.days)}</p>
                   </div>
-                  <button
-                    type="button"
-                    role="switch"
-                    aria-checked={reminder.enabled}
-                    aria-label={`${reminder.message}: ${reminder.enabled ? 'on' : 'off'}`}
-                    onClick={() => toggle.mutate(reminder)}
-                    className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${reminder.enabled ? 'bg-primary' : 'bg-border'}`}
-                  >
-                    <span className={`absolute top-1 h-5 w-5 rounded-full bg-white transition-all ${reminder.enabled ? 'left-6' : 'left-1'}`} />
-                  </button>
-                  <button type="button" onClick={() => openEdit(reminder)} aria-label={`Edit reminder: ${reminder.message}`} className="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground">
-                    <Pencil className="h-4 w-4" aria-hidden="true" />
-                  </button>
-                  <button type="button" onClick={() => { remove.reset(); setDeleting(reminder); }} aria-label={`Delete reminder: ${reminder.message}`} className="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-danger">
-                    <Trash2 className="h-4 w-4" aria-hidden="true" />
-                  </button>
                 </Card>
               </li>
             ))}

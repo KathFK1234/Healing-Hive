@@ -127,9 +127,9 @@ const Home = () => {
           </div>
           <Card className="divide-y divide-border py-2 sm:py-2">
             {todaysReminders.map((reminder) => (
-              <p key={reminder._id} className="flex items-center gap-4 py-4">
+              <p key={reminder._id} className="flex items-baseline gap-4 py-4">
                 <span className="w-20 shrink-0 font-bold text-primary">{formatClock(reminder.time)}</span>
-                <span className="truncate">{reminder.message}</span>
+                <span className="min-w-0 break-words">{reminder.message}</span>
               </p>
             ))}
           </Card>
