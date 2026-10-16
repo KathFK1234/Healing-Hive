@@ -23,6 +23,10 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
+        with:
+          # Nothing here pushes, so the token is not left in .git/config
+          # for npm install scripts to find.
+          persist-credentials: false
       - uses: actions/setup-node@v7
         with:
           node-version: 22
@@ -36,6 +40,10 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
+        with:
+          # Nothing here pushes, so the token is not left in .git/config
+          # for npm install scripts to find.
+          persist-credentials: false
       - uses: actions/setup-node@v7
         with:
           node-version: 22
