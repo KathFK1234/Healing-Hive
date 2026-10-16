@@ -64,7 +64,7 @@ export function ErrorState({ error, onRetry }) {
   return (
     <div role="alert" className="rounded-3xl bg-danger-soft px-6 py-12 text-center">
       <CircleAlert className="mx-auto mb-3 h-8 w-8 text-danger" aria-hidden="true" />
-      <p className="font-bold text-danger">{error?.message || 'Something went wrong'}</p>
+      <p className="font-bold text-danger">{error?.message || "This couldn't load. Please try again"}</p>
       {onRetry && <Button variant="outline" size="sm" className="mt-4" onClick={onRetry}>Try again</Button>}
     </div>
   );

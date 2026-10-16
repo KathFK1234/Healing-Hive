@@ -42,28 +42,39 @@ async function request(method, path, body) {
       },
       body: body !== undefined ? JSON.stringify(body) : undefined,
     });
-  } catch {
-    throw new ApiError(0, 'NETWORK', 'We could not reach Healing Hive. Check your connection and try again');
+  } catch (error) {
+    // The browser hides why (offline, server unreachable, or refused by CORS),
+    // but it does know when the device itself is offline.
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+      throw new ApiError(0, 'OFFLINE', "You're offline. Check your internet connection and try again");
+    }
+    console.error(`Healing Hive API: ${method} ${BASE_URL}${path} could not be reached`, error);
+    throw new ApiError(0, 'NETWORK', "We couldn't reach the Healing Hive server. If your internet is working, the server may be down: please try again in a few minutes");
   }
 
   const data = await response.json().catch(() => null);
   if (response.ok) return data;
 
-  // A gateway error with no body means the web app is up but the API behind it
-  // is not (in development: the server isn't running).
-  if (!data && response.status >= 502 && response.status <= 504) {
-    throw new ApiError(response.status, 'SERVER_DOWN', "We can't reach the Healing Hive server right now. Please try again in a moment");
+  // Every error the API sends has { error: { code, message } }. Anything else
+  // came from something in front of it: the host while the API is down or
+  // restarting, or a server that is not the API at all because the app was
+  // built with the wrong address (VITE_API_URL). Say which, and leave the
+  // details in the console for whoever runs the site.
+  if (!data?.error?.message) {
+    console.error(`Healing Hive API: ${method} ${BASE_URL}${path} answered ${response.status} without an API error`, data);
+    if (response.status >= 500) {
+      throw new ApiError(response.status, 'SERVER_DOWN', "The Healing Hive server isn't responding right now, so this couldn't load. Please try again in a few minutes");
+    }
+    if (response.status === 429) {
+      throw new ApiError(429, 'TOO_MANY_REQUESTS', 'Too many requests in a short time. Please wait a minute and try again');
+    }
+    throw new ApiError(response.status, 'NOT_CONNECTED', "This app couldn't find the Healing Hive server, so this couldn't load. Please try again later");
   }
 
   // An expired or invalid session: tell the auth context so it can sign out.
   if (response.status === 401 && token) window.dispatchEvent(new Event('hh:signed-out'));
 
-  throw new ApiError(
-    response.status,
-    data?.error?.code || 'ERROR',
-    data?.error?.message || 'Something went wrong. Please try again',
-    data?.error?.details,
-  );
+  throw new ApiError(response.status, data.error.code || 'ERROR', data.error.message, data.error.details);
 }
 
 function withQuery(path, params) {
