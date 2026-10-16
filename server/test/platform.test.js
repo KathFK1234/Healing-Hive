@@ -329,3 +329,9 @@ test("admins can search everyone and page through them", async () => {
     assert.equal((await api.get("/api/v1/admin/users?q=.*").set(admin.auth)).body.total, 0);
     assert.equal(byEmail.body.items[0].password, undefined);
 });
+
+test("the Google callback says when Google Calendar is not set up on this server", async () => {
+    const res = await api.get("/api/v1/google/callback?code=abc&state=anything");
+    assert.equal(res.status, 302);
+    assert.equal(new URL(res.headers.location).searchParams.get("calendar"), "unavailable");
+});

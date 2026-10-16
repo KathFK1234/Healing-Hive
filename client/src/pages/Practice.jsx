@@ -13,8 +13,12 @@ import { JoinButton, SessionActions, SessionCard } from './Sessions';
 
 const calendarMessages = {
   connected: ['Google Calendar connected', 'success'],
-  cancelled: ['Google Calendar was not connected', 'error'],
-  failed: ['We could not connect Google Calendar. Please try again', 'error'],
+  cancelled: ['Google Calendar was not connected, because the Google sign-in was cancelled', 'error'],
+  unavailable: ["Google Calendar isn't set up on this server yet, so it can't be connected", 'error'],
+  expired: ['The Google sign-in took more than 10 minutes or was used twice. Please connect again', 'error'],
+  'not-approved': ['Only an approved professional can connect a calendar. Your application is still being reviewed', 'error'],
+  refused: ['Google did not accept the connection. Please connect again, and allow calendar access when Google asks', 'error'],
+  failed: ['Google Calendar was connected, but saving it failed on our side. Please try again', 'error'],
 };
 
 const Practice = () => {

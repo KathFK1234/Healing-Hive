@@ -27,16 +27,31 @@ router.get("/connect", authenticate, requireRole("therapist", "peer"), async (re
 // Step 2: Google sends the professional's browser back here. This is a page
 // navigation, not an API call, so it always ends in a redirect to the web app.
 router.get("/callback", async (req, res) => {
+    // Each result has its own message on My practice, so the professional
+    // learns what went wrong and what to do about it.
     const back = (result) => res.redirect(`${env.clientUrl}/practice?calendar=${result}`);
-    if (!env.googleEnabled || req.query.error || !req.query.code || !req.query.state) return back("cancelled");
+    if (!env.googleEnabled) return back("unavailable");
+    if (req.query.error || !req.query.code || !req.query.state) return back("cancelled");
+
+    let userId;
+    try {
+        userId = readState(String(req.query.state));
+    } catch {
+        return back("expired");
+    }
 
     try {
-        const userId = readState(String(req.query.state));
         const professional = await Professional.findOne({ user: userId, status: "approved" });
-        if (!professional) return back("failed");
+        if (!professional) return back("not-approved");
 
-        const { refreshToken, email } = await exchangeCode(String(req.query.code));
-        professional.google = { refreshToken: encrypt(refreshToken), email };
+        let tokens;
+        try {
+            tokens = await exchangeCode(String(req.query.code));
+        } catch (err) {
+            console.error("Google connect failed:", err.message);
+            return back("refused");
+        }
+        professional.google = { refreshToken: encrypt(tokens.refreshToken), email: tokens.email };
         professional.calendarConnected = true;
         await professional.save();
         forget(professional._id);
