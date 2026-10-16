@@ -1,7 +1,8 @@
 import { lazy, Suspense } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Spinner } from '@/components/ui';
 import { Protected, Open, GuestOnly } from '@/components/layout/RouteGuards';
+import { PageErrorBoundary } from '@/components/layout/PageErrorBoundary';
 
 // Each page is loaded when first visited, so the first screen stays small as
 // the app grows.
@@ -43,56 +44,61 @@ const moved = {
   '/therapist': '/practice',
 };
 
-const App = () => (
-  <Suspense fallback={<Spinner className="min-h-screen" />}>
-    <Routes>
-      <Route element={<GuestOnly />}>
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
-        <Route path="/professionals/signup" element={<ProfessionalSignup />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/reset-password" element={<ResetPassword />} />
-      </Route>
+const App = () => {
+  const location = useLocation();
+  return (
+    <PageErrorBoundary resetKey={location.pathname}>
+      <Suspense fallback={<Spinner className="min-h-screen" />}>
+        <Routes>
+          <Route element={<GuestOnly />}>
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
+            <Route path="/professionals/signup" element={<ProfessionalSignup />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+          </Route>
 
-      <Route element={<Open />}>
-        <Route path="/help" element={<Help />} />
-        <Route path="/therapists" element={<Therapists />} />
-        <Route path="/therapists/:id" element={<TherapistProfile />} />
-        <Route path="/nuggets" element={<Nuggets />} />
-        <Route path="/events" element={<Events />} />
-        <Route path="/professionals" element={<ForProfessionals />} />
-      </Route>
+          <Route element={<Open />}>
+            <Route path="/help" element={<Help />} />
+            <Route path="/therapists" element={<Therapists />} />
+            <Route path="/therapists/:id" element={<TherapistProfile />} />
+            <Route path="/nuggets" element={<Nuggets />} />
+            <Route path="/events" element={<Events />} />
+            <Route path="/professionals" element={<ForProfessionals />} />
+          </Route>
 
-      <Route element={<Protected />}>
-        <Route path="/home" element={<Home />} />
-        <Route path="/sessions" element={<Sessions />} />
-        <Route path="/companion" element={<Companion />} />
-        <Route path="/journal" element={<Journal />} />
-        <Route path="/mood" element={<Mood />} />
-        <Route path="/reminders" element={<Reminders />} />
-        <Route path="/settings" element={<SettingsPage />} />
-        <Route path="/apply" element={<Apply />} />
-      </Route>
+          <Route element={<Protected />}>
+            <Route path="/home" element={<Home />} />
+            <Route path="/sessions" element={<Sessions />} />
+            <Route path="/companion" element={<Companion />} />
+            <Route path="/journal" element={<Journal />} />
+            <Route path="/mood" element={<Mood />} />
+            <Route path="/reminders" element={<Reminders />} />
+            <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/apply" element={<Apply />} />
+          </Route>
 
-      <Route element={<Protected roles={['therapist', 'peer']} />}>
-        <Route path="/practice" element={<Practice />} />
-      </Route>
+          <Route element={<Protected roles={['therapist', 'peer']} />}>
+            <Route path="/practice" element={<Practice />} />
+          </Route>
 
-      <Route element={<Protected roles={['institution']} />}>
-        <Route path="/institution" element={<Institution />} />
-      </Route>
+          <Route element={<Protected roles={['institution']} />}>
+            <Route path="/institution" element={<Institution />} />
+          </Route>
 
-      <Route element={<Protected roles={['admin']} />}>
-        <Route path="/admin" element={<Admin />} />
-      </Route>
+          <Route element={<Protected roles={['admin']} />}>
+            <Route path="/admin" element={<Admin />} />
+          </Route>
 
-      {Object.entries(moved).map(([from, to]) => (
-        <Route key={from} path={from} element={<Navigate to={to} replace />} />
-      ))}
-      <Route path="*" element={<NotFound />} />
-    </Routes>
-  </Suspense>
-);
+          {Object.entries(moved).map(([from, to]) => (
+            <Route key={from} path={from} element={<Navigate to={to} replace />} />
+          ))}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </Suspense>
+    </PageErrorBoundary>
+  );
+};
 
 export default App;
