@@ -101,7 +101,7 @@ const Home = () => {
             <Spinner label="Checking your sessions" className="py-2" />
           ) : sessions.isError ? (
             <div role="alert" className="flex flex-wrap items-center justify-between gap-5">
-              <p className="text-danger">We couldn't load your sessions.</p>
+              <p className="text-danger">{sessions.error.message}</p>
               <Button variant="outline" size="sm" onClick={() => sessions.refetch()}>Try again</Button>
             </div>
           ) : nextSession ? (
