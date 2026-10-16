@@ -19,7 +19,7 @@ A **Get help now** button with Kenyan crisis lines is on every page.
 
 ## Getting started
 
-You need Node.js 20 or newer. Nothing else: no database to install, no settings to fill in.
+You need Node.js 22 (22.13 or later). Nothing else: no database to install, no settings to fill in. `package.json` asks for Node 22 so that Railway runs the version CI tests; a newer Node works locally, though npm may warn.
 
 ```bash
 npm install
