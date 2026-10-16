@@ -53,7 +53,13 @@ async function request(method, path, body) {
   }
 
   const data = await response.json().catch(() => null);
-  if (response.ok) return data;
+  if (response.ok) {
+    // The API always answers in JSON (null included). A successful reply that
+    // isn't came from another site, usually a web page at a wrong VITE_API_URL.
+    if ((response.headers.get('content-type') || '').includes('application/json')) return data;
+    console.error(`Healing Hive API: ${method} ${BASE_URL}${path} answered ${response.status} with ${response.headers.get('content-type') || 'no content type'}, not the API's JSON`);
+    throw new ApiError(response.status, 'NOT_CONNECTED', "This app couldn't find the Healing Hive server, so this couldn't load. Please try again later");
+  }
 
   // Every error the API sends has { error: { code, message } }. Anything else
   // came from something in front of it: the host while the API is down or
