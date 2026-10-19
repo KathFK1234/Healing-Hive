@@ -2,8 +2,8 @@
 // first. Last checked against each organisation's published details in
 // October 2026. Kept in the app itself (not fetched) so the help page works
 // even when the server is down. The server has a matching list in
-// server/src/utils/crisis.js: keep the two in step, and re-check the numbers
-// before every release.
+// server/src/utils/crisis.js: keep the two in step (server/test/crisis.test.js
+// checks), and re-check the numbers before every release.
 export const CRISIS_CONTACTS = [
   { name: 'Emergency services', phone: '999', hours: 'Any time', note: 'Police, ambulance and fire. 112 also works from mobile phones.' },
   { name: 'Kenya Red Cross', phone: '1199', hours: 'Any time, free', note: 'Free counselling by phone, day or night.' },
