@@ -215,3 +215,24 @@ test("deleting an event emails each person who registered, but not for a past ev
     assert.equal((await api.delete(`/api/v1/events/${past._id}`).set(admin.auth)).status, 200);
     assert.equal(outbox.length, 0);
 });
+
+test("an admin deleting someone's event tells the host, and an event under way says it ended early", async () => {
+    const admin = await makeAdmin(api);
+    const host = await makeProfessional(api, admin);
+    const guest = await signUp(api);
+    const Event = (await import("../src/modules/events/event.model.js")).default;
+    const running = await Event.create({
+        title: "Morning stretch", eventDate: new Date(Date.now() - 10 * 60000), durationMinutes: 60,
+        host: host.user._id, participants: [guest.user._id, host.user._id],
+    });
+
+    outbox.length = 0;
+    assert.equal((await api.delete(`/api/v1/events/${running._id}`).set(admin.auth)).status, 200);
+    const toGuest = outbox.filter((mail) => mail.to === guest.user.email);
+    const toHost = outbox.filter((mail) => mail.to === host.user.email);
+    assert.equal(toGuest.length, 1);
+    assert.match(toGuest[0].text, /"Morning stretch" on .* has been ended early\./);
+    assert.equal(toHost.length, 1, "the host gets one email, not also the guests' one");
+    assert.equal(toHost[0].subject, "Your Healing Hive event was removed");
+    assert.match(toHost[0].text, /removed by the Healing Hive team\. The people who registered have been told\./);
+});

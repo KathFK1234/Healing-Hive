@@ -81,15 +81,29 @@ async function deleteEvent(req, res) {
 
     await event.deleteOne();
 
-    // Tell everyone who registered, like a cancelled session. One email each,
-    // so nobody learns who else was going.
+    // Tell everyone who registered, like a cancelled session, and the host if
+    // someone else (an admin) removed it. One email each, so nobody learns who
+    // else was going.
     if (endsAt(event) > new Date()) {
+        const started = event.eventDate <= new Date();
+        const removedByOther = event.host && !event.host.equals(req.user._id);
         const people = await User.find({ _id: { $in: event.participants, $ne: req.user._id } }).select("fullName email");
-        await Promise.all(people.map((person) => sendMail({
-            to: person.email,
-            subject: "A Healing Hive event was cancelled",
-            text: `Hello ${person.fullName},\n\n"${event.title}" on ${when(event.eventDate)} has been cancelled, so it will not take place.\n\nOther events are listed here:\n${env.clientUrl}/events`,
-        })));
+        const mails = people
+            .filter((person) => !(removedByOther && person._id.equals(event.host)))
+            .map((person) => ({
+                to: person.email,
+                subject: "A Healing Hive event was cancelled",
+                text: `Hello ${person.fullName},\n\n"${event.title}" on ${when(event.eventDate)} ${started ? "has been ended early" : "has been cancelled"}.\n\nOther events are listed here:\n${env.clientUrl}/events`,
+            }));
+        const host = removedByOther && await User.findById(event.host).select("fullName email");
+        if (host) {
+            mails.push({
+                to: host.email,
+                subject: "Your Healing Hive event was removed",
+                text: `Hello ${host.fullName},\n\nYour event "${event.title}" on ${when(event.eventDate)} was removed by the Healing Hive team.${mails.length ? " The people who registered have been told." : ""}`,
+            });
+        }
+        await Promise.all(mails.map(sendMail));
     }
     res.json({ message: "Deleted" });
 }
