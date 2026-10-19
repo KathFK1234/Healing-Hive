@@ -37,7 +37,7 @@ async function listProfessionals(req, res) {
     if (language) filter.languages = language;
 
     let professionals = await Professional.find(filter)
-        .select("-institution -institutionStatus -meetingLink -reviewNote -calendarConnected")
+        .select("-institution -institutionStatus -meetingLink -reviewNote")
         .populate("user", PUBLIC_USER_FIELDS)
         .lean();
 
@@ -52,11 +52,16 @@ async function listProfessionals(req, res) {
         );
     }
 
-    const taken = await takenTimes(professionals.map((p) => p._id));
-    for (const professional of professionals) {
-        const slots = openSlots(professional, taken.get(professional._id.toString()));
+    // Same rules as the profile page, so "Next free" is a time it offers
+    const [taken, busy] = await Promise.all([
+        takenTimes(professionals.map((p) => p._id)),
+        Promise.all(professionals.map((p) => busyTimes(p))),
+    ]);
+    professionals.forEach((professional, i) => {
+        const slots = openSlots(professional, taken.get(professional._id.toString()), new Date(), busy[i]);
         professional.nextAvailable = slots[0] || null;
-    }
+        delete professional.calendarConnected;
+    });
 
     const sorters = {
         soonest: (a, b) => (a.nextAvailable?.getTime() ?? Infinity) - (b.nextAvailable?.getTime() ?? Infinity),

@@ -5,7 +5,8 @@ import assert from "node:assert/strict";
 process.env.GOOGLE_CLIENT_ID = "test-client-id";
 process.env.GOOGLE_CLIENT_SECRET = "test-client-secret";
 const { start, stop, reset, signUp, makeAdmin, makeProfessional } = await import("./setup.js");
-const { connectUrl } = await import("../src/modules/google/google.service.js");
+const { connectUrl, encrypt } = await import("../src/modules/google/google.service.js");
+const { default: mongoose } = await import("mongoose");
 
 let api;
 before(async () => { api = await start(); });
@@ -29,6 +30,35 @@ test("the Google callback says why a calendar was not connected", async () => {
         const res = await api.get(`/api/v1/google/callback?code=abc&state=${stateFor(professional.user._id)}`);
         assert.equal(res.status, 302);
         assert.equal(result(res), "refused");
+    } finally {
+        globalThis.fetch = realFetch;
+    }
+});
+
+test("the directory's next free time leaves out calendar busy times, like the profile page", async () => {
+    const professional = await makeProfessional(api, await makeAdmin(api));
+    await mongoose.model("Professional").updateOne(
+        { _id: professional.profileId },
+        { calendarConnected: true, google: { refreshToken: encrypt("refresh-token") } },
+    );
+    // Busy in Google for the next three days
+    const busyUntil = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
+    let freeBusyCalls = 0;
+    const realFetch = globalThis.fetch;
+    globalThis.fetch = async (url) => {
+        if (String(url).startsWith("https://oauth2.googleapis.com/token")) {
+            return new Response(JSON.stringify({ access_token: "access", expires_in: 3600 }));
+        }
+        freeBusyCalls++;
+        return new Response(JSON.stringify({ calendars: { primary: { busy: [{ start: new Date().toISOString(), end: busyUntil.toISOString() }] } } }));
+    };
+    try {
+        const listed = (await api.get("/api/v1/professionals")).body.items.find((p) => p._id === professional.profileId);
+        const profile = (await api.get(`/api/v1/professionals/${professional.profileId}`)).body;
+        assert.equal(freeBusyCalls, 1, "the directory asked Google, and the profile page reused it");
+        assert.ok(new Date(listed.nextAvailable) >= busyUntil);
+        assert.equal(listed.nextAvailable, profile.nextAvailable);
+        assert.equal(listed.calendarConnected, undefined);
     } finally {
         globalThis.fetch = realFetch;
     }
