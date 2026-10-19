@@ -154,3 +154,14 @@ test("a request whose time has passed cannot be confirmed, only declined", async
     const declined = await api.patch(`/api/v1/sessions/${session._id}/status`).set(therapist.auth).send({ status: "cancelled" });
     assert.equal(declined.status, 200);
 });
+
+test("directory filters only offer what the directory lists", async () => {
+    const admin = await makeAdmin(api);
+    await makeProfessional(api, admin, { specialties: ["Anxiety"], languages: ["English"] });
+    await makeProfessional(api, admin, { type: "institution", licenseNumber: undefined, organisationName: "A Clinic", specialties: ["Family Therapy"], languages: ["Kikuyu"] });
+
+    const filters = (await api.get("/api/v1/professionals/filters")).body;
+    assert.deepEqual(filters, { specialties: ["Anxiety"], languages: ["English"] });
+    const listed = (await api.get("/api/v1/professionals").query({ specialty: "Family Therapy" })).body;
+    assert.equal(listed.total, 0, "the directory never lists institutions");
+});

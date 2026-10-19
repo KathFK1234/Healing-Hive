@@ -122,11 +122,13 @@ async function getReviews(req, res) {
     res.json(reviews);
 }
 
-// Lists of filter options for the directory, taken from what is actually on offer.
+// Lists of filter options for the directory, taken from what is actually on
+// offer: the same profiles the directory lists, so no option leads nowhere.
 async function getFilters(req, res) {
+    const listed = { status: "approved", type: { $in: ["therapist", "peer"] } };
     const [specialties, languages] = await Promise.all([
-        Professional.distinct("specialties", { status: "approved" }),
-        Professional.distinct("languages", { status: "approved" }),
+        Professional.distinct("specialties", listed),
+        Professional.distinct("languages", listed),
     ]);
     res.json({ specialties: specialties.sort(), languages: languages.sort() });
 }
