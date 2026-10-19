@@ -115,7 +115,7 @@ const Reminders = () => {
                     </button>
                   </div>
                   <div className={classNames('mt-1', !reminder.enabled && 'opacity-60')}>
-                    <p className="break-words">{reminder.message}</p>
+                    <p className="wrap-break-word">{reminder.message}</p>
                     <p className="text-sm text-muted-foreground">{describeDays(reminder.days)}</p>
                   </div>
                 </Card>

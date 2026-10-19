@@ -128,7 +128,7 @@ export function AppLayout({ children }) {
       </aside>
 
       {/* Top bar */}
-      <header className="sticky top-0 z-30 bg-background/95 backdrop-blur">
+      <header className="sticky top-0 z-30 bg-background/95 backdrop-blur-sm">
         <div className="flex h-20 items-center justify-between gap-3 px-5 lg:px-12">
           <div className="lg:hidden"><Logo to={homePath(user)} /></div>
           <div className="ml-auto flex items-center gap-2">

@@ -88,10 +88,10 @@ function Applications() {
                   <div className="flex flex-wrap items-start gap-3">
                     <Avatar name={application.user?.fullName} />
                     {/* Wide enough that the buttons wrap below on a phone instead of squeezing this */}
-                    <div className="min-w-[12rem] flex-1">
+                    <div className="min-w-48 flex-1">
                       <h2 className="text-lg">{application.organisationName || application.user?.fullName}</h2>
                       {application.organisationName && <p className="text-sm">Contact: {application.user?.fullName}</p>}
-                      <p className="break-words text-sm text-muted-foreground">{application.user?.email}{application.user?.phone ? ` · ${application.user.phone}` : ''}</p>
+                      <p className="wrap-break-word text-sm text-muted-foreground">{application.user?.email}{application.user?.phone ? ` · ${application.user.phone}` : ''}</p>
                       <div className="mt-2 flex flex-wrap gap-1.5">
                         <Badge tone="primary">{PROFESSIONAL_TYPES[application.type]}</Badge>
                         {application.title && <Badge>{application.title}</Badge>}

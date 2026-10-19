@@ -1,8 +1,89 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
 
-/* Design tokens. Every colour in the app comes from here (see tailwind.config.cjs).
+/* Tailwind 4 reads its settings from this file (there is no tailwind.config).
+   Colours are CSS variables (the design tokens below), so light and dark mode
+   share one set of class names. Use these names, not raw hex values. */
+
+@custom-variant dark (&:is(.dark *));
+
+@utility container {
+  margin-inline: auto;
+  padding-inline: 1.25rem;
+  @media (width >= --theme(--breakpoint-sm)) {
+    max-width: none;
+  }
+  @media (width >= 1040px) {
+    max-width: 1040px;
+  }
+}
+
+@theme {
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-border: hsl(var(--border));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-primary-soft: hsl(var(--primary-soft));
+  --color-honey: hsl(var(--honey));
+  --color-honey-foreground: hsl(var(--honey-foreground));
+  --color-honey-soft: hsl(var(--honey-soft));
+  --color-calm: hsl(var(--calm));
+  --color-calm-soft: hsl(var(--calm-soft));
+  --color-warmth: hsl(var(--warmth));
+  --color-warmth-soft: hsl(var(--warmth-soft));
+  --color-danger: hsl(var(--danger));
+  --color-danger-soft: hsl(var(--danger-soft));
+
+  --font-sans: 'Nunito Variable', Nunito, system-ui, sans-serif;
+
+  /* Tailwind 3's line heights, in rem as they were: Tailwind 4's ratios
+     round slightly differently and scale when a child changes font size */
+  --text-xs--line-height: 1rem;
+  --text-sm--line-height: 1.25rem;
+  --text-base--line-height: 1.5rem;
+  --text-lg--line-height: 1.75rem;
+  --text-xl--line-height: 1.75rem;
+  --text-2xl--line-height: 2rem;
+  --text-3xl--line-height: 2.25rem;
+  --text-4xl--line-height: 2.5rem;
+
+  --radius-xl: 0.875rem;
+  --radius-2xl: 1.25rem;
+  --radius-3xl: 1.75rem;
+}
+
+/* Tailwind 3's defaults, which Tailwind 4 changed, kept so the app looks and
+   behaves the same: a light grey default border, grey placeholders, and the
+   pointer cursor on buttons. */
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: #e5e7eb;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: #9ca3af;
+  }
+
+  button:not(:disabled),
+  [role='button']:not(:disabled) {
+    cursor: pointer;
+  }
+}
+
+@utility pb-safe {
+  /* Keeps content clear of the phone's home indicator */
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Design tokens. Every colour in the app comes from here (see @theme above).
    Text colours are checked for at least 4.5:1 contrast on their backgrounds. */
 @layer base {
   :root {
@@ -59,8 +140,11 @@
     font-size: 106.25%;
   }
 
+  /* Line heights here are plain CSS, not @apply leading-*: in Tailwind 4 that
+     would also override the line height of text-* size classes on the element */
   body {
-    @apply bg-background text-foreground font-sans antialiased leading-relaxed;
+    @apply bg-background text-foreground font-sans antialiased;
+    line-height: var(--leading-relaxed);
   }
 
   /* Browsers give a fieldset the width of its content by default, so a
@@ -71,13 +155,14 @@
   }
 
   h1, h2, h3, h4 {
-    @apply font-bold tracking-tight leading-snug;
+    @apply font-bold tracking-tight;
+    line-height: var(--leading-snug);
     text-wrap: balance;
   }
 
   /* One visible focus style everywhere, for people using a keyboard */
   :focus-visible {
-    @apply outline-none ring-2 ring-primary ring-offset-2 ring-offset-background;
+    @apply outline-hidden ring-2 ring-primary ring-offset-2 ring-offset-background;
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -86,12 +171,5 @@
       transition-duration: 0.01ms !important;
       scroll-behavior: auto !important;
     }
-  }
-}
-
-@layer utilities {
-  /* Keeps content clear of the phone's home indicator */
-  .pb-safe {
-    padding-bottom: env(safe-area-inset-bottom);
   }
 }

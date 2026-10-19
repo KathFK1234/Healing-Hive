@@ -28,7 +28,7 @@ export function PublicLayout({ children }) {
         Skip to content
       </a>
 
-      <header className="sticky top-0 z-40 bg-background/95 backdrop-blur">
+      <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-sm">
         <div className="mx-auto flex h-20 max-w-6xl items-center justify-between gap-3 px-5">
           <Logo />
 

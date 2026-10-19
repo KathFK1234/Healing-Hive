@@ -84,7 +84,7 @@ const Companion = () => {
 
       <QueryState query={query}>
         {() => (
-          <Card className="flex h-[calc(100dvh-21rem)] min-h-[26rem] flex-col p-0 lg:h-[calc(100dvh-16rem)]">
+          <Card className="flex h-[calc(100dvh-21rem)] min-h-104 flex-col p-0 lg:h-[calc(100dvh-16rem)]">
             <div className="flex-1 space-y-4 overflow-y-auto p-4" role="log" aria-live="polite" aria-label="Conversation">
               <Bubble role="assistant">
                 Hi, I'm the Healing Hive companion. I'm here to listen, without judgement. How are you feeling today?

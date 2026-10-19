@@ -136,7 +136,7 @@ const Home = () => {
             {todaysReminders.map((reminder) => (
               <p key={reminder._id} className="flex items-baseline gap-4 py-4">
                 <span className="w-20 shrink-0 font-bold text-primary">{formatClock(reminder.time)}</span>
-                <span className="min-w-0 break-words">{reminder.message}</span>
+                <span className="min-w-0 wrap-break-word">{reminder.message}</span>
               </p>
             ))}
           </Card>

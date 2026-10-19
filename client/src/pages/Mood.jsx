@@ -115,10 +115,10 @@ function Chart({ days }) {
       {/* Decorative: the sentence above and the list below carry the same information */}
       <div className="flex h-32 items-end gap-[3px]" aria-hidden="true">
         {days.map((day) => (
-          <div key={day.date} className="flex h-full flex-1 items-end rounded-sm bg-muted">
+          <div key={day.date} className="flex h-full flex-1 items-end rounded-xs bg-muted">
             {day.average !== null && (
               <div
-                className={`w-full rounded-sm ${moodFor(Math.round(day.average)).bar}`}
+                className={`w-full rounded-xs ${moodFor(Math.round(day.average)).bar}`}
                 style={{ height: `${(day.average / 5) * 100}%` }}
                 title={`${localDay(day.date)}: ${moodFor(Math.round(day.average)).label}`}
               />

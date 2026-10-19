@@ -1,6 +1,7 @@
 import crypto from 'node:crypto';
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
+import tailwindcss from '@tailwindcss/vite';
 import path from 'path';
 
 // A Content-Security-Policy for the built app. The sign-in token lives in
@@ -39,7 +40,7 @@ export default defineConfig(({ mode }) => ({
   // Where the app is served from. '/' locally; the GitHub Pages build sets
   // BASE_PATH=/Healing-Hive/ because Pages serves the repo under that path.
   base: process.env.BASE_PATH || '/',
-  plugins: [react(), contentSecurityPolicy(loadEnv(mode, import.meta.dirname, 'VITE_').VITE_API_URL)],
+  plugins: [react(), tailwindcss(), contentSecurityPolicy(loadEnv(mode, import.meta.dirname, 'VITE_').VITE_API_URL)],
   resolve: {
     alias: {
       '@': path.resolve(import.meta.dirname, './src'),

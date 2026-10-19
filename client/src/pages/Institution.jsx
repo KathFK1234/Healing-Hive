@@ -94,7 +94,7 @@ const Institution = () => {
                                 : <Badge tone="primary">Active</Badge>}
                             </div>
                             <p className="text-muted-foreground">{member.title || PROFESSIONAL_TYPES[member.type]}</p>
-                            <p className="break-words text-muted-foreground">{member.user?.email}</p>
+                            <p className="wrap-break-word text-muted-foreground">{member.user?.email}</p>
                             {member.institutionStatus === 'active' && <p className="mt-2"><RatingSummary average={member.ratingAverage} count={member.ratingCount} /></p>}
                           </div>
                         </div>
