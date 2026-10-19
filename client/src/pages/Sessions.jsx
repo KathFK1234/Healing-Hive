@@ -22,6 +22,9 @@ const Sessions = () => {
     mutationFn: (session) => api.patch(`/sessions/${session._id}/status`, { status: 'cancelled' }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sessions'] });
+      // The time is free again on the profile and in the directory
+      queryClient.invalidateQueries({ queryKey: ['professional'] });
+      queryClient.invalidateQueries({ queryKey: ['professionals'] });
       setCancelling(null);
       toast('Session cancelled');
     },
@@ -32,6 +35,7 @@ const Sessions = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sessions'] });
       queryClient.invalidateQueries({ queryKey: ['professional'] });
+      queryClient.invalidateQueries({ queryKey: ['professionals'] });
       setRating(null);
       toast('Thank you for your feedback');
     },

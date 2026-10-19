@@ -107,6 +107,8 @@ function Booking({ professional }) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sessions'] });
       queryClient.invalidateQueries({ queryKey: ['professional', professional._id] });
+      // The directory's "Next free" may have been this time
+      queryClient.invalidateQueries({ queryKey: ['professionals'] });
       toast('Session requested');
       navigate('/sessions');
     },
