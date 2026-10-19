@@ -88,7 +88,7 @@ const ProfessionalSignup = () => {
               </span>
             </button>
           ))}
-          <Button size="lg" className="mt-4" disabled={!type} onClick={() => setStep(1)}>Continue</Button>
+          <Button size="lg" disabled={!type} onClick={() => setStep(1)}>Continue</Button>
         </div>
       )}
 

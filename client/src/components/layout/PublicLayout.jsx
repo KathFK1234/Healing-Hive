@@ -37,10 +37,10 @@ export function PublicLayout({ children }) {
           </nav>
 
           <div className="flex items-center gap-2">
-            <HelpButton className="hidden sm:inline-flex" />
+            <HelpButton className="max-sm:hidden" />
             <ThemeToggle />
-            <Button to="/login" variant="outline" size="sm" className="hidden sm:inline-flex">Sign in</Button>
-            <Button to="/signup" variant="honey" size="sm" className="hidden sm:inline-flex">Get started</Button>
+            <Button to="/login" variant="outline" size="sm" className="max-sm:hidden">Sign in</Button>
+            <Button to="/signup" variant="honey" size="sm" className="max-sm:hidden">Get started</Button>
             <button
               type="button"
               className="inline-flex h-10 w-10 items-center justify-center rounded-lg hover:bg-muted xl:hidden"
