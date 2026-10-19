@@ -29,6 +29,15 @@ async function takenTimes(professionalIds) {
     return byProfessional;
 }
 
+// The directory never waits long on one professional's calendar: a slow
+// lookup carries on and fills the cache for the next load, and booking
+// still checks the calendar.
+const DIRECTORY_BUSY_WAIT_MS = 3000;
+const quickBusyTimes = (professional) => Promise.race([
+    busyTimes(professional),
+    new Promise((resolve) => setTimeout(resolve, DIRECTORY_BUSY_WAIT_MS, []).unref()),
+]);
+
 // Public directory. Only approved profiles are ever returned.
 async function listProfessionals(req, res) {
     const { q, type, specialty, language, sort, page, limit } = req.filters;
@@ -55,7 +64,7 @@ async function listProfessionals(req, res) {
     // Same rules as the profile page, so "Next free" is a time it offers
     const [taken, busy] = await Promise.all([
         takenTimes(professionals.map((p) => p._id)),
-        Promise.all(professionals.map((p) => busyTimes(p))),
+        Promise.all(professionals.map(quickBusyTimes)),
     ]);
     professionals.forEach((professional, i) => {
         const slots = openSlots(professional, taken.get(professional._id.toString()), new Date(), busy[i]);

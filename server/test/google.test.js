@@ -63,3 +63,33 @@ test("the directory's next free time leaves out calendar busy times, like the pr
         globalThis.fetch = realFetch;
     }
 });
+
+test("a slow Google reply does not hold up the directory", async () => {
+    const professional = await makeProfessional(api, await makeAdmin(api));
+    await mongoose.model("Professional").updateOne(
+        { _id: professional.profileId },
+        { calendarConnected: true, google: { refreshToken: encrypt("refresh-token") } },
+    );
+    const busyUntil = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
+    const realFetch = globalThis.fetch;
+    globalThis.fetch = async (url) => {
+        if (String(url).startsWith("https://oauth2.googleapis.com/token")) {
+            return new Response(JSON.stringify({ access_token: "access", expires_in: 3600 }));
+        }
+        await new Promise((resolve) => setTimeout(resolve, 4500));
+        return new Response(JSON.stringify({ calendars: { primary: { busy: [{ start: new Date().toISOString(), end: busyUntil.toISOString() }] } } }));
+    };
+    try {
+        const started = Date.now();
+        const listed = (await api.get("/api/v1/professionals")).body.items.find((p) => p._id === professional.profileId);
+        assert.ok(Date.now() - started < 4000, "answered without waiting for Google");
+        assert.ok(listed.nextAvailable, "still shows a time from the hours set in Healing Hive");
+
+        // The lookup carried on; once it is in, both pages leave the busy time out
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        const again = (await api.get("/api/v1/professionals")).body.items.find((p) => p._id === professional.profileId);
+        assert.ok(new Date(again.nextAvailable) >= busyUntil);
+    } finally {
+        globalThis.fetch = realFetch;
+    }
+});
