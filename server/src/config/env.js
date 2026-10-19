@@ -6,8 +6,13 @@ import { z } from "zod";
 const schema = z.object({
     NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
     PORT: z.coerce.number().int().positive().default(7002),
-    MONGO_URI: z.string().min(1, "MONGO_URI is required"),
-    JWT_SECRET: z.string().min(32, "JWT_SECRET must be at least 32 characters"),
+    MONGO_URI: z
+        .string({ error: "MONGO_URI is required" })
+        .min(1, "MONGO_URI is required")
+        .regex(/^mongodb(\+srv)?:\/\//, "MONGO_URI must start with mongodb:// or mongodb+srv://"),
+    JWT_SECRET: z
+        .string({ error: "JWT_SECRET is required" })
+        .min(32, "JWT_SECRET must be at least 32 characters"),
     JWT_EXPIRES_IN: z.string().default("7d"),
     CLIENT_ORIGIN: z.string().default("http://localhost:5173"),
     // Public addresses, used in links inside emails and in the Google sign-in flow
@@ -33,7 +38,8 @@ const schema = z.object({
     ADMIN_PASSWORD: z.string().optional(),
 });
 
-const parsed = schema.safeParse(process.env);
+// Railway's MongoDB names its address MONGO_URL
+const parsed = schema.safeParse({ ...process.env, MONGO_URI: process.env.MONGO_URI || process.env.MONGO_URL });
 
 if (!parsed.success) {
     console.error("Invalid environment configuration:");

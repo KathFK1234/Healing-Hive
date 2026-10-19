@@ -24,3 +24,22 @@ test("the seed says in one line why it could not reach the database", () => {
     assert.match(result.stderr, /^Could not connect to the database: .*ECONNREFUSED.*\(nothing answered at the address in MONGO_URI/m);
     assert.doesNotMatch(result.stderr, /node_modules/, "no stack trace");
 });
+
+test("missing or wrong settings are named before anything starts", () => {
+    const missing = runSeed({ JWT_SECRET: undefined });
+    assert.equal(missing.status, 1);
+    assert.match(missing.stderr, /MONGO_URI: MONGO_URI is required/);
+    assert.match(missing.stderr, /JWT_SECRET: JWT_SECRET is required/);
+
+    const notMongo = runSeed({ MONGO_URI: "https://example.com" });
+    assert.equal(notMongo.status, 1);
+    assert.match(notMongo.stderr, /MONGO_URI must start with mongodb:\/\/ or mongodb\+srv:\/\//);
+});
+
+test("Railway's MONGO_URL is used when MONGO_URI is not set", () => {
+    const result = runSeed({ MONGO_URL: "mongodb://127.0.0.1:1/?serverSelectionTimeoutMS=500" });
+    assert.equal(result.status, 1);
+    // Got past the settings check and tried that address
+    assert.doesNotMatch(result.stderr, /Invalid environment configuration/);
+    assert.match(result.stderr, /Could not connect to the database: .*127\.0\.0\.1:1/);
+});
