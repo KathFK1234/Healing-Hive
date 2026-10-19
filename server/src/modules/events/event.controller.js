@@ -54,11 +54,15 @@ async function getEvent(req, res) {
     res.json(present(event, req.user));
 }
 
-//Create event (therapist, peer counsellor or admin)
-async function createEvent(req, res) {
-    if (req.body.eventDate <= new Date()) {
+function refusePastDate(eventDate) {
+    if (eventDate && eventDate <= new Date()) {
         throw ApiError.badRequest("Pick a date and time that hasn't passed yet", [{ field: "eventDate", message: "This time has already passed" }]);
     }
+}
+
+//Create event (therapist, peer counsellor or admin)
+async function createEvent(req, res) {
+    refusePastDate(req.body.eventDate);
     const event = await Event.create({ ...req.body, host: req.user._id });
     res.status(201).json(present(event, req.user));
 }
@@ -68,6 +72,7 @@ async function updateEvent(req, res) {
     const event = await Event.findById(req.params.id);
     if (!event) throw ApiError.notFound("Event");
     if (!canManage(event, req.user)) throw ApiError.forbidden();
+    refusePastDate(req.body.eventDate);
 
     Object.assign(event, req.body);
     await event.save();

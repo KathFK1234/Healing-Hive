@@ -158,6 +158,9 @@ test("editing a nugget or event leaves the fields you did not send alone", async
 
     const event = await api.post("/api/v1/events").set(admin.auth)
         .send({ title: "Paid workshop", eventDate: new Date(Date.now() + 86400000).toISOString(), price: 500, durationMinutes: 90 });
+    const toThePast = await api.patch(`/api/v1/events/${event.body._id}`).set(admin.auth).send({ eventDate: new Date(Date.now() - 86400000).toISOString() });
+    assert.equal(toThePast.status, 400);
+    assert.equal(toThePast.body.error.message, "Pick a date and time that hasn't passed yet");
     const moved = await api.patch(`/api/v1/events/${event.body._id}`).set(admin.auth).send({ speaker: "A. Speaker" });
     assert.equal(moved.body.price, 500);
     assert.equal(moved.body.durationMinutes, 90);
