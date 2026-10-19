@@ -178,7 +178,11 @@ const Events = () => {
         error={remove.error}
         onConfirm={() => remove.mutate(deleting)}
       >
-        <p>"{deleting?.title}" will be removed, and people who registered will no longer see it.</p>
+        <p>
+          "{deleting?.title}" will be removed, and people who registered will no longer see it.
+          {deleting?.participantCount > 0 && new Date(deleting.eventDate).getTime() + (deleting.durationMinutes || 60) * 60000 > Date.now() &&
+            ` ${deleting.participantCount === 1 ? 'The person' : `The ${deleting.participantCount} people`} who registered will get an email saying it is cancelled.`}
+        </p>
       </ConfirmModal>
     </>
   );

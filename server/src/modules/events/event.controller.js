@@ -1,5 +1,9 @@
 import Event from "./event.model.js";
+import User from "../users/user.model.js";
 import ApiError from "../../utils/ApiError.js";
+import env from "../../config/env.js";
+import { sendMail } from "../../utils/mailer.js";
+import { when } from "../sessions/session.controller.js";
 
 // What anyone may see. The participant list is private, so it is reduced to a
 // count plus whether the person asking is on it, and the host's account id is
@@ -76,6 +80,17 @@ async function deleteEvent(req, res) {
     if (!canManage(event, req.user)) throw ApiError.forbidden();
 
     await event.deleteOne();
+
+    // Tell everyone who registered, like a cancelled session. One email each,
+    // so nobody learns who else was going.
+    if (endsAt(event) > new Date()) {
+        const people = await User.find({ _id: { $in: event.participants, $ne: req.user._id } }).select("fullName email");
+        await Promise.all(people.map((person) => sendMail({
+            to: person.email,
+            subject: "A Healing Hive event was cancelled",
+            text: `Hello ${person.fullName},\n\n"${event.title}" on ${when(event.eventDate)} has been cancelled, so it will not take place.\n\nOther events are listed here:\n${env.clientUrl}/events`,
+        })));
+    }
     res.json({ message: "Deleted" });
 }
 

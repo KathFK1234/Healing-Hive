@@ -1,6 +1,7 @@
 import { test, before, after, beforeEach } from "node:test";
 import assert from "node:assert/strict";
 import { start, stop, reset, signUp, makeAdmin, makeProfessional } from "./setup.js";
+import { outbox } from "../src/utils/mailer.js";
 
 let api;
 before(async () => { api = await start(); });
@@ -192,4 +193,25 @@ test("today's nugget turns over at midnight in Kenya", async () => {
     assert.equal(eatDayNumber(new Date("2026-10-14T00:01:00+03:00")) - eatDayNumber(new Date("2026-10-13T23:59:00+03:00")), 1);
     // ...while 00:01 and 02:59 are the same one (in UTC they straddle midnight)
     assert.equal(eatDayNumber(new Date("2026-10-14T00:01:00+03:00")), eatDayNumber(new Date("2026-10-14T02:59:00+03:00")));
+});
+
+test("deleting an event emails each person who registered, but not for a past event", async () => {
+    const admin = await makeAdmin(api);
+    const host = await makeProfessional(api, admin);
+    const first = await signUp(api);
+    const second = await signUp(api);
+    const event = await api.post("/api/v1/events").set(host.auth).send({ title: "Evening check-in", eventDate: new Date(Date.now() + 86400000).toISOString() });
+    for (const person of [first, second, host]) await api.post(`/api/v1/events/${event.body._id}/join`).set(person.auth);
+
+    outbox.length = 0;
+    assert.equal((await api.delete(`/api/v1/events/${event.body._id}`).set(host.auth)).status, 200);
+    const sent = outbox.filter((mail) => mail.subject === "A Healing Hive event was cancelled");
+    assert.deepEqual(sent.map((mail) => mail.to).sort(), [first.user.email, second.user.email].sort(), "one each, not the host");
+    assert.match(sent[0].text, /"Evening check-in" on .* \(East Africa Time\) has been cancelled/);
+
+    const Event = (await import("../src/modules/events/event.model.js")).default;
+    const past = await Event.create({ title: "Last month", eventDate: new Date(Date.now() - 30 * 86400000), participants: [first.user._id] });
+    outbox.length = 0;
+    assert.equal((await api.delete(`/api/v1/events/${past._id}`).set(admin.auth)).status, 200);
+    assert.equal(outbox.length, 0);
 });
