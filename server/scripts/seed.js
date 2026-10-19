@@ -11,7 +11,7 @@ import { fileURLToPath } from "node:url";
 import bcrypt from "bcryptjs";
 import mongoose from "mongoose";
 import env from "../src/config/env.js";
-import { connectDb, disconnectDb } from "../src/config/db.js";
+import { connectDbOrExit, disconnectDb } from "../src/config/db.js";
 import User from "../src/modules/users/user.model.js";
 import Nugget from "../src/modules/nuggets/nugget.model.js";
 import Professional from "../src/modules/professionals/professional.model.js";
@@ -321,7 +321,7 @@ async function seedDemo() {
 }
 
 export async function seed({ demo = false } = {}) {
-    await connectDb();
+    await connectDbOrExit();
     await seedNuggets();
     await seedAdmin();
     if (demo) await seedDemo();

@@ -1,13 +1,8 @@
 import env from "./config/env.js";
-import { connectDb, disconnectDb } from "./config/db.js";
+import { connectDbOrExit, disconnectDb } from "./config/db.js";
 import { createApp } from "./app.js";
 
-try {
-    await connectDb();
-} catch (error) {
-    console.error("Could not connect to the database:", error.message);
-    process.exit(1);
-}
+await connectDbOrExit();
 
 if (env.isProduction && !env.SMTP_HOST) {
     console.warn("Email is not configured (SMTP_HOST is empty): password resets, booking and application emails will not be sent.");
