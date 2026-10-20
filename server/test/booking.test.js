@@ -120,6 +120,44 @@ test("only the people in a session can see or change it", async () => {
     assert.equal((await api.get("/api/v1/sessions/mine").set(stranger.auth)).body.length, 0);
 });
 
+test("a professional can page back through every completed session and its notes", async () => {
+    const Session = (await import("../src/modules/sessions/session.model.js")).default;
+    const admin = await makeAdmin(api);
+    const therapist = await makeProfessional(api, admin);
+    const client = await signUp(api);
+    const hour = 60 * 60 * 1000;
+    const base = { client: client.user._id, professional: therapist.profileId, durationMinutes: 50 };
+    // 45 completed sessions, the newest 25 at the same time, each with notes
+    await Session.insertMany(Array.from({ length: 45 }, (_, i) => ({
+        ...base, status: "completed", privateNotes: `Notes ${i}`,
+        scheduledAt: new Date(Date.now() - (i < 25 ? 1 : i) * 24 * hour),
+    })));
+    await Session.insertMany([
+        { ...base, status: "pending", scheduledAt: new Date(Date.now() + 48 * hour) },
+        { ...base, status: "pending", scheduledAt: new Date(Date.now() - 48 * hour) },
+        { ...base, status: "confirmed", scheduledAt: new Date(Date.now() - 3 * hour) },
+        { ...base, status: "cancelled", scheduledAt: new Date(Date.now() + 72 * hour) },
+    ]);
+
+    // open work only: the request still to answer and the session to wrap up
+    const open = (await api.get("/api/v1/sessions/assigned").set(therapist.auth)).body;
+    assert.deepEqual(open.map((session) => session.status).sort(), ["confirmed", "pending"]);
+
+    const seen = [];
+    let page = (await api.get("/api/v1/sessions/assigned").query({ status: "completed" }).set(therapist.auth)).body;
+    while (page.length) {
+        assert.ok(page.length <= 20);
+        seen.push(...page);
+        const last = page.at(-1);
+        page = (await api.get("/api/v1/sessions/assigned").query({ status: "completed", before: last.scheduledAt, beforeId: last._id }).set(therapist.auth)).body;
+    }
+    assert.equal(seen.length, 45);
+    assert.equal(new Set(seen.map((session) => session.privateNotes)).size, 45);
+    assert.ok(seen.every((session, i) => i === 0 || session.scheduledAt <= seen[i - 1].scheduledAt));
+
+    assert.equal((await api.get("/api/v1/sessions/assigned").query({ status: "cancelled" }).set(therapist.auth)).status, 400);
+});
+
 test("a client cannot cancel a session once it has started, but the professional can", async () => {
     const mongoose = (await import("mongoose")).default;
     const admin = await makeAdmin(api);

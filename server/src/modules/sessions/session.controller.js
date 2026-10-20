@@ -77,15 +77,36 @@ async function getMySessions(req, res) {
     res.json(sessions);
 }
 
-// Sessions booked with the signed-in professional
+export const COMPLETED_PAGE_SIZE = 20;
+
+// Sessions booked with the signed-in professional: the work still open
+// (requests not yet past, and confirmed sessions until they are marked
+// completed), or with status=completed their finished sessions a page at a
+// time, so the notes on every one of them can still be opened.
 async function getAssignedSessions(req, res) {
     const professional = await Professional.findOne({ user: req.user._id });
     if (!professional) return res.json([]);
 
-    const sessions = await Session.find({ professional: professional._id })
+    const { status, before, beforeId } = req.filters;
+    let filter;
+    if (status === "completed") {
+        filter = { professional: professional._id, status: "completed" };
+        if (before) {
+            filter.$or = beforeId
+                ? [{ scheduledAt: { $lt: before } }, { scheduledAt: before, _id: { $lt: beforeId } }]
+                : [{ scheduledAt: { $lt: before } }];
+        }
+    } else {
+        filter = {
+            professional: professional._id,
+            $or: [{ status: "pending", scheduledAt: { $gt: new Date() } }, { status: "confirmed" }],
+        };
+    }
+
+    const sessions = await Session.find(filter)
         .select("+privateNotes")
-        .sort({ scheduledAt: -1 })
-        .limit(200)
+        .sort({ scheduledAt: -1, _id: -1 })
+        .limit(status === "completed" ? COMPLETED_PAGE_SIZE : 200)
         .populate("client", "fullName");
     res.json(sessions);
 }

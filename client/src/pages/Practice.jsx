@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Building2, CalendarCheck, CalendarDays, ExternalLink, Inbox, NotebookPen } from 'lucide-react';
 import { api } from '@/lib/api';
 import { formatDateTime } from '@/lib/format';
@@ -20,6 +20,9 @@ const calendarMessages = {
   refused: ['Google did not accept the connection. Please connect again, and allow calendar access when Google asks', 'error'],
   failed: ['Google Calendar was connected, but saving it failed on our side. Please try again', 'error'],
 };
+
+// The API sends completed sessions newest first, this many at a time
+const COMPLETED_PAGE_SIZE = 20;
 
 const Practice = () => {
   usePageTitle('My practice');
@@ -99,7 +102,16 @@ function AssignedSessions() {
   const [notes, setNotes] = useState('');
   const [cancelling, setCancelling] = useState(null);
 
+  // Open work (requests, confirmed sessions) and the completed history are
+  // fetched apart, so the notes on every past session stay reachable
   const query = useQuery({ queryKey: ['sessions', 'assigned'], queryFn: () => api.get('/sessions/assigned') });
+  const completed = useInfiniteQuery({
+    queryKey: ['sessions', 'assigned', 'completed'],
+    queryFn: ({ pageParam }) => api.get('/sessions/assigned', { status: 'completed', ...pageParam }),
+    initialPageParam: {},
+    getNextPageParam: (page) => page.length < COMPLETED_PAGE_SIZE ? undefined : { before: page.at(-1).scheduledAt, beforeId: page.at(-1)._id },
+    select: (data) => data.pages.flat(),
+  });
   const refresh = () => queryClient.invalidateQueries({ queryKey: ['sessions'] });
 
   const setStatus = useMutation({
@@ -158,9 +170,9 @@ function AssignedSessions() {
           const upcoming = sessions.filter((session) => session.status === 'confirmed' && isLive(session)).reverse();
           // Confirmed sessions whose time has passed still need to be closed off
           const toWrapUp = sessions.filter((session) => session.status === 'confirmed' && !isLive(session));
-          const past = sessions.filter((session) => session.status === 'completed').slice(0, 20);
+          const past = completed.data || [];
 
-          if (sessions.length === 0) {
+          if (sessions.length === 0 && completed.isSuccess && past.length === 0) {
             return (
               <EmptyState icon={Inbox} title="No bookings yet">
                 When someone books one of your open times, it shows here for you to accept. Check that your weekly hours are set under "Profile, hours and calendar".
@@ -212,9 +224,18 @@ function AssignedSessions() {
                 )}
               </Section>
 
-              {past.length > 0 && (
+              {(past.length > 0 || completed.isError) && (
                 <Section title="Completed">
-                  <ul className="space-y-5">{past.map((session) => renderSession(session, notesButton(session)))}</ul>
+                  {/* Older sessions that fail to load say so here; the rest of the page stays */}
+                  {completed.isError && !completed.isFetchNextPageError ? <FormError error={completed.error} /> : (
+                    <ul className="space-y-5">{past.map((session) => renderSession(session, notesButton(session)))}</ul>
+                  )}
+                  {completed.hasNextPage && (
+                    <div className="mt-6 space-y-4 text-center">
+                      {completed.isFetchNextPageError && <FormError error={completed.error} />}
+                      <Button variant="outline" loading={completed.isFetchingNextPage} onClick={() => completed.fetchNextPage()}>Show older sessions</Button>
+                    </div>
+                  )}
                 </Section>
               )}
             </div>
