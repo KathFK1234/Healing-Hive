@@ -2,6 +2,7 @@ import { test, before, after, beforeEach } from "node:test";
 import assert from "node:assert/strict";
 import { start, stop, reset, signUp, makeAdmin, makeProfessional } from "./setup.js";
 import { outbox } from "../src/utils/mailer.js";
+import Journal from "../src/modules/journal/journal.model.js";
 
 let api;
 before(async () => { api = await start(); });
@@ -25,6 +26,34 @@ test("journal entries are private to their owner", async () => {
     const sneaky = await api.post("/api/v1/journal").set(other.auth).send({ content: "mine", user: owner.user._id });
     assert.equal(sneaky.status, 201);
     assert.equal((await api.get("/api/v1/journal").set(owner.auth)).body.length, 1);
+});
+
+test("a long journal can be read back in full, a page at a time", async () => {
+    const owner = await signUp(api);
+    const other = await signUp(api);
+    // 120 entries, the newest 60 all written at the same moment
+    const now = Date.now();
+    await Journal.insertMany(Array.from({ length: 120 }, (_, i) => ({
+        user: owner.user._id,
+        content: `Entry ${i}`,
+        createdAt: new Date(i < 60 ? now : now - (i - 59) * 60 * 1000),
+    })));
+    await api.post("/api/v1/journal").set(other.auth).send({ content: "Not yours" });
+
+    const seen = [];
+    let page = (await api.get("/api/v1/journal").set(owner.auth)).body;
+    while (page.length) {
+        assert.ok(page.length <= 50);
+        seen.push(...page);
+        const last = page.at(-1);
+        page = (await api.get("/api/v1/journal").query({ before: last.createdAt, beforeId: last._id }).set(owner.auth)).body;
+    }
+    assert.equal(seen.length, 120);
+    assert.equal(new Set(seen.map((entry) => entry._id)).size, 120);
+    assert.ok(seen.every((entry, i) => i === 0 || entry.createdAt <= seen[i - 1].createdAt));
+    assert.ok(seen.every((entry) => entry.content !== "Not yours"));
+
+    assert.equal((await api.get("/api/v1/journal").query({ before: "not a date" }).set(owner.auth)).status, 400);
 });
 
 test("mood check-ins are saved and scoped to the person", async () => {

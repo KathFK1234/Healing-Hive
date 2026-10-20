@@ -22,7 +22,7 @@ const journalSchema = new mongoose.Schema({
     timestamps: true,
 });
 
-journalSchema.index({ user: 1, createdAt: -1 });
+journalSchema.index({ user: 1, createdAt: -1, _id: -1 });
 
 const Journal = mongoose.model("Journal", journalSchema);
 export default Journal;

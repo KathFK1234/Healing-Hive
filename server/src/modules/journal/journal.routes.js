@@ -3,7 +3,7 @@ import { z } from "zod";
 import Journal from "./journal.model.js";
 import ApiError from "../../utils/ApiError.js";
 import { authenticate } from "../../middleware/auth.js";
-import { validate, validateId } from "../../middleware/validate.js";
+import { validate, validateId, objectId } from "../../middleware/validate.js";
 
 const router = express.Router();
 
@@ -13,12 +13,29 @@ const entrySchema = z.object({
     mood: z.number().int().min(1).max(5).nullable().optional(),
 });
 
+export const JOURNAL_PAGE_SIZE = 50;
+
+// The next page starts after the last entry of the one before: its time, and
+// its id for entries written at the same moment.
+const listSchema = z.object({
+    before: z.coerce.date().optional(),
+    beforeId: objectId.optional(),
+}).refine((value) => !value.beforeId || value.before, "beforeId needs before");
+
 // A journal is private: every query below is scoped to the signed-in person,
 // and no other role (admin included) has a route into it.
 router.use(authenticate);
 
-router.get("/", async (req, res) => {
-    const entries = await Journal.find({ user: req.user._id }).sort({ createdAt: -1 }).limit(200);
+// Newest first, a page at a time, so a journal of any length can be read back
+router.get("/", validate({ query: listSchema }), async (req, res) => {
+    const { before, beforeId } = req.filters;
+    const filter = { user: req.user._id };
+    if (before) {
+        filter.$or = beforeId
+            ? [{ createdAt: { $lt: before } }, { createdAt: before, _id: { $lt: beforeId } }]
+            : [{ createdAt: { $lt: before } }];
+    }
+    const entries = await Journal.find(filter).sort({ createdAt: -1, _id: -1 }).limit(JOURNAL_PAGE_SIZE);
     res.json(entries);
 });
 

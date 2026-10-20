@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import classNames from 'classnames';
 import { Lock, NotebookPen, Pencil, Plus, Trash2 } from 'lucide-react';
 import { api } from '@/lib/api';
@@ -16,6 +16,9 @@ const prompts = [
 
 const blank = { title: '', content: '', mood: null };
 
+// The API sends entries newest first, this many at a time
+const PAGE_SIZE = 50;
+
 const Journal = () => {
   usePageTitle('Journal');
   const toast = useToast();
@@ -24,7 +27,14 @@ const Journal = () => {
   const [draft, setDraft] = useState(null);
   const [deleting, setDeleting] = useState(null);
 
-  const query = useQuery({ queryKey: ['journal'], queryFn: () => api.get('/journal') });
+  const query = useInfiniteQuery({
+    queryKey: ['journal'],
+    queryFn: ({ pageParam }) => api.get('/journal', pageParam),
+    initialPageParam: null,
+    // Each page carries on from the last entry of the one before
+    getNextPageParam: (page) => page.length < PAGE_SIZE ? undefined : { before: page.at(-1).createdAt, beforeId: page.at(-1)._id },
+    select: (data) => data.pages.flat(),
+  });
   const refresh = () => queryClient.invalidateQueries({ queryKey: ['journal'] });
 
   const save = useMutation({
@@ -65,7 +75,8 @@ const Journal = () => {
         action={<Button onClick={() => open(blank)}><Plus className="h-4 w-4" aria-hidden="true" /> New entry</Button>}
       />
 
-      <QueryState query={query}>
+      {/* Older entries that fail to load say so under the list, which stays */}
+      <QueryState query={query.isFetchNextPageError ? { ...query, isError: false } : query}>
         {(entries) => entries.length === 0 ? (
           <EmptyState icon={NotebookPen} title="Your journal is empty" action={<Button onClick={() => open(blank)}>Write your first entry</Button>}>
             Writing things down can make them feel lighter. Not sure where to start? Try: "{prompts[0]}"
@@ -97,6 +108,12 @@ const Journal = () => {
           </ul>
         )}
       </QueryState>
+      {query.hasNextPage && (
+        <div className="mt-6 space-y-4 text-center">
+          {query.isFetchNextPageError && <FormError error={query.error} />}
+          <Button variant="outline" loading={query.isFetchingNextPage} onClick={() => query.fetchNextPage()}>Show older entries</Button>
+        </div>
+      )}
 
       <Modal
         open={!!draft}
