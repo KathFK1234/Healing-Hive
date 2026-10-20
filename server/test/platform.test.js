@@ -241,8 +241,15 @@ test("stored Google tokens are encrypted and tamper-evident", () => {
     assert.equal(stored.includes("refresh-token-value"), false);
     assert.equal(decrypt(stored), "1//refresh-token-value");
     assert.notEqual(encrypt("1//refresh-token-value"), stored);
+    // Flip one bit, so the tampered copy always differs from the original
+    const flip = (part) => {
+        const bytes = Buffer.from(part, "base64url");
+        bytes[0] ^= 1;
+        return bytes.toString("base64url");
+    };
     const [iv, tag, data] = stored.split(".");
-    assert.throws(() => decrypt([iv, tag, data.slice(0, -2) + "AA"].join(".")));
+    assert.throws(() => decrypt([iv, tag, flip(data)].join(".")));
+    assert.throws(() => decrypt([iv, flip(tag), data].join(".")));
 });
 
 test("the Google Calendar option reports as unavailable until it is configured", async () => {
