@@ -77,7 +77,7 @@ router.get("/me", async (req, res) => {
         members: rows,
         totals: {
             members: activeRows.length,
-            invited: rows.length - active.length,
+            invited: rows.length - activeRows.length,
             upcoming: total("upcoming"),
             completed: total("completed"),
             completedThisMonth: total("completedThisMonth"),
