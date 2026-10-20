@@ -16,7 +16,9 @@ const prompts = [
 
 const blank = { title: '', content: '', mood: null };
 
-// The API sends entries newest first, this many at a time
+// The API sends entries newest first, this many at a time. Must match
+// JOURNAL_PAGE_SIZE in server/src/modules/journal/journal.routes.js: a
+// smaller page would look like the last one.
 const PAGE_SIZE = 50;
 
 const Journal = () => {

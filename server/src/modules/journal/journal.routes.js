@@ -13,7 +13,8 @@ const entrySchema = z.object({
     mood: z.number().int().min(1).max(5).nullable().optional(),
 });
 
-export const JOURNAL_PAGE_SIZE = 50;
+// client/src/pages/Journal.jsx has the same number: keep the two in step
+const JOURNAL_PAGE_SIZE = 50;
 
 // The next page starts after the last entry of the one before: its time, and
 // its id for entries written at the same moment.

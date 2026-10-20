@@ -77,7 +77,8 @@ async function getMySessions(req, res) {
     res.json(sessions);
 }
 
-export const COMPLETED_PAGE_SIZE = 20;
+// client/src/pages/Practice.jsx has the same number: keep the two in step
+const COMPLETED_PAGE_SIZE = 20;
 
 // Sessions booked with the signed-in professional: the work still open
 // (requests not yet past, and confirmed sessions until they are marked

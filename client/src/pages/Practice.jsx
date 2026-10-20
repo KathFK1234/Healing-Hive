@@ -21,7 +21,9 @@ const calendarMessages = {
   failed: ['Google Calendar was connected, but saving it failed on our side. Please try again', 'error'],
 };
 
-// The API sends completed sessions newest first, this many at a time
+// The API sends completed sessions newest first, this many at a time. Must
+// match COMPLETED_PAGE_SIZE in server/src/modules/sessions/session.controller.js:
+// a smaller page would look like the last one.
 const COMPLETED_PAGE_SIZE = 20;
 
 const Practice = () => {
