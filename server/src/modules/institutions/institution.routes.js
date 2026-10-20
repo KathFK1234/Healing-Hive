@@ -32,10 +32,13 @@ router.get("/me", async (req, res) => {
         .populate("user", "fullName email")
         .lean();
 
+    // Numbers only for people who accepted: an invitation alone, which needs
+    // nothing but an email address, must not open up anyone's workload.
+    const active = members.filter((member) => member.institutionStatus === "active");
     const now = new Date();
     const monthAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
     const stats = await Session.aggregate([
-        { $match: { professional: { $in: members.map((member) => member._id) } } },
+        { $match: { professional: { $in: active.map((member) => member._id) } } },
         {
             $group: {
                 _id: "$professional",
@@ -50,6 +53,7 @@ router.get("/me", async (req, res) => {
     const statsById = new Map(stats.map((row) => [row._id.toString(), row]));
 
     const rows = members.map((member) => {
+        if (member.institutionStatus !== "active") return member;
         const row = statsById.get(member._id.toString());
         return {
             ...member,
@@ -63,16 +67,16 @@ router.get("/me", async (req, res) => {
         };
     });
 
-    const active = rows.filter((row) => row.institutionStatus === "active");
-    const total = (key) => active.reduce((sum, row) => sum + row.stats[key], 0);
-    const rated = active.filter((row) => row.ratingCount > 0);
+    const activeRows = rows.filter((row) => row.institutionStatus === "active");
+    const total = (key) => activeRows.reduce((sum, row) => sum + row.stats[key], 0);
+    const rated = activeRows.filter((row) => row.ratingCount > 0);
     const reviews = rated.reduce((sum, row) => sum + row.ratingCount, 0);
 
     res.json({
         institution,
         members: rows,
         totals: {
-            members: active.length,
+            members: activeRows.length,
             invited: rows.length - active.length,
             upcoming: total("upcoming"),
             completed: total("completed"),

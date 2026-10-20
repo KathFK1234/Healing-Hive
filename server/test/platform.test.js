@@ -217,6 +217,11 @@ test("an institution invites professionals, who must accept, and sees numbers bu
     await api.post("/api/v1/professionals/me/institution").set(therapist.auth).send({ accept: false });
     assert.equal((await api.get("/api/v1/institutions/me").set(institution.auth)).body.members.length, 0);
     await api.post("/api/v1/institutions/me/members").set(institution.auth).send({ email: therapist.user.email });
+    // invited again, with a completed session on record: no numbers until they accept
+    dashboard = (await api.get("/api/v1/institutions/me").set(institution.auth)).body;
+    assert.equal(dashboard.members[0].institutionStatus, "invited");
+    assert.equal(dashboard.members[0].stats, undefined);
+    assert.equal(dashboard.totals.completed, 0);
     assert.equal((await api.delete(`/api/v1/institutions/me/members/${therapist.profileId}`).set(institution.auth)).status, 200);
     assert.equal((await api.get("/api/v1/professionals/me").set(therapist.auth)).body.institution, undefined);
 });
