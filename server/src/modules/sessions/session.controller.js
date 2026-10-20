@@ -20,6 +20,11 @@ const WITH_PROFESSIONAL = {
     populate: { path: "user", select: "fullName" },
 };
 
+// Each waiting request holds its time away from everyone else until it is
+// answered, so one account cannot sit on a professional's (or everyone's) diary.
+const MAX_WAITING_PER_PROFESSIONAL = 3;
+const MAX_WAITING = 10;
+
 async function bookSession(req, res) {
     const { professionalId, scheduledAt, mode, clientNote } = req.body;
 
@@ -27,6 +32,14 @@ async function bookSession(req, res) {
         .populate("user", "fullName email");
     if (!professional) throw ApiError.notFound("Professional");
     if (professional.user._id.equals(req.user._id)) throw ApiError.badRequest("You cannot book a session with yourself");
+
+    const waiting = await Session.find({ client: req.user._id, status: "pending", scheduledAt: { $gt: new Date() } }).select("professional");
+    if (waiting.filter((session) => session.professional.equals(professional._id)).length >= MAX_WAITING_PER_PROFESSIONAL) {
+        throw ApiError.badRequest(`You already have ${MAX_WAITING_PER_PROFESSIONAL} requests waiting for ${professional.user.fullName} to answer. Wait for a reply, or cancel one from your sessions page, before asking for another time`);
+    }
+    if (waiting.length >= MAX_WAITING) {
+        throw ApiError.badRequest(`You have ${MAX_WAITING} session requests waiting for an answer. Wait for replies, or cancel one from your sessions page, before asking for another`);
+    }
 
     const taken = await Session.find({ professional: professional._id, active: true, scheduledAt: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) } })
         .select("scheduledAt durationMinutes");

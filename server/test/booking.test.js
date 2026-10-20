@@ -80,6 +80,39 @@ test("two people booking the same slot at the same moment: exactly one succeeds"
     assert.deepEqual(statuses, [201, 409, 409]);
 });
 
+test("one person can only have a few requests waiting at once", async () => {
+    const admin = await makeAdmin(api);
+    const therapists = [];
+    for (let i = 0; i < 4; i++) therapists.push(await makeProfessional(api, admin));
+    const client = await signUp(api);
+    const book = async (therapist, index) => {
+        const slot = (await api.get(`/api/v1/professionals/${therapist.profileId}`)).body.slots[index];
+        return api.post("/api/v1/sessions").set(client.auth).send({ professionalId: therapist.profileId, scheduledAt: slot });
+    };
+
+    // three with one professional, then a fourth is refused
+    const first = [];
+    for (let i = 0; i < 3; i++) first.push((await book(therapists[0], i)).body);
+    let refused = await book(therapists[0], 3);
+    assert.equal(refused.status, 400);
+    assert.match(refused.body.error.message, /3 requests waiting/);
+
+    // an answered request no longer counts, and cancelling one frees a place
+    await api.patch(`/api/v1/sessions/${first[0]._id}/status`).set(therapists[0].auth).send({ status: "confirmed" });
+    assert.equal((await book(therapists[0], 4)).status, 201);
+    await api.patch(`/api/v1/sessions/${first[1]._id}/status`).set(client.auth).send({ status: "cancelled" });
+    assert.equal((await book(therapists[0], 5)).status, 201);
+
+    // ten waiting in all: 3 above, then 3 + 3 + 1 more
+    for (const therapist of therapists.slice(1, 3)) {
+        for (let i = 0; i < 3; i++) assert.equal((await book(therapist, i)).status, 201);
+    }
+    assert.equal((await book(therapists[3], 0)).status, 201);
+    refused = await book(therapists[3], 1);
+    assert.equal(refused.status, 400);
+    assert.match(refused.body.error.message, /10 session requests waiting/);
+});
+
 test("times outside the professional's hours cannot be booked", async () => {
     const admin = await makeAdmin(api);
     const therapist = await makeProfessional(api, admin);
