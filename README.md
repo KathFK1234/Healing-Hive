@@ -113,8 +113,8 @@ To add a feature: create a folder in `server/src/modules/`, mount its routes in 
 - **Input is validated before it reaches a controller.** Routes declare a schema, and only fields in the schema get through. This is what stops someone setting their own `role`, or the owner of a record, from the request body.
 - **Roles change in one place.** Everyone starts with the role `user`, including professionals who have applied. An account becomes `therapist`, `peer` or `institution` only when an admin approves its application.
 - **Each kind of account has its own home and menu** (`client/src/lib/roles.js`): people looking for support, applicants, practising professionals, institutions and admins.
-- **Personal data is scoped to its owner in the query.** Journal entries, mood check-ins, reminders and AI conversations have no route for anyone else, admins included. Institutions see counts for their team, never client names or notes. Reviews are public without names.
-- **The database prevents double-booking**, with a unique index on a professional's time slot, so two people booking at the same instant cannot both succeed.
+- **Personal data is scoped to its owner in the query.** Journal entries, mood check-ins, reminders and AI conversations have no route for anyone else, admins included. Institutions see counts for team members who accepted their invitation, never client names or notes. Reviews are public without names.
+- **The database prevents double-booking**, with a unique index on a professional's time slot, so two people booking at the same instant cannot both succeed. A request holds its time until it is answered, so one person can have only 3 waiting with the same professional and 10 in all.
 - **Times are East Africa Time** (UTC+3, no daylight saving) for working hours, slots and reminders.
 - **Colours come from design tokens** in `client/src/index.css`, with light and dark values. Use the Tailwind names (`bg-primary`, `text-muted-foreground`, `bg-honey-soft`), not hex values.
 
