@@ -36,6 +36,9 @@ const schema = z.object({
     GOOGLE_CLIENT_SECRET: z.string().optional(),
     ADMIN_EMAIL: z.string().optional(),
     ADMIN_PASSWORD: z.string().optional(),
+
+    // Set by Railway on each deployment: the git commit it built
+    RAILWAY_GIT_COMMIT_SHA: z.string().optional(),
 });
 
 // Railway's MongoDB names its address MONGO_URL

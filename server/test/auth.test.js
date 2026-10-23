@@ -7,6 +7,15 @@ before(async () => { api = await start(); });
 after(stop);
 beforeEach(reset);
 
+test("the health check says which commit is running", async () => {
+    const health = await api.get("/api/v1/health");
+    assert.equal(health.status, 200);
+    assert.equal(health.body.status, "ok");
+    // Railway sets RAILWAY_GIT_COMMIT_SHA; tests run without it
+    assert.ok("commit" in health.body);
+    assert.equal(health.body.commit, process.env.RAILWAY_GIT_COMMIT_SHA || null);
+});
+
 test("signing up signs you in and never returns the password", async () => {
     const person = await signUp(api, { email: "Wanjiru@Example.com" });
     assert.ok(person.token);

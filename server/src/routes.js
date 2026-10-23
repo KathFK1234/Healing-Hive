@@ -13,10 +13,12 @@ import reviewRoutes from "./modules/reviews/review.routes.js";
 import institutionRoutes from "./modules/institutions/institution.routes.js";
 import googleRoutes from "./modules/google/google.routes.js";
 import { CRISIS_CONTACTS } from "./utils/crisis.js";
+import env from "./config/env.js";
 
 const router = express.Router();
 
-router.get("/health", (req, res) => res.json({ status: "ok" }));
+// The commit shows which code is live: after a failed deploy, the one before keeps running.
+router.get("/health", (req, res) => res.json({ status: "ok", commit: env.RAILWAY_GIT_COMMIT_SHA || null }));
 router.get("/crisis-contacts", (req, res) => res.json(CRISIS_CONTACTS));
 
 router.use("/auth", authRoutes);
