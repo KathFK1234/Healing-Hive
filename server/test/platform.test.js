@@ -164,6 +164,11 @@ test("only the client of a completed session can rate it, and the average follow
 
     const mine = await api.get("/api/v1/sessions/mine").set(client.auth);
     assert.equal(mine.body.find((session) => session._id === first._id).review.rating, 5);
+
+    // rating again without the comment takes the comment down
+    assert.equal((await api.put("/api/v1/reviews").set(client.auth).send({ sessionId: first._id, rating: 4 })).status, 200);
+    const after = await api.get(`/api/v1/professionals/${therapist.profileId}/reviews`);
+    assert.equal(after.body.some((review) => review.comment), false);
 });
 
 test("an institution invites professionals, who must accept, and sees numbers but not clients", async () => {

@@ -28,7 +28,7 @@ async function refreshRating(professionalId) {
 }
 
 // Only the client of a completed session can review it, once. Sending again
-// updates the same review.
+// replaces the same review: one sent without a comment has none.
 router.put("/", authenticate, validate({ body: reviewSchema }), async (req, res) => {
     const { sessionId, rating, comment } = req.body;
 
@@ -38,7 +38,7 @@ router.put("/", authenticate, validate({ body: reviewSchema }), async (req, res)
 
     const review = await Review.findOneAndUpdate(
         { session: session._id },
-        { client: req.user._id, professional: session.professional, rating, comment },
+        { client: req.user._id, professional: session.professional, rating, ...(comment ? { comment } : { $unset: { comment: 1 } }) },
         { upsert: true, returnDocument: "after", runValidators: true, setDefaultsOnInsert: true },
     );
     await refreshRating(session.professional);
