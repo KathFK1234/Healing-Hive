@@ -102,9 +102,11 @@ client/                  React + Vite + Tailwind web app
   src/
     pages/               one file per page, loaded on first visit
     components/ui/       shared building blocks (Button, Card, Modal, form fields ...)
-    components/layout/   public layout, signed-in layout, route guards
+    components/layout/   public layout, signed-in layout, route guards, the notice shown
+                         when the API can't be reached
     context/             who is signed in
-    lib/                 API client, date and money formatting, option lists
+    lib/                 API client (and how it reads failures), date and money
+                         formatting, option lists; *.test.js beside them, run by npm test
 ```
 
 To add a feature: create a folder in `server/src/modules/`, mount its routes in `server/src/routes.js`, then add a page in `client/src/pages/` and a route in `client/src/App.jsx`.
