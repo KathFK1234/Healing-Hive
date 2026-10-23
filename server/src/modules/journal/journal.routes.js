@@ -45,10 +45,11 @@ router.post("/", validate({ body: entrySchema }), async (req, res) => {
     res.status(201).json(entry);
 });
 
+// Saves the entry as sent: one saved without a title has none.
 router.put("/:id", validateId, validate({ body: entrySchema }), async (req, res) => {
     const updated = await Journal.findOneAndUpdate(
         { _id: req.params.id, user: req.user._id },
-        req.body,
+        req.body.title ? req.body : { content: req.body.content, mood: req.body.mood, $unset: { title: 1 } },
         { returnDocument: "after", runValidators: true }
     );
     if (!updated) throw ApiError.notFound("Entry");

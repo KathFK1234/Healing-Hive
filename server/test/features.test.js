@@ -26,6 +26,15 @@ test("journal entries are private to their owner", async () => {
     const sneaky = await api.post("/api/v1/journal").set(other.auth).send({ content: "mine", user: owner.user._id });
     assert.equal(sneaky.status, 201);
     assert.equal((await api.get("/api/v1/journal").set(owner.auth)).body.length, 1);
+
+    // saving an edit without the title takes the title away
+    const edited = await api.put(`/api/v1/journal/${entry.body._id}`).set(owner.auth).send({ content: "A hard day.", mood: 2 });
+    assert.equal(edited.status, 200);
+    assert.equal(edited.body.title, undefined);
+    const blank = await api.put(`/api/v1/journal/${entry.body._id}`).set(owner.auth).send({ title: "  ", content: "A hard day." });
+    assert.equal(blank.status, 200);
+    assert.equal(blank.body.title, undefined);
+    assert.equal(blank.body.mood, 2);
 });
 
 test("a long journal can be read back in full, a page at a time", async () => {
