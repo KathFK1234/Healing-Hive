@@ -7,6 +7,7 @@ import { CRISIS_CONTACTS, telHref } from '@/lib/crisis';
 import { Logo, LogoMark } from './Logo';
 import { HelpButton } from './HelpButton';
 import { ThemeToggle } from './ThemeToggle';
+import { ServiceBanner } from './ServiceNotice';
 
 const links = [
   { to: '/therapists', label: 'Find support' },
@@ -27,6 +28,8 @@ export function PublicLayout({ children }) {
       <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-card focus:px-4 focus:py-2">
         Skip to content
       </a>
+
+      <ServiceBanner />
 
       <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-sm">
         <div className="mx-auto flex h-20 max-w-6xl items-center justify-between gap-3 px-5">

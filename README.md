@@ -47,7 +47,7 @@ Other commands, all from the repo root:
 
 | Command | What it does |
 | --- | --- |
-| `npm test` | Runs the API tests against an in-memory MongoDB |
+| `npm test` | Runs the API tests against an in-memory MongoDB, then the web app's tests |
 | `npm run lint` | Lints the web app |
 | `npm run build` | Builds the web app into `client/dist` |
 | `npm run seed` | Adds starter nuggets and the admin account to whatever database `server/.env` points at |
@@ -73,6 +73,7 @@ The web app and the API are hosted separately:
 
 - **Web app: GitHub Pages**, at `https://<owner>.github.io/Healing-Hive/`. `.github/workflows/pages.yml` runs the tests and lint on every push to `main`, then builds `client/` with `BASE_PATH=/Healing-Hive/` and publishes it. Pages has no rewrite rules, so the workflow copies `index.html` to `404.html` and links such as `/therapists/123` still open the app.
 - **API: Railway**, from this repository. `railway.json` starts only the API (`npm start -w server`), checks `/api/v1/health`, and runs `npm run seed -w server` before each deploy (starter nuggets and the admin account; it skips anything already there).
+- **When Railway has a problem.** A deployment that fails (its build, the seed, or the `/api/v1/health` check) never replaces the one that is running: Railway keeps serving the last good deployment (seen on 2026-10-23, when a deploy failed during Railway's own incident and the API stayed up). If the API can't be reached at all (down, restarting, Railway's 502/503/504 or its "Application not found"), the web app keeps working where it doesn't need the API (the Help page and its crisis numbers, the public pages), shows a calm banner saying the server is unreachable because of our hosting provider, with a link to https://status.railway.com and a Try again button, and clears it by itself once the API answers. Someone signed in whose account can't be loaded gets a "temporarily unavailable" page with the crisis numbers. Ordinary errors (a wrong password, a missing item) are shown as before. The detection is in `client/src/lib/apiError.js`.
 
 Setting it up once:
 

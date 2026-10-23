@@ -1,16 +1,10 @@
 // The one place the app talks to the server. Pages call api.get / api.post and
 // get parsed data back, or an ApiError with a message that is safe to show.
+import { errorForAnswer, errorForNoAnswer, isOutage } from './apiError';
+import { outage } from './outage';
+
 const BASE_URL = `${import.meta.env.VITE_API_URL || ''}/api/v1`;
 const TOKEN_KEY = 'hh-token';
-
-export class ApiError extends Error {
-  constructor(status, code, message, details) {
-    super(message);
-    this.status = status;
-    this.code = code;
-    this.details = details;
-  }
-}
 
 export const tokenStore = {
   get() {
@@ -43,44 +37,31 @@ async function request(method, path, body) {
       body: body !== undefined ? JSON.stringify(body) : undefined,
     });
   } catch (error) {
-    // The browser hides why (offline, server unreachable, or refused by CORS),
-    // but it does know when the device itself is offline.
-    if (typeof navigator !== 'undefined' && navigator.onLine === false) {
-      throw new ApiError(0, 'OFFLINE', "You're offline. Check your internet connection and try again");
+    const failure = errorForNoAnswer(typeof navigator !== 'undefined' && navigator.onLine === false);
+    // Being offline is the device's own state, not the server's
+    if (failure.code !== 'OFFLINE') {
+      console.error(`Healing Hive API: ${method} ${BASE_URL}${path} could not be reached`, error);
+      outage.set(true);
     }
-    console.error(`Healing Hive API: ${method} ${BASE_URL}${path} could not be reached`, error);
-    throw new ApiError(0, 'NETWORK', "We couldn't reach the Healing Hive server. If your internet is working, the server may be down: please try again in a few minutes");
+    throw failure;
   }
 
   const data = await response.json().catch(() => null);
-  if (response.ok) {
-    // The API always answers in JSON (null included). A successful reply that
-    // isn't came from another site, usually a web page at a wrong VITE_API_URL.
-    if ((response.headers.get('content-type') || '').includes('application/json')) return data;
-    console.error(`Healing Hive API: ${method} ${BASE_URL}${path} answered ${response.status} with ${response.headers.get('content-type') || 'no content type'}, not the API's JSON`);
-    throw new ApiError(response.status, 'NOT_CONNECTED', "This app couldn't find the Healing Hive server, so this couldn't load. Please try again later");
-  }
+  const contentType = response.headers.get('content-type') || '';
+  const failure = errorForAnswer({ status: response.status, ok: response.ok, contentType, data });
+  outage.set(isOutage(failure));
+  if (!failure) return data;
 
-  // Every error the API sends has { error: { code, message } }. Anything else
-  // came from something in front of it: the host while the API is down or
-  // restarting, or a server that is not the API at all because the app was
-  // built with the wrong address (VITE_API_URL). Say which, and leave the
-  // details in the console for whoever runs the site.
+  // Not the API's own answer: leave the details in the console for whoever
+  // runs the site.
   if (!data?.error?.message) {
-    console.error(`Healing Hive API: ${method} ${BASE_URL}${path} answered ${response.status} without an API error`, data);
-    if (response.status >= 500) {
-      throw new ApiError(response.status, 'SERVER_DOWN', "The Healing Hive server isn't responding right now, so this couldn't load. Please try again in a few minutes");
-    }
-    if (response.status === 429) {
-      throw new ApiError(429, 'TOO_MANY_REQUESTS', 'Too many requests in a short time. Please wait a minute and try again');
-    }
-    throw new ApiError(response.status, 'NOT_CONNECTED', "This app couldn't find the Healing Hive server, so this couldn't load. Please try again later");
+    console.error(`Healing Hive API: ${method} ${BASE_URL}${path} answered ${response.status} with ${contentType || 'no content type'}, not the API's own answer`, data);
   }
 
   // An expired or invalid session: tell the auth context so it can sign out.
-  if (response.status === 401 && token) window.dispatchEvent(new Event('hh:signed-out'));
+  if (failure.status === 401 && data?.error?.message && token) window.dispatchEvent(new Event('hh:signed-out'));
 
-  throw new ApiError(response.status, data.error.code || 'ERROR', data.error.message, data.error.details);
+  throw failure;
 }
 
 function withQuery(path, params) {

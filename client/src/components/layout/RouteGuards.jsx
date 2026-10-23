@@ -4,10 +4,13 @@ import { homePath } from '@/lib/roles';
 import { Spinner, ErrorState } from '@/components/ui';
 import { AppLayout } from './AppLayout';
 import { PublicLayout } from './PublicLayout';
+import { ServiceUnavailable } from './ServiceNotice';
+import { isOutage } from '@/lib/apiError';
 
 function AuthGate({ children }) {
   const { loading, error, retry } = useAuth();
   if (loading) return <Spinner className="min-h-screen" />;
+  if (isOutage(error)) return <ServiceUnavailable onRetry={retry} />;
   if (error && error.status !== 401) {
     return <div className="mx-auto max-w-md p-6 pt-24"><ErrorState error={error} onRetry={retry} /></div>;
   }

@@ -11,6 +11,7 @@ import { Avatar, Modal } from '@/components/ui';
 import { Logo } from './Logo';
 import { HelpButton } from './HelpButton';
 import { ThemeToggle } from './ThemeToggle';
+import { ServiceBanner } from './ServiceNotice';
 
 const learn = {
   label: 'Learn',
@@ -126,6 +127,8 @@ export function AppLayout({ children }) {
           </button>
         </div>
       </aside>
+
+      <ServiceBanner />
 
       {/* Top bar */}
       <header className="sticky top-0 z-30 bg-background/95 backdrop-blur-sm">
