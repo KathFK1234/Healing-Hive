@@ -65,7 +65,7 @@ export function ProfessionalForm({ profile, mode, type, mutation, submitLabel, o
       title: form.title,
       specialties: form.specialties,
       languages: form.languages,
-      yearsExperience: form.yearsExperience === '' ? undefined : Number(form.yearsExperience),
+      yearsExperience: form.yearsExperience === '' ? null : Number(form.yearsExperience),
       rate: { amount: Number(form.amount) || 0 },
       sessionMinutes: Number(form.sessionMinutes),
       ...(!applying && { meetingLink: form.meetingLink }),

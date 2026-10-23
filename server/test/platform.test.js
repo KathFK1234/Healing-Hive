@@ -105,6 +105,20 @@ test("confirming a session creates a private meeting link for both people", asyn
     assert.match(lastMailTo(therapist.user.email).subject, /cancelled/);
 });
 
+test("a professional can take their years of experience off their profile", async () => {
+    const admin = await makeAdmin(api);
+    const therapist = await makeProfessional(api, admin);
+
+    assert.equal((await api.patch("/api/v1/professionals/me").set(therapist.auth).send({ yearsExperience: 6 })).status, 200);
+    assert.equal((await api.get(`/api/v1/professionals/${therapist.profileId}`)).body.yearsExperience, 6);
+    // the form sends null for an emptied box; leaving the field out keeps it
+    assert.equal((await api.patch("/api/v1/professionals/me").set(therapist.auth).send({ yearsExperience: null })).status, 200);
+    assert.equal((await api.get(`/api/v1/professionals/${therapist.profileId}`)).body.yearsExperience, undefined);
+    await api.patch("/api/v1/professionals/me").set(therapist.auth).send({ yearsExperience: 4 });
+    await api.patch("/api/v1/professionals/me").set(therapist.auth).send({ bio: "Listening first." });
+    assert.equal((await api.get(`/api/v1/professionals/${therapist.profileId}`)).body.yearsExperience, 4);
+});
+
 test("a professional's own meeting link is used when they set one, and is not public", async () => {
     const admin = await makeAdmin(api);
     const therapist = await makeProfessional(api, admin);

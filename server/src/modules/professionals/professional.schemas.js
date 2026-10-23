@@ -18,7 +18,8 @@ export const profileFields = {
     specialties: tags.optional(),
     languages: tags.optional(),
     location: z.string().trim().max(80).optional(),
-    yearsExperience: z.number().int().min(0).max(70).optional(),
+    // null (an emptied box) removes it; undefined is what unsets a field on save
+    yearsExperience: z.number().int().min(0).max(70).nullable().transform((value) => value ?? undefined).optional(),
     rate: z.object({ amount: z.number().min(0).max(1000000) }).optional(),
     sessionMinutes: z.number().int().min(15).max(180).optional(),
     availability: availability.optional(),
