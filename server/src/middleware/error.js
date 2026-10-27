@@ -30,6 +30,13 @@ export function errorHandler(err, req, res, next) {
         error = ApiError.badRequest("The request body is not valid JSON");
     } else if (err?.type === "entity.too.large") {
         error = new ApiError(413, "TOO_LARGE", "That is too large to send");
+    } else if (err?.expose && err.status >= 400 && err.status < 500) {
+        // Any other body the JSON reader could not read (a broken compressed
+        // body, an encoding or charset it doesn't know, an aborted request):
+        // the sender's problem, not the server's.
+        error = err.status === 415
+            ? new ApiError(415, "UNSUPPORTED_MEDIA_TYPE", "This request's body can't be read: it is in a format the server doesn't accept")
+            : ApiError.badRequest("This request's body can't be read. Please try again");
     }
 
     // Unexpected: keep the details in the log, and give the person a reference

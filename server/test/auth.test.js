@@ -16,6 +16,23 @@ test("the health check says which commit is running", async () => {
     assert.equal(health.body.commit, process.env.RAILWAY_GIT_COMMIT_SHA || null);
 });
 
+test("a request body that can't be read is the sender's error, not the server's", async () => {
+    const post = (headers, body) => {
+        const request = api.post("/api/v1/auth/login").set("Content-Type", "application/json");
+        for (const [name, value] of Object.entries(headers)) request.set(name, value);
+        return request.send(body);
+    };
+    const broken = await post({}, "{ not json");
+    assert.equal(broken.status, 400);
+    assert.equal(broken.body.error.code, "BAD_REQUEST");
+    // compressed, but not really: a broken or padded gzip stream
+    assert.equal((await post({ "Content-Encoding": "gzip" }, Buffer.from("this is not gzip at all"))).status, 400);
+    const encoding = await post({ "Content-Encoding": "compress" }, "{}");
+    assert.equal(encoding.status, 415);
+    assert.match(encoding.body.error.message, /can't be read/);
+    assert.equal((await post({}, JSON.stringify({ email: "x".repeat(200 * 1024) }))).status, 413);
+});
+
 test("signing up signs you in and never returns the password", async () => {
     const person = await signUp(api, { email: "Wanjiru@Example.com" });
     assert.ok(person.token);
