@@ -37,10 +37,13 @@ async function registerProfessional(req, res) {
         throw err;
     }
 
+    // Therapists and peer counsellors are reviewed once their certificate is in
     await sendMail({
         to: user.email,
         subject: "We received your Healing Hive application",
-        text: `Hello ${user.fullName},\n\nThank you for applying to join Healing Hive. We review every application before listing anyone, and we will email you as soon as there is a decision.\n\nYou can check or update your application any time:\n${env.clientUrl}/apply`,
+        text: application.type === "institution"
+            ? `Hello ${user.fullName},\n\nThank you for applying to join Healing Hive. We review every application before listing anyone, and we will email you as soon as there is a decision.\n\nYou can check or update your application any time:\n${env.clientUrl}/apply`
+            : `Hello ${user.fullName},\n\nThank you for applying to join Healing Hive. One step is left before we can review your application: upload your certificate (a PDF or a clear photo, up to 5 MB) from your practice page. We start the review as soon as it is in, and email you when there is a decision.\n\nUpload it, and set up your profile and hours, here:\n${env.clientUrl}/practice`,
     });
     res.status(201).json({ token: signToken(user), user });
 }

@@ -67,6 +67,8 @@ test("professionals sign up and apply in one step", async () => {
     assert.equal(created.body.user.accountType, "professional");
     assert.equal(created.body.user.role, "user");
     assert.match(lastMailTo(details.email).subject, /received your/);
+    // the one step left, and where to do it
+    assert.match(lastMailTo(details.email).text, /upload your certificate.*\/practice/s);
 
     const auth = { Authorization: `Bearer ${created.body.token}` };
     const mine = await api.get("/api/v1/professionals/me").set(auth);
