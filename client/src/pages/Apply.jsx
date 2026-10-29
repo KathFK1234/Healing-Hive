@@ -44,8 +44,8 @@ const Apply = () => {
               <Card className="bg-muted">Admin accounts can't apply as a professional. Use a separate account instead.</Card>
             )}
             {profile?.status === 'pending' && (
-              <Card className="mb-10 flex gap-4 border-transparent bg-honey-soft">
-                <Hourglass className="mt-1 h-6 w-6 shrink-0 text-honey-foreground dark:text-honey" aria-hidden="true" />
+              <Card className="mb-10 flex gap-4 border-transparent bg-primary-soft">
+                <Hourglass className="mt-1 h-6 w-6 shrink-0 text-primary" aria-hidden="true" />
                 <div>
                   <p className="text-lg font-bold">We're reviewing your application</p>
                   <p className="mt-1 text-muted-foreground">

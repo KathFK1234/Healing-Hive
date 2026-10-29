@@ -8,7 +8,6 @@ const base =
 
 const variants = {
   primary: 'bg-primary text-primary-foreground hover:bg-primary/90',
-  honey: 'bg-honey text-honey-foreground hover:bg-honey/90',
   outline: 'border border-border bg-card text-foreground hover:bg-muted',
   soft: 'bg-primary-soft text-primary hover:bg-primary-soft/70',
   ghost: 'text-foreground hover:bg-muted',

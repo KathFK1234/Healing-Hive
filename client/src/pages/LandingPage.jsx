@@ -65,7 +65,7 @@ const LandingPage = () => {
         <ol className="mt-14 grid gap-12 md:grid-cols-3">
           {steps.map((step, index) => (
             <li key={step.title} className="text-center">
-              <span className="mx-auto mb-5 flex h-12 w-12 items-center justify-center rounded-full bg-honey text-lg font-bold text-honey-foreground">{index + 1}</span>
+              <span className="mx-auto mb-5 flex h-12 w-12 items-center justify-center rounded-full bg-primary-soft text-lg font-bold text-primary">{index + 1}</span>
               <h3 className="text-xl">{step.title}</h3>
               <p className="mt-2 text-muted-foreground">{step.text}</p>
             </li>
@@ -73,9 +73,9 @@ const LandingPage = () => {
         </ol>
       </section>
 
-      <section className="bg-honey-soft py-20">
+      <section className="bg-muted py-20">
         <figure className="container max-w-2xl text-center">
-          <figcaption className="mb-5 flex items-center justify-center gap-2 font-semibold text-honey-foreground dark:text-honey">
+          <figcaption className="mb-5 flex items-center justify-center gap-2 font-semibold text-primary">
             <Lightbulb className="h-5 w-5" aria-hidden="true" /> Today's nugget
           </figcaption>
           <h2 className="text-2xl sm:text-3xl">{nugget.data?.title || "You're allowed to rest"}</h2>

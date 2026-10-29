@@ -149,7 +149,7 @@ const Home = () => {
             <h2 id="nugget-heading" className="text-xl">Today's nugget</h2>
             <Link to="/nuggets" className="font-semibold text-primary hover:underline">More nuggets</Link>
           </div>
-          <Card className="border-transparent bg-honey-soft">
+          <Card className="border-transparent bg-muted">
             <p className="text-xl font-bold">{nugget.data.title}</p>
             <p className="mt-3 text-foreground/80">{nugget.data.content}</p>
           </Card>

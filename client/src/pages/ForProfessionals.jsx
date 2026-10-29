@@ -48,7 +48,7 @@ const ForProfessionals = () => {
         <ol className="mt-6 space-y-6">
           {steps.map((step, index) => (
             <li key={step.title} className="flex gap-4">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-honey font-bold text-honey-foreground">{index + 1}</span>
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-soft font-bold text-primary">{index + 1}</span>
               <div>
                 <h3 className="text-lg">{step.title}</h3>
                 <p className="text-muted-foreground">{step.text}</p>

@@ -9,7 +9,7 @@ import { ServiceBanner } from '@/components/layout/ServiceNotice';
 // The frame around the sign in and sign up forms.
 export function AuthShell({ title, description, children, footer, wide = false }) {
   return (
-    <div className="flex min-h-screen flex-col bg-honey-soft/50">
+    <div className="flex min-h-screen flex-col bg-muted/60">
       <ServiceBanner />
       <header className="container flex h-20 items-center justify-between">
         <Link to="/" className="inline-flex items-center gap-1 rounded-lg text-sm font-semibold text-muted-foreground hover:text-foreground">

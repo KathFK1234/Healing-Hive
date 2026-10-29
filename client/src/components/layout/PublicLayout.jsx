@@ -43,7 +43,7 @@ export function PublicLayout({ children }) {
             <HelpButton className="max-sm:hidden" />
             <ThemeToggle />
             <Button to="/login" variant="outline" size="sm" className="max-sm:hidden">Sign in</Button>
-            <Button to="/signup" variant="honey" size="sm" className="max-sm:hidden">Get started</Button>
+            <Button to="/signup" size="sm" className="max-sm:hidden">Get started</Button>
             <button
               type="button"
               className="inline-flex h-10 w-10 items-center justify-center rounded-lg hover:bg-muted xl:hidden"
@@ -63,7 +63,7 @@ export function PublicLayout({ children }) {
               {links.map((link) => <NavLink key={link.to} to={link.to} className={linkClass} onClick={close}>{link.label}</NavLink>)}
               <div className="mt-2 grid grid-cols-2 gap-2 sm:hidden">
                 <Button to="/login" variant="outline" onClick={close}>Sign in</Button>
-                <Button to="/signup" variant="honey" onClick={close}>Get started</Button>
+                <Button to="/signup" onClick={close}>Get started</Button>
               </div>
               <HelpButton className="mt-2 justify-center sm:hidden" />
             </div>

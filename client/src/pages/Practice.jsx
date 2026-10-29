@@ -78,9 +78,9 @@ function Invitation({ profile }) {
   });
 
   return (
-    <Card className="mb-8 border-transparent bg-honey-soft">
+    <Card className="mb-8 border-transparent bg-primary-soft">
       <div className="flex items-start gap-4">
-        <Building2 className="mt-1 h-6 w-6 shrink-0 text-honey-foreground dark:text-honey" aria-hidden="true" />
+        <Building2 className="mt-1 h-6 w-6 shrink-0 text-primary" aria-hidden="true" />
         <div>
           <p className="text-lg font-bold">{profile.institution?.organisationName} invited you to join them</p>
           <p className="mt-1 text-muted-foreground">
