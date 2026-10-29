@@ -1,6 +1,6 @@
 import { test, before, after, beforeEach } from "node:test";
 import assert from "node:assert/strict";
-import { start, stop, reset, signUp, makeAdmin, makeProfessional } from "./setup.js";
+import { start, stop, reset, signUp, makeAdmin, makeProfessional, uploadCertificate } from "./setup.js";
 
 let api;
 before(async () => { api = await start(); });
@@ -24,7 +24,13 @@ test("a professional is only listed after an admin approves them", async () => {
     const selfApprove = await api.patch(`/api/v1/admin/applications/${application.body._id}`).set(applicant.auth).send({ status: "approved" });
     assert.equal(selfApprove.status, 403);
 
-    await api.patch(`/api/v1/admin/applications/${application.body._id}`).set(admin.auth).send({ status: "approved" });
+    // not without a certificate to check
+    const early = await api.patch(`/api/v1/admin/applications/${application.body._id}`).set(admin.auth).send({ status: "approved" });
+    assert.equal(early.status, 400);
+    assert.match(early.body.error.message, /no certificate/);
+
+    await uploadCertificate(api, applicant);
+    assert.equal((await api.patch(`/api/v1/admin/applications/${application.body._id}`).set(admin.auth).send({ status: "approved" })).status, 200);
     directory = await api.get("/api/v1/professionals");
     assert.equal(directory.body.total, 1);
     assert.equal(directory.body.items[0].licenseNumber, undefined);

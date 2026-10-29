@@ -119,6 +119,7 @@ export const DEMO_ACCOUNTS = {
     client: "client@healinghive.local",
     therapist: "therapist@healinghive.local",
     institution: "institution@healinghive.local",
+    applicant: "applicant@healinghive.local",
 };
 
 const demoProfessionals = [
@@ -234,11 +235,27 @@ async function seedDemo() {
         console.warn(`Demo data: refused. The database is on ${host}, not this machine, and the sample accounts share a public password.`);
         return;
     }
+    const password = await bcrypt.hash(DEMO_PASSWORD, 12);
+
+    // A peer counsellor who has applied but not yet uploaded a certificate, to
+    // show the practice page before verification. Added to older demo
+    // databases too.
+    if (!await User.exists({ email: DEMO_ACCOUNTS.applicant })) {
+        const applicant = await User.create({
+            fullName: "Brian Mwangi (sample)", email: DEMO_ACCOUNTS.applicant, password,
+            accountType: "professional", phone: "0700 000 002",
+        });
+        await Professional.create({
+            user: applicant._id, type: "peer", status: "pending", title: "Peer Counsellor", location: "Nairobi",
+            specialties: ["Stress Management"], languages: ["English", "Swahili"], availability: weekdays,
+            bio: "A sample applicant, used to show the practice page while an application is being reviewed.",
+        });
+    }
+
     if (await User.exists({ email: DEMO_ACCOUNTS.client })) {
         console.log("Demo data: already in place");
         return;
     }
-    const password = await bcrypt.hash(DEMO_PASSWORD, 12);
 
     // Professionals
     const professionals = {};

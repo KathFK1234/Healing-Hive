@@ -11,6 +11,8 @@ export function homePath(user) {
   if (user.role === 'admin') return '/admin';
   if (isPractitioner(user)) return '/practice';
   if (user.role === 'institution') return '/institution';
-  if (isApplicant(user)) return '/apply';
+  // Therapists and peer counsellors see their practice (in preview) while they
+  // are verified; Practice sends an institution's application to /apply
+  if (isApplicant(user)) return '/practice';
   return '/home';
 }

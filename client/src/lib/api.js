@@ -24,17 +24,21 @@ export const tokenStore = {
   },
 };
 
-async function request(method, path, body) {
+// `file` sends a file as the body itself (with its type and name); `asFile`
+// returns a successful answer as a Blob instead of JSON.
+async function request(method, path, body, { file, fileType, asFile } = {}) {
   const token = tokenStore.get();
   let response;
   try {
     response = await fetch(`${BASE_URL}${path}`, {
       method,
       headers: {
-        ...(body !== undefined && { 'Content-Type': 'application/json' }),
+        ...(file
+          ? { 'Content-Type': fileType || file.type, 'X-Filename': encodeURIComponent(file.name) }
+          : body !== undefined && { 'Content-Type': 'application/json' }),
         ...(token && { Authorization: `Bearer ${token}` }),
       },
-      body: body !== undefined ? JSON.stringify(body) : undefined,
+      body: file ?? (body !== undefined ? JSON.stringify(body) : undefined),
     });
   } catch (error) {
     const failure = errorForNoAnswer(typeof navigator !== 'undefined' && navigator.onLine === false);
@@ -46,8 +50,14 @@ async function request(method, path, body) {
     throw failure;
   }
 
-  const data = await response.json().catch(() => null);
   const contentType = response.headers.get('content-type') || '';
+  // A file from the API. A web page instead means some other site answered.
+  if (asFile && response.ok && !contentType.includes('text/html')) {
+    outage.set(false);
+    return response.blob();
+  }
+
+  const data = await response.json().catch(() => null);
   const failure = errorForAnswer({ status: response.status, ok: response.ok, contentType, data });
   outage.set(isOutage(failure));
   if (!failure) return data;
@@ -80,4 +90,18 @@ export const api = {
   put: (path, body) => request('PUT', path, body ?? {}),
   patch: (path, body) => request('PATCH', path, body ?? {}),
   delete: (path) => request('DELETE', path),
+  // Sends a file as it is, for example a certificate
+  upload: (path, file, fileType) => request('PUT', path, undefined, { file, fileType }),
+  // Fetches a file the API sends back (with the sign-in token, which a plain link can't carry)
+  download: (path) => request('GET', path, undefined, { asFile: true }),
 };
+
+// Hands a downloaded file to the browser to save
+export function saveFile(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const link = Object.assign(document.createElement('a'), { href: url, download: filename });
+  document.body.append(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
+}

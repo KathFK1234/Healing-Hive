@@ -3,13 +3,14 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Hourglass, CircleAlert } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
-import { homePath, isPractitioner } from '@/lib/roles';
+import { homePath, isApplicant, isPractitioner } from '@/lib/roles';
 import { Card, PageHeader, QueryState, useToast } from '@/components/ui';
 import { ProfessionalForm } from '@/components/ProfessionalForm';
 import { usePageTitle } from '@/hooks/usePageTitle';
 
-// Where an applicant checks on, and can update, their application. Also where
-// someone with a personal account applies from.
+// Where someone with a personal account applies from, and where an
+// institution checks on its application. A therapist or peer counsellor who
+// has applied follows theirs on My practice instead.
 const Apply = () => {
   usePageTitle('Your application');
   const { user, retry } = useAuth();
@@ -33,7 +34,7 @@ const Apply = () => {
   return (
     <div className="mx-auto max-w-2xl">
       <QueryState query={query}>
-        {(profile) => (
+        {(profile) => isApplicant(user) && profile && profile.type !== 'institution' ? <Navigate to="/practice" replace /> : (
           <>
             <PageHeader
               title={profile ? 'Your application' : 'Apply as a professional'}

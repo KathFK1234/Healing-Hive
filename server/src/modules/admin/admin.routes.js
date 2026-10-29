@@ -11,6 +11,8 @@ import env from "../../config/env.js";
 import { sendMail } from "../../utils/mailer.js";
 import { cancelMeeting } from "../sessions/meeting.js";
 import { when } from "../sessions/session.controller.js";
+import Certificate from "../professionals/certificate.model.js";
+import { certificateSummary, sendCertificate } from "../professionals/certificate.js";
 
 const router = express.Router();
 
@@ -79,13 +81,23 @@ router.get("/applications", validate({ query: listSchema }), async (req, res) =>
         .sort({ updatedAt: -1 })
         .limit(100)
         .populate("user", "fullName email phone");
-    res.json(applications);
+    const certificates = await Certificate.find({ professional: { $in: applications.map((application) => application._id) } });
+    const byProfessional = new Map(certificates.map((certificate) => [certificate.professional.toString(), certificateSummary(certificate)]));
+    res.json(applications.map((application) => ({ ...application.toJSON(), certificate: byProfessional.get(application._id.toString()) || null })));
+});
+
+router.get("/applications/:id/certificate", validateId, async (req, res) => {
+    await sendCertificate(res, req.params.id);
 });
 
 // Approving an application is the only way an account becomes a professional.
 router.patch("/applications/:id", validateId, validate({ body: reviewSchema }), async (req, res) => {
     const application = await Professional.findById(req.params.id);
     if (!application) throw ApiError.notFound("Application");
+    // A therapist or peer counsellor is listed only once their certificate has been seen
+    if (req.body.status === "approved" && application.type !== "institution" && !(await Certificate.exists({ professional: application._id }))) {
+        throw ApiError.badRequest("This application has no certificate yet, so it can't be approved. Ask them to upload one from their practice page");
+    }
 
     const wasListed = application.status === "approved";
     application.status = req.body.status;

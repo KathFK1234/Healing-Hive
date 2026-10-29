@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ClipboardCheck, Lightbulb, Search, Users } from 'lucide-react';
-import { api } from '@/lib/api';
+import { ClipboardCheck, Download, Lightbulb, Search, Users } from 'lucide-react';
+import { api, saveFile } from '@/lib/api';
+import { formatSize } from '@/lib/certificate';
 import { DAY_SHORT, formatClock, formatDate, formatMoney } from '@/lib/format';
 import { NUGGET_TYPES, PROFESSIONAL_TYPES } from '@/lib/options';
 import { Avatar, Badge, Button, Card, Chip, EmptyState, Field, FormError, Input, Modal, PageHeader, QueryState, StatTiles, Textarea, useToast } from '@/components/ui';
@@ -69,6 +70,12 @@ function Applications() {
     onError: (error) => toast(error.message, 'error'),
   });
 
+  const download = useMutation({
+    mutationFn: (application) => api.download(`/admin/applications/${application._id}/certificate`),
+    onSuccess: (blob, application) => saveFile(blob, application.certificate.filename),
+    onError: (error) => toast(error.message, 'error'),
+  });
+
   return (
     <>
       <div className="mb-4 flex gap-2" role="group" aria-label="Application status">
@@ -82,7 +89,10 @@ function Applications() {
           <EmptyState icon={ClipboardCheck} title={status === 'pending' ? 'No applications waiting' : `No ${status} applications`} />
         ) : (
           <ul className="space-y-5">
-            {applications.map((application) => (
+            {applications.map((application) => {
+              // A therapist or peer counsellor is approved only with a certificate to check
+              const needsCertificate = application.type !== 'institution' && !application.certificate;
+              return (
               <li key={application._id}>
                 <Card>
                   <div className="flex flex-wrap items-start gap-3">
@@ -100,7 +110,15 @@ function Applications() {
                     {status !== 'approved' && (
                       <div className="flex gap-2">
                         {status === 'pending' && <Button variant="outline" size="sm" onClick={() => { setNote(''); setRejecting(application); }}>Send back</Button>}
-                        <Button size="sm" loading={review.isPending && review.variables?.application._id === application._id} onClick={() => review.mutate({ application, decision: 'approved' })}>Approve</Button>
+                        <Button
+                          size="sm"
+                          disabled={needsCertificate}
+                          aria-describedby={needsCertificate ? `certificate-${application._id}` : undefined}
+                          loading={review.isPending && review.variables?.application._id === application._id}
+                          onClick={() => review.mutate({ application, decision: 'approved' })}
+                        >
+                          Approve
+                        </Button>
                       </div>
                     )}
                     {status === 'approved' && <Button variant="outline" size="sm" onClick={() => { setNote(''); setRejecting(application); }}>Remove from directory</Button>}
@@ -110,6 +128,18 @@ function Applications() {
                     <Detail label="Location">{application.location || 'Not given'}</Detail>
                     {application.type !== 'institution' && (
                       <>
+                        <Detail label="Certificate" wide>
+                          {application.certificate ? (
+                            <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                              <span className="wrap-break-word">{application.certificate.filename} · {formatSize(application.certificate.size)} · {formatDate(application.certificate.uploadedAt)}</span>
+                              <Button variant="outline" size="sm" loading={download.isPending && download.variables?._id === application._id} onClick={() => download.mutate(application)}>
+                                <Download className="h-4 w-4" aria-hidden="true" /> Download
+                              </Button>
+                            </span>
+                          ) : (
+                            <span id={`certificate-${application._id}`}>Not uploaded yet, so this can't be approved. They upload it from their practice page.</span>
+                          )}
+                        </Detail>
                         <Detail label="Licence number">{application.licenseNumber || 'Not given'}</Detail>
                         <Detail label="Experience">{application.yearsExperience != null ? `${application.yearsExperience} years` : 'Not given'}</Detail>
                         <Detail label="Rate">{formatMoney(application.rate?.amount)} for {application.sessionMinutes} min</Detail>
@@ -127,7 +157,8 @@ function Applications() {
                   </dl>
                 </Card>
               </li>
-            ))}
+              );
+            })}
           </ul>
         )}
       </QueryState>
@@ -152,7 +183,7 @@ function Applications() {
       >
         <p className="mb-4 text-sm text-muted-foreground">
           {removing
-            ? 'They disappear from the directory and lose their practice page. Their upcoming sessions, and any under way, are cancelled and each client is emailed. They can update their application and send it again.'
+            ? 'They disappear from the directory and their practice page goes back to its preview. Their upcoming sessions, and any under way, are cancelled and each client is emailed. They can update their application and send it again.'
             : 'They will not be listed in the directory, and can update their application and send it again.'}
         </p>
         <Field label={removing ? 'Why are they being removed?' : 'What needs to change?'} hint="The applicant will see this.">

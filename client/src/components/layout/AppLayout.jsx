@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import classNames from 'classnames';
 import {
   House, HeartHandshake, CalendarDays, MessageCircle, NotebookPen, Activity, Lightbulb, Bell, Ticket,
   Stethoscope, ShieldCheck, Settings, LogOut, Ellipsis, Building2, ClipboardList,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { api } from '@/lib/api';
 import { homePath, isApplicant, isPractitioner } from '@/lib/roles';
 import { Avatar, Modal } from '@/components/ui';
 import { Logo } from './Logo';
@@ -23,7 +25,7 @@ const learn = {
 
 // The menu is short and grouped, and depends on who is signed in: someone
 // looking for support, a professional, an institution or an admin.
-function menuFor(user) {
+function menuFor(user, applicationType) {
   if (user.role === 'admin') {
     return [
       { items: [{ to: '/admin', label: 'Admin', icon: ShieldCheck }, { to: '/therapists', label: 'Directory', icon: HeartHandshake }] },
@@ -37,7 +39,12 @@ function menuFor(user) {
     return [{ items: [{ to: '/institution', label: 'My institution', icon: Building2 }] }, learn];
   }
   if (isApplicant(user)) {
-    return [{ items: [{ to: '/apply', label: 'My application', icon: ClipboardList }] }, learn];
+    // A therapist or peer counsellor waiting to be verified already has their
+    // practice page; an institution's application has its own page
+    const item = applicationType === 'institution'
+      ? { to: '/apply', label: 'My application', icon: ClipboardList }
+      : { to: '/practice', label: 'My practice', icon: Stethoscope };
+    return [{ items: [item] }, learn];
   }
   return [
     { items: [{ to: '/home', label: 'Home', icon: House }] },
@@ -83,7 +90,8 @@ export function AppLayout({ children }) {
   const { user, signOut } = useAuth();
   const [moreOpen, setMoreOpen] = useState(false);
 
-  const groups = menuFor(user);
+  const application = useQuery({ queryKey: ['professionals', 'me'], queryFn: () => api.get('/professionals/me'), enabled: isApplicant(user) });
+  const groups = menuFor(user, application.data?.type);
   const all = groups.flatMap((group) => group.items);
   const isClient = all.some((item) => item.to === '/home');
   const tabs = isClient ? CLIENT_TABS.map((to) => all.find((item) => item.to === to)) : all.slice(0, 4);

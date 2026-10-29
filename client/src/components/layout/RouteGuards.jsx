@@ -18,15 +18,16 @@ function AuthGate({ children }) {
 }
 
 // Pages that need an account. Sends people to sign in, then back to where they
-// were going. `roles` limits a page to certain kinds of account.
-export function Protected({ roles }) {
+// were going. `roles` limits a page to certain kinds of account; `allow` does
+// the same with a test of the account, for rules a role alone can't say.
+export function Protected({ roles, allow }) {
   const { user } = useAuth();
   const location = useLocation();
   return (
     <AuthGate>
       {!user
         ? <Navigate to="/login" replace state={{ from: location.pathname + location.search }} />
-        : roles && !roles.includes(user.role)
+        : (roles && !roles.includes(user.role)) || (allow && !allow(user))
           ? <Navigate to={homePath(user)} replace />
           : <AppLayout><Outlet /></AppLayout>}
     </AuthGate>

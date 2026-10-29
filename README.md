@@ -11,9 +11,9 @@ This is the second version of the [MindConnect](https://github.com/derick-machar
 | For | Features |
 | --- | --- |
 | People looking for support | Directory of verified therapists and peer counsellors, booking, video sessions, ratings, daily mood check-ins, private journal, AI companion, nuggets, reminders, events |
-| Therapists and peer counsellors | Their own sign-up and verification, public profile, weekly hours, Google Calendar and Meet, accepting requests, private session notes, writing nuggets, hosting events |
+| Therapists and peer counsellors | Their own sign-up, a practice page from day one (in preview until verified), certificate upload for verification, public profile, weekly hours, Google Calendar and Meet, accepting requests, private session notes, writing nuggets, hosting events |
 | Institutions | Their own sign-up, inviting verified professionals, a dashboard of sessions, ratings and value per team member |
-| Admins | Reviewing applications, reviewing and publishing nuggets, finding anyone who has signed up, platform numbers |
+| Admins | Reviewing applications and certificates, reviewing and publishing nuggets, finding anyone who has signed up, platform numbers |
 
 A **Get help now** button with Kenyan crisis lines is on every page.
 
@@ -39,6 +39,7 @@ The first run creates `server/.env` for you and fills the database with starter 
 | Someone looking for support | `client@healinghive.local` | `healing-hive-demo` |
 | A therapist | `therapist@healinghive.local` | `healing-hive-demo` |
 | An institution | `institution@healinghive.local` | `healing-hive-demo` |
+| A peer counsellor waiting to be verified | `applicant@healinghive.local` | `healing-hive-demo` |
 | The admin | `admin@healinghive.local` | in `server/.env` (`ADMIN_PASSWORD`) |
 
 To start again from a clean database, stop `npm run dev` and delete the `server/.data` folder.
@@ -114,9 +115,9 @@ To add a feature: create a folder in `server/src/modules/`, mount its routes in 
 ### Rules the code relies on
 
 - **Input is validated before it reaches a controller.** Routes declare a schema, and only fields in the schema get through. This is what stops someone setting their own `role`, or the owner of a record, from the request body.
-- **Roles change in one place.** Everyone starts with the role `user`, including professionals who have applied. An account becomes `therapist`, `peer` or `institution` only when an admin approves its application.
+- **Roles change in one place.** Everyone starts with the role `user`, including professionals who have applied. An account becomes `therapist`, `peer` or `institution` only when an admin approves its application, and a therapist or peer counsellor only once they have uploaded a certificate (PDF, JPEG or PNG, up to 5 MB, checked by its first bytes). Until then their practice page is a preview: they can set up their profile and hours, but are not listed and can't take bookings.
 - **Each kind of account has its own home and menu** (`client/src/lib/roles.js`): people looking for support, applicants, practising professionals, institutions and admins.
-- **Personal data is scoped to its owner in the query.** Journal entries, mood check-ins, reminders and AI conversations have no route for anyone else, admins included. Institutions see counts for team members who accepted their invitation, never client names or notes. Reviews are public without names.
+- **Personal data is scoped to its owner in the query.** Journal entries, mood check-ins, reminders and AI conversations have no route for anyone else, admins included. Institutions see counts for team members who accepted their invitation, never client names or notes. Reviews are public without names. A certificate can be downloaded only by its professional and admins, always as a download and never cached; it is stored in its own collection, apart from the profile.
 - **The database prevents double-booking**, with a unique index on a professional's time slot, so two people booking at the same instant cannot both succeed. A request holds its time until it is answered, so one person can have only 3 waiting with the same professional and 10 in all.
 - **Times are East Africa Time** (UTC+3, no daylight saving) for working hours, slots and reminders.
 - **Colours come from design tokens** in `client/src/index.css`, with light and dark values. Use the Tailwind names (`bg-primary`, `text-muted-foreground`, `bg-honey-soft`), not hex values.

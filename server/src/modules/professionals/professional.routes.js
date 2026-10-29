@@ -4,6 +4,7 @@ import professionalController from "./professional.controller.js";
 import { authenticate, requireRole } from "../../middleware/auth.js";
 import { validate, validateId } from "../../middleware/validate.js";
 import { applySchema, updateSchema } from "./professional.schemas.js";
+import { readCertificate } from "./certificate.js";
 
 const router = express.Router();
 
@@ -21,6 +22,9 @@ const listSchema = z.object({
 router.get("/me", authenticate, professionalController.getMyProfile);
 router.post("/apply", authenticate, requireRole("user"), validate({ body: applySchema }), professionalController.apply);
 router.patch("/me", authenticate, requireRole("therapist", "peer", "institution"), validate({ body: updateSchema }), professionalController.updateMyProfile);
+// The certificate that verifies a therapist or peer counsellor: only they and admins can read it
+router.put("/me/certificate", authenticate, readCertificate, professionalController.uploadCertificate);
+router.get("/me/certificate", authenticate, professionalController.downloadMyCertificate);
 
 // Answering an institution's invitation, or leaving one
 router.post("/me/institution", authenticate, requireRole("therapist", "peer"), validate({ body: z.object({ accept: z.boolean() }) }), professionalController.answerInvitation);

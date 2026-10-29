@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Navigate, useSearchParams } from 'react-router-dom';
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Building2, CalendarCheck, CalendarDays, ExternalLink, Inbox, NotebookPen } from 'lucide-react';
+import { Building2, CalendarCheck, CalendarDays, ExternalLink, FileText, Inbox, NotebookPen } from 'lucide-react';
 import { api } from '@/lib/api';
 import { formatDateTime } from '@/lib/format';
 import { isUpcoming, isLive } from '@/lib/sessions';
 import { Button, Card, Chip, ConfirmModal, EmptyState, Field, FormError, Modal, PageHeader, QueryState, Section, Textarea, useToast } from '@/components/ui';
 import { ProfessionalForm } from '@/components/ProfessionalForm';
+import { CertificateFile, VerificationSteps } from '@/components/Verification';
+import { useAuth } from '@/context/AuthContext';
 import { RatingSummary } from '@/components/Stars';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { JoinButton, SessionActions, SessionCard } from './Sessions';
@@ -41,27 +43,69 @@ const Practice = () => {
     setParams({}, { replace: true });
   }, [params, setParams, toast]);
 
+  return <QueryState query={profile}>{(data) => <PracticeFor profile={data} tab={tab} setTab={setTab} />}</QueryState>;
+};
+
+function PracticeFor({ profile, tab, setTab }) {
+  // An institution's application, or none yet, has its own page
+  if (!profile || profile.type === 'institution') return <Navigate to="/apply" replace />;
+  if (profile.status !== 'approved') return <Preview profile={profile} tab={tab} setTab={setTab} />;
   return (
     <>
       <PageHeader
         title="My practice"
-        description={profile.data && <RatingSummary average={profile.data.ratingAverage} count={profile.data.ratingCount} />}
-        action={profile.data && (
-          <Button to={`/therapists/${profile.data._id}`} variant="outline">See my public profile <ExternalLink className="h-4 w-4" aria-hidden="true" /></Button>
-        )}
+        description={<RatingSummary average={profile.ratingAverage} count={profile.ratingCount} />}
+        action={<Button to={`/therapists/${profile._id}`} variant="outline">See my public profile <ExternalLink className="h-4 w-4" aria-hidden="true" /></Button>}
       />
 
-      {profile.data?.institutionStatus === 'invited' && <Invitation profile={profile.data} />}
+      {profile.institutionStatus === 'invited' && <Invitation profile={profile} />}
 
       <div className="mb-8 flex gap-2" role="group" aria-label="Section">
         <Chip selected={tab === 'sessions'} onClick={() => setTab('sessions')}>Sessions</Chip>
         <Chip selected={tab === 'profile'} onClick={() => setTab('profile')}>Profile, hours and calendar</Chip>
       </div>
 
-      {tab === 'sessions' ? <AssignedSessions /> : <QueryState query={profile}>{(data) => <EditProfile profile={data} />}</QueryState>}
+      {tab === 'sessions' ? <AssignedSessions /> : <EditProfile profile={profile} />}
     </>
   );
-};
+}
+
+// Before verification: the same page, with what is left to do on top. The
+// profile can be set up, but nothing that involves clients works yet.
+function Preview({ profile, tab, setTab }) {
+  const { user } = useAuth();
+  const toast = useToast();
+  const queryClient = useQueryClient();
+  const save = useMutation({
+    mutationFn: (values) => api.post('/professionals/apply', values),
+    onSuccess: (updated) => {
+      queryClient.setQueryData(['professionals', 'me'], { ...updated, certificate: profile.certificate });
+      toast(profile.status === 'rejected' ? 'Changes sent to our team' : 'Details saved');
+    },
+  });
+
+  return (
+    <>
+      <PageHeader title="My practice" description="Almost there. Here is what's left before people can book you." />
+      <VerificationSteps profile={profile} email={user.email} />
+
+      <div className="mb-8 flex gap-2" role="group" aria-label="Section">
+        <Chip selected={tab === 'sessions'} onClick={() => setTab('sessions')}>Sessions</Chip>
+        <Chip selected={tab === 'profile'} onClick={() => setTab('profile')}>Profile and hours</Chip>
+      </div>
+
+      {tab === 'sessions' ? (
+        <EmptyState icon={Inbox} title="Session requests will appear here">
+          Once you're verified, people can book the times you set under Profile and hours, and you accept or decline each request here.
+        </EmptyState>
+      ) : (
+        <Card>
+          <ProfessionalForm key={profile.updatedAt} profile={profile} mode="apply" type={profile.type} mutation={save} submitLabel="Save details" />
+        </Card>
+      )}
+    </>
+  );
+}
 
 // An institution has asked this professional to join. Nothing is shared
 // until they say yes.
@@ -362,10 +406,16 @@ function EditProfile({ profile }) {
     },
   });
 
-  if (!profile) return <EmptyState title="No profile found">Contact support so we can set your profile up.</EmptyState>;
   return (
     <>
       <GoogleCalendar />
+      {profile.certificate && (
+        <Card className="mb-8">
+          <h2 className="flex items-center gap-2 text-lg"><FileText className="h-5 w-5 text-primary" aria-hidden="true" /> Your certificate</h2>
+          <p className="mb-4 mt-1 text-muted-foreground">Checked when you were approved. To change it, contact the Healing Hive team.</p>
+          <CertificateFile profile={profile} />
+        </Card>
+      )}
       {profile.institutionStatus === 'active' && (
         <Card className="mb-8 flex flex-wrap items-center justify-between gap-4">
           <p className="flex items-center gap-3">

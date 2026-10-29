@@ -3,6 +3,7 @@ import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Spinner } from '@/components/ui';
 import { Protected, Open, GuestOnly } from '@/components/layout/RouteGuards';
 import { PageErrorBoundary } from '@/components/layout/PageErrorBoundary';
+import { isApplicant, isPractitioner } from '@/lib/roles';
 
 // Each page is loaded when first visited, so the first screen stays small as
 // the app grows.
@@ -79,7 +80,8 @@ const App = () => {
             <Route path="/apply" element={<Apply />} />
           </Route>
 
-          <Route element={<Protected roles={['therapist', 'peer']} />}>
+          {/* Applicants too: they see their practice in preview until verified */}
+          <Route element={<Protected allow={(user) => isPractitioner(user) || isApplicant(user)} />}>
             <Route path="/practice" element={<Practice />} />
           </Route>
 

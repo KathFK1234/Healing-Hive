@@ -29,10 +29,11 @@ if (process.env.MONGO_URI !== LOCAL_DB_URI) {
     await seed({ demo: true });
 
     console.log(`
-Sample accounts to explore with (password for all three: ${DEMO_PASSWORD})
+Sample accounts to explore with (password for all of them: ${DEMO_PASSWORD})
   Looking for support   ${DEMO_ACCOUNTS.client}
   Therapist             ${DEMO_ACCOUNTS.therapist}
   Institution           ${DEMO_ACCOUNTS.institution}
+  Waiting for review    ${DEMO_ACCOUNTS.applicant}
 Your admin account is ${process.env.ADMIN_EMAIL || "not set"}; its password is in server/.env
 `);
 

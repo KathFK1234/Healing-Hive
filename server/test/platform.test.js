@@ -1,7 +1,7 @@
 import { test, before, after, beforeEach } from "node:test";
 import assert from "node:assert/strict";
 import mongoose from "mongoose";
-import { start, stop, reset, signUp, makeAdmin, makeProfessional } from "./setup.js";
+import { start, stop, reset, signUp, makeAdmin, makeProfessional, uploadCertificate, PDF } from "./setup.js";
 
 const { outbox } = await import("../src/utils/mailer.js");
 const { openSlots } = await import("../src/modules/professionals/slots.js");
@@ -72,13 +72,72 @@ test("professionals sign up and apply in one step", async () => {
     const mine = await api.get("/api/v1/professionals/me").set(auth);
     assert.equal(mine.body.status, "pending");
     assert.equal(mine.body.licenseNumber, "KCPA-777");
+    assert.equal(mine.body.certificate, null);
 
+    await uploadCertificate(api, { auth });
     await api.patch(`/api/v1/admin/applications/${mine.body._id}`).set(admin.auth).send({ status: "approved" });
     assert.match(lastMailTo(details.email).subject, /approved/);
     assert.equal((await api.get("/api/v1/auth/me").set(auth)).body.role, "therapist");
 
     // ordinary sign-up still makes a client account
     assert.equal((await signUp(api)).user.accountType, "client");
+});
+
+test("a certificate is private to its professional and admins, and only real PDF, JPEG or PNG files are taken", async () => {
+    const admin = await makeAdmin(api);
+    const applicant = await signUp(api);
+    const other = await signUp(api);
+    const application = (await api.post("/api/v1/professionals/apply").set(applicant.auth).send({ type: "peer" })).body;
+    const put = (person, body, contentType, filename = "cert.pdf") => api.put("/api/v1/professionals/me/certificate").set(person.auth)
+        .set("Content-Type", contentType).set("X-Filename", encodeURIComponent(filename)).send(body);
+
+    // only the three kinds of file, and only when they really are that kind
+    assert.equal((await put(applicant, Buffer.from("just text"), "text/plain")).status, 415);
+    assert.equal((await put(applicant, Buffer.from("MZ not a pdf at all"), "application/pdf")).status, 400);
+    assert.equal((await put(applicant, Buffer.from("%PDF-1.4"), "image/png")).status, 400);
+    assert.equal((await put(applicant, Buffer.alloc(5 * 1024 * 1024 + 1, 0x25), "application/pdf")).status, 413);
+    // someone without an application has nothing to attach it to
+    assert.equal((await put(other, PDF, "application/pdf")).status, 404);
+
+    const png = Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), Buffer.from("rest of the image")]);
+    const saved = await put(applicant, png, "image/png", "../../My Certificate \"2026\".png");
+    assert.equal(saved.status, 200);
+    assert.deepEqual([saved.body.filename, saved.body.contentType, saved.body.size], ["My Certificate 2026.png", "image/png", png.length]);
+    // a second upload replaces the first
+    await uploadCertificate(api, applicant);
+    assert.equal((await api.get("/api/v1/professionals/me").set(applicant.auth)).body.certificate.filename, "certificate.pdf");
+
+    // the owner and admins can download it, as a download; nobody else can
+    const mine = await api.get("/api/v1/professionals/me/certificate").set(applicant.auth).buffer(true).parse((res, done) => { const parts = []; res.on("data", (part) => parts.push(part)); res.on("end", () => done(null, Buffer.concat(parts))); });
+    assert.equal(mine.status, 200);
+    assert.ok(mine.body.equals(PDF));
+    assert.match(mine.headers["content-disposition"], /^attachment;/);
+    assert.equal(mine.headers["cache-control"], "private, no-store");
+    assert.equal((await api.get(`/api/v1/admin/applications/${application._id}/certificate`).set(admin.auth)).status, 200);
+    assert.equal((await api.get(`/api/v1/admin/applications/${application._id}/certificate`).set(other.auth)).status, 403);
+    assert.equal((await api.get("/api/v1/professionals/me/certificate").set(other.auth)).status, 404);
+    assert.equal((await api.get(`/api/v1/admin/applications/${application._id}/certificate`)).status, 401);
+
+    // the admin's list says there is one, without sending the file
+    const listed = (await api.get("/api/v1/admin/applications").set(admin.auth)).body.find((item) => item._id === application._id);
+    assert.equal(listed.certificate.filename, "certificate.pdf");
+    assert.equal(listed.certificate.data, undefined);
+
+    // sent back for changes, a new certificate puts the application back in the queue
+    await api.patch(`/api/v1/admin/applications/${application._id}`).set(admin.auth).send({ status: "rejected", reviewNote: "The scan is blurry" });
+    await uploadCertificate(api, applicant);
+    const resent = (await api.get("/api/v1/professionals/me").set(applicant.auth)).body;
+    assert.equal(resent.status, "pending");
+    assert.equal(resent.reviewNote, undefined);
+
+    // once approved, it was what got them listed, so it stays as it is
+    assert.equal((await api.patch(`/api/v1/admin/applications/${application._id}`).set(admin.auth).send({ status: "approved" })).status, 200);
+    assert.equal((await put(applicant, PDF, "application/pdf")).status, 409);
+
+    // institutions are verified in other ways and don't upload one
+    const institution = await signUp(api);
+    await api.post("/api/v1/professionals/apply").set(institution.auth).send({ type: "institution", organisationName: "Campus Wellness" });
+    assert.equal((await put(institution, PDF, "application/pdf")).status, 400);
 });
 
 test("confirming a session creates a private meeting link for both people", async () => {

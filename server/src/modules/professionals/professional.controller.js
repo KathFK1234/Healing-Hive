@@ -4,6 +4,8 @@ import ApiError from "../../utils/ApiError.js";
 import Review from "../reviews/review.model.js";
 import { openSlots } from "./slots.js";
 import { busyTimes } from "../google/google.service.js";
+import Certificate from "./certificate.model.js";
+import { certificateFromRequest, certificateSummary, saveCertificate, sendCertificate } from "./certificate.js";
 
 const PUBLIC_USER_FIELDS = "fullName";
 
@@ -137,7 +139,35 @@ async function getMyProfile(req, res) {
     const professional = await Professional.findOne({ user: req.user._id })
         .select("+licenseNumber")
         .populate("institution", "organisationName");
-    res.json(professional);
+    if (!professional) return res.json(null);
+    const certificate = await Certificate.findOne({ professional: professional._id });
+    res.json({ ...professional.toJSON(), certificate: certificateSummary(certificate) || null });
+}
+
+// A therapist or peer counsellor sends the certificate that verifies them,
+// or a better copy, while their application is waiting or needs changes.
+async function uploadCertificate(req, res) {
+    const professional = await Professional.findOne({ user: req.user._id });
+    if (!professional) throw ApiError.notFound("Application");
+    if (professional.type === "institution") throw ApiError.badRequest("Institutions don't need to upload a certificate");
+    if (professional.status === "approved") {
+        throw ApiError.conflict("Your certificate was checked when you were approved. To change it, contact the Healing Hive team");
+    }
+    const certificate = await saveCertificate(professional._id, certificateFromRequest(req));
+    // Sent back for changes, often for this very file: a new one goes back
+    // to the team, the same as re-sending the application does.
+    if (professional.status === "rejected") {
+        professional.status = "pending";
+        professional.reviewNote = undefined;
+        await professional.save();
+    }
+    res.json(certificate);
+}
+
+async function downloadMyCertificate(req, res) {
+    const professional = await Professional.findOne({ user: req.user._id });
+    if (!professional) throw ApiError.notFound("Certificate");
+    await sendCertificate(res, professional._id);
 }
 
 // Creates the application, or updates it while it is waiting or was rejected.
@@ -188,6 +218,8 @@ export default {
     answerInvitation,
     getFilters,
     getMyProfile,
+    uploadCertificate,
+    downloadMyCertificate,
     apply,
     updateMyProfile
 }

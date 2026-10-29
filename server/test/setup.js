@@ -48,6 +48,16 @@ export async function makeAdmin(api) {
     return person;
 }
 
+// The smallest file that passes as a PDF certificate
+export const PDF = Buffer.from("%PDF-1.4\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF\n");
+
+export async function uploadCertificate(api, person, body = PDF, contentType = "application/pdf", filename = "certificate.pdf") {
+    const res = await api.put("/api/v1/professionals/me/certificate").set(person.auth)
+        .set("Content-Type", contentType).set("X-Filename", encodeURIComponent(filename)).send(body);
+    if (res.status !== 200) throw new Error(`certificate upload failed: ${res.status} ${JSON.stringify(res.body)}`);
+    return res.body;
+}
+
 // Applies as a professional and has an admin approve it.
 export async function makeProfessional(api, admin, overrides = {}) {
     const person = await signUp(api);
@@ -63,6 +73,7 @@ export async function makeProfessional(api, admin, overrides = {}) {
         ...overrides,
     });
     if (application.status !== 201) throw new Error(`apply failed: ${JSON.stringify(application.body)}`);
+    if (application.body.type !== "institution") await uploadCertificate(api, person);
     await api.patch(`/api/v1/admin/applications/${application.body._id}`).set(admin.auth).send({ status: "approved" });
     return { ...person, profileId: application.body._id };
 }
