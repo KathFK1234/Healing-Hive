@@ -96,7 +96,7 @@ const Reminders = () => {
                     the card's full width to wrap in on a phone */}
                 <Card>
                   <div className="flex items-center gap-2">
-                    <p className={classNames('min-w-0 flex-1 text-lg font-bold', !reminder.enabled && 'opacity-60')}>{formatClock(reminder.time)}</p>
+                    <p className={classNames('min-w-0 flex-1 text-lg font-bold', !reminder.enabled && 'text-muted-foreground')}>{formatClock(reminder.time)}</p>
                     <button
                       type="button"
                       role="switch"
@@ -114,9 +114,10 @@ const Reminders = () => {
                       <Trash2 className="h-4 w-4" aria-hidden="true" />
                     </button>
                   </div>
-                  <div className={classNames('mt-1', !reminder.enabled && 'opacity-60')}>
+                  {/* Off reads quieter, but stays readable, and says so in words */}
+                  <div className={classNames('mt-1', !reminder.enabled && 'text-muted-foreground')}>
                     <p className="wrap-break-word">{reminder.message}</p>
-                    <p className="text-sm text-muted-foreground">{describeDays(reminder.days)}</p>
+                    <p className="text-sm text-muted-foreground">{describeDays(reminder.days)}{!reminder.enabled && ' · Off'}</p>
                   </div>
                 </Card>
               </li>
