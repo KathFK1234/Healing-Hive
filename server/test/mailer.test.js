@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import http from "node:http";
+import "./setup.js";
 import { parseSender, sendWithBrevo } from "../src/utils/mailer.js";
 
 const message = { from: "Healing Hive <hello@example.com>", to: "person@example.com", subject: "Hello", text: "Body" };
