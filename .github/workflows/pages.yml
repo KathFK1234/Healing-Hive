@@ -65,6 +65,9 @@ jobs:
       # Pages has no rewrite rules: 404.html is served for any other path, so
       # a copy of the app there lets links like /therapists/123 open directly.
       - run: cp client/dist/index.html client/dist/404.html
+      # A public page gets a real copy, so it answers 200 rather than 404:
+      # crawlers making a link's preview card can give up on a 404.
+      - run: for page in therapists nuggets events help professionals login signup; do mkdir -p "client/dist/$page" && cp client/dist/index.html "client/dist/$page/index.html"; done
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
           path: client/dist
