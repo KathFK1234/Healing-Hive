@@ -1,4 +1,5 @@
 import express from "express";
+import mongoose from "mongoose";
 import authRoutes from "./modules/auth/auth.routes.js";
 import professionalRoutes from "./modules/professionals/professional.routes.js";
 import sessionRoutes from "./modules/sessions/session.routes.js";
@@ -17,8 +18,16 @@ import env from "./config/env.js";
 
 const router = express.Router();
 
+// Without its database the API can't do anything, so it isn't healthy.
+export const healthAnswer = (readyState) => readyState === mongoose.ConnectionStates.connected
+    ? { code: 200, status: "ok" }
+    : { code: 503, status: "database unavailable" };
+
 // The commit shows which code is live: after a failed deploy, the one before keeps running.
-router.get("/health", (req, res) => res.json({ status: "ok", commit: env.RAILWAY_GIT_COMMIT_SHA || null }));
+router.get("/health", (req, res) => {
+    const { code, status } = healthAnswer(mongoose.connection.readyState);
+    res.status(code).json({ status, commit: env.RAILWAY_GIT_COMMIT_SHA || null });
+});
 router.get("/crisis-contacts", (req, res) => res.json(CRISIS_CONTACTS));
 
 router.use("/auth", authRoutes);

@@ -17,17 +17,19 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # Actions are pinned to full commits, with the version beside each: a tag can
+  # be moved to other code, a commit can't.
   # Pinned: ubuntu-latest moves to Ubuntu 26 from 2026-10-19, and the tests'
   # MongoDB download (mongodb-memory-server) is published per Ubuntu release.
   test:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           # Nothing here pushes, so the token is not left in .git/config
           # for npm install scripts to find.
           persist-credentials: false
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 22
           cache: npm
@@ -39,12 +41,12 @@ jobs:
     needs: test
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           # Nothing here pushes, so the token is not left in .git/config
           # for npm install scripts to find.
           persist-credentials: false
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 22
           cache: npm
@@ -63,7 +65,7 @@ jobs:
       # Pages has no rewrite rules: 404.html is served for any other path, so
       # a copy of the app there lets links like /therapists/123 open directly.
       - run: cp client/dist/index.html client/dist/404.html
-      - uses: actions/upload-pages-artifact@v5
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
           path: client/dist
 
@@ -78,4 +80,4 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - id: deployment
-        uses: actions/deploy-pages@v5
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1

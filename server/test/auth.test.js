@@ -1,6 +1,8 @@
 import { test, before, after, beforeEach } from "node:test";
+import mongoose from "mongoose";
 import assert from "node:assert/strict";
 import { start, stop, reset, signUp } from "./setup.js";
+import { healthAnswer } from "../src/routes.js";
 
 let api;
 before(async () => { api = await start(); });
@@ -14,6 +16,11 @@ test("the health check says which commit is running", async () => {
     // Railway sets RAILWAY_GIT_COMMIT_SHA; tests run without it
     assert.ok("commit" in health.body);
     assert.equal(health.body.commit, process.env.RAILWAY_GIT_COMMIT_SHA || null);
+});
+
+test("the health check fails without the database", () => {
+    assert.equal(healthAnswer(mongoose.ConnectionStates.connected).code, 200);
+    assert.equal(healthAnswer(mongoose.ConnectionStates.disconnected).code, 503);
 });
 
 test("a request body that can't be read is the sender's error, not the server's", async () => {
