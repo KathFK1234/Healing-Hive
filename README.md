@@ -128,6 +128,7 @@ To add a feature: create a folder in `server/src/modules/`, mount its routes in 
 - **Reminder delivery by SMS or email.** Reminders are saved and shown in the app. Sending them needs Africa's Talking credentials and a scheduled job.
 - **A built-in call room.** Sessions happen on Google Meet, the professional's own link, or Jitsi. Note that Jitsi's free service asks whoever opens a room first to sign in with a Google or GitHub account.
 - **Changing your email address**, and confirming an email address at sign-up.
+- **Deleting an account or downloading your data**, and a **privacy notice with consent at sign-up**. Both are needed before real users: Kenya's Data Protection Act 2019 covers this kind of health-related data.
 
 ## Before going live
 
