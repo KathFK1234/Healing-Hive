@@ -78,7 +78,7 @@ function Applications() {
 
   return (
     <>
-      <div className="mb-4 flex gap-2" role="group" aria-label="Application status">
+      <div className="mb-4 flex flex-wrap gap-2" role="group" aria-label="Application status">
         {['pending', 'approved', 'rejected'].map((value) => (
           <Chip key={value} selected={status === value} onClick={() => setStatus(value)} className="capitalize">{value}</Chip>
         ))}

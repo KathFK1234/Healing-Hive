@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 
 const base =
-  'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full font-semibold transition-colors ' +
+  'inline-flex items-center justify-center gap-2 whitespace-nowrap max-[359px]:h-auto max-[359px]:min-h-10 max-[359px]:whitespace-normal max-[359px]:py-2 max-[359px]:text-center rounded-full font-semibold transition-colors ' +
   'disabled:opacity-60 disabled:cursor-not-allowed select-none';
 
 const variants = {
