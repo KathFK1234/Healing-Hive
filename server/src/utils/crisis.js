@@ -18,21 +18,32 @@ const CRISIS_PATTERNS = [
     /\bsuicid/i,
     /\bkill(ing)?\s+my\s?self\b/i,
     /\bend(ing)?\s+(my|this)\s+life\b/i,
+    /\bend(ing)?\s+it\s+all\b/i,
     /\btake\s+my\s+(own\s+)?life\b/i,
     /\b(want|wish|going|ready)\s+to\s+die\b/i,
+    /\b(wanna|gonna)\s+die\b/i,
+    /\bwish\s+i\s+(was|were)\s+dead\b/i,
     /\bbetter\s+off\s+(dead|without\s+me)\b/i,
     /\bno\s+reason\s+to\s+(live|go\s+on)\b/i,
+    /\bno\s+point\s+(in|to)\s+(living|live|going\s+on|go\s+on)\b/i,
+    /\bnothing\s+to\s+live\s+for\b/i,
+    /\bcan(no|')?t\s+go\s+on\b/i,
     /\b(don'?t|do\s+not)\s+want\s+to\s+(live|be\s+alive|be\s+here)\b/i,
-    /\b(hurt|harm|cut)(ting)?\s+my\s?self\b/i,
+    /\b(hurt|harm|cut)(ing|ting)?\s+my\s?self\b/i,
     /\bself[-\s]?harm/i,
     /\boverdos/i,
-    /\bkujiua\b/i,
-    /\bnijiue\b/i,
+    /\b(ku|ni|nita|ta)jiua\b/i,
+    /\bkujinyonga\b/i,
+    /\bkujidhuru\b/i,
     /\bnataka\s+kufa\b/i,
+    /\bbora\s+nife\b/i,
+    /\bsitaki\s+kuishi\b/i,
 ];
 
+// Phones type a curly apostrophe, so "don\u2019t" has to read as "don't"
 export function looksLikeCrisis(text) {
-    return CRISIS_PATTERNS.some((pattern) => pattern.test(text));
+    const plain = text.replace(/[\u2018\u2019\u02bc`]/g, "'");
+    return CRISIS_PATTERNS.some((pattern) => pattern.test(plain));
 }
 
 export const CRISIS_REPLY =
