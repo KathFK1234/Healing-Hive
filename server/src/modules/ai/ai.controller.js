@@ -18,7 +18,7 @@ async function sendAiMessage(req, res) {
         const recent = await AiMessage.find({ user }).sort({ createdAt: -1 }).limit(HISTORY_LIMIT);
         const history = recent.reverse().map((m) => ({ role: m.role, content: m.message }));
         try {
-            replyText = await generateReply([...history, { role: "user", content: message }]);
+            replyText = await generateReply([...history, { role: "user", content: message }], { urgent: crisis });
         } catch (err) {
             if (!crisis) throw err;
             replyText = CRISIS_REPLY;

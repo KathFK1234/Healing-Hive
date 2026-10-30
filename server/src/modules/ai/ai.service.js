@@ -37,9 +37,13 @@ export function isAiConfigured() {
     return Boolean(env.ANTHROPIC_API_KEY);
 }
 
+// Someone in crisis must not wait out retries on a slow provider: the safety
+// reply stands ready, so an urgent request gets one short try.
+const URGENT_REQUEST = { timeout: 12 * 1000, maxRetries: 0 };
+
 // `history` is [{ role: "user" | "assistant", content }], oldest first, ending
 // with the message to answer.
-export async function generateReply(history) {
+export async function generateReply(history, { urgent = false } = {}) {
     if (!isAiConfigured()) {
         throw new ApiError(503, "AI_NOT_CONFIGURED", "The AI companion is not switched on yet");
     }
@@ -62,7 +66,7 @@ export async function generateReply(history) {
             // retry it on a fallback model before we give up on the turn.
             betas: ["server-side-fallback-2026-07-01"],
             fallbacks: "default",
-        });
+        }, urgent ? URGENT_REQUEST : undefined);
     } catch (err) {
         if (err instanceof Anthropic.AuthenticationError || err instanceof Anthropic.PermissionDeniedError) {
             console.error("AI request rejected: check ANTHROPIC_API_KEY");
