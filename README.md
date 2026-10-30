@@ -132,6 +132,7 @@ To add a feature: create a folder in `server/src/modules/`, mount its routes in 
 ## Before going live
 
 - **Verify every crisis number** in `server/src/utils/crisis.js` and `client/src/lib/crisis.js` (the two lists must match), and re-check them regularly.
+- Turn on database backups, and try a restore once. People's journals, sessions and certificates live only in MongoDB.
 - Add your own domain as a Brevo sender. A Gmail `MAIL_FROM` works, but without the domain's DKIM and DMARC records password reset emails can land in spam.
 - Google Calendar uses "sensitive" permissions. While the Google Cloud project is in testing, only the test users you list can connect; opening it to all professionals needs Google's verification.
 - Have a qualified clinician review the AI companion's instructions in `server/src/modules/ai/ai.service.js` and the crisis wording.
