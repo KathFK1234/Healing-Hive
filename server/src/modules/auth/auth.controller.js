@@ -99,7 +99,9 @@ async function forgotPassword(req, res) {
         const token = crypto.randomBytes(32).toString("base64url");
         user.passwordReset = { tokenHash: hashToken(token), expiresAt: new Date(Date.now() + RESET_MINUTES * 60 * 1000) };
         await user.save();
-        await sendMail({
+        // Not waited for: an answer that takes as long as sending an email
+        // would tell apart the emails that have an account. It never throws.
+        sendMail({
             to: user.email,
             subject: "Reset your Healing Hive password",
             text: `Hello ${user.fullName},\n\nSomeone asked to reset the password for this Healing Hive account. If that was you, choose a new password here:\n\n${env.clientUrl}/reset-password?token=${token}\n\nThe link works once and expires in ${RESET_MINUTES} minutes. If you did not ask for this, you can ignore this email and your password stays the same.`,
