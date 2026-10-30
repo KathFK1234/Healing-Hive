@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import classNames from 'classnames';
 import { api } from '@/lib/api';
@@ -46,6 +47,14 @@ export function MoodCheckIn({ onDone }) {
           </button>
         ))}
       </div>
+
+      {score === 1 && (
+        <p className="rounded-xl bg-muted p-4 text-sm">
+          That sounds really hard, and you don't have to carry it alone.{' '}
+          <Link to="/help" className="font-semibold text-danger hover:underline">Get help now</Link> if things feel urgent, or{' '}
+          <Link to="/therapists" className="font-semibold text-primary hover:underline">find someone to talk to</Link>.
+        </p>
+      )}
 
       {score && (
         <>
