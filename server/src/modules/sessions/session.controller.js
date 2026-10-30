@@ -180,6 +180,11 @@ async function updateStatus(req, res) {
         throw ApiError.badRequest("A session cannot be completed before it has started");
     }
 
+    // Only the first of two taps moves the session on, so the other person
+    // hears about it once.
+    const claimed = await Session.updateOne({ _id: session._id, status: session.status }, { status: req.body.status });
+    if (!claimed.modifiedCount) throw ApiError.conflict("This session was just changed. Refresh the page to see where it stands");
+
     const [client, professionalUser] = await Promise.all([
         User.findById(session.client).select("fullName email"),
         User.findById(session.professional.user).select("fullName email"),

@@ -2,6 +2,8 @@ import { test, before, after, beforeEach } from "node:test";
 import assert from "node:assert/strict";
 import { start, stop, reset, signUp, makeAdmin, makeProfessional, uploadCertificate } from "./setup.js";
 
+const { outbox } = await import("../src/utils/mailer.js");
+
 let api;
 before(async () => { api = await start(); });
 after(stop);
@@ -126,6 +128,18 @@ test("requests sent together cannot pass the waiting limit", async () => {
     const answers = await Promise.all(slots.slice(0, 8).map((scheduledAt) =>
         api.post("/api/v1/sessions").set(client.auth).send({ professionalId: professional.profileId, scheduledAt })));
     assert.ok(answers.filter((answer) => answer.status === 201).length <= 3);
+});
+
+test("a session cancelled twice at once is cancelled, and announced, once", async () => {
+    const professional = await makeProfessional(api, await makeAdmin(api));
+    const { slots } = (await api.get(`/api/v1/professionals/${professional.profileId}`)).body;
+    const client = await signUp(api);
+    const session = await api.post("/api/v1/sessions").set(client.auth).send({ professionalId: professional.profileId, scheduledAt: slots[0] });
+    outbox.length = 0;
+    const answers = await Promise.all([1, 2, 3].map(() =>
+        api.patch(`/api/v1/sessions/${session.body._id}/status`).set(client.auth).send({ status: "cancelled" })));
+    assert.equal(answers.filter((answer) => answer.status === 200).length, 1);
+    assert.equal(outbox.length, 1);
 });
 
 test("times outside the professional's hours cannot be booked", async () => {
