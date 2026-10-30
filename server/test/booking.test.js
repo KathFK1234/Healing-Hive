@@ -119,6 +119,15 @@ test("one person can only have a few requests waiting at once", async () => {
     assert.match(refused.body.error.message, /10 session requests waiting/);
 });
 
+test("requests sent together cannot pass the waiting limit", async () => {
+    const professional = await makeProfessional(api, await makeAdmin(api));
+    const { slots } = (await api.get(`/api/v1/professionals/${professional.profileId}`)).body;
+    const client = await signUp(api);
+    const answers = await Promise.all(slots.slice(0, 8).map((scheduledAt) =>
+        api.post("/api/v1/sessions").set(client.auth).send({ professionalId: professional.profileId, scheduledAt })));
+    assert.ok(answers.filter((answer) => answer.status === 201).length <= 3);
+});
+
 test("times outside the professional's hours cannot be booked", async () => {
     const admin = await makeAdmin(api);
     const therapist = await makeProfessional(api, admin);

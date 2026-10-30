@@ -25,7 +25,23 @@ const WITH_PROFESSIONAL = {
 const MAX_WAITING_PER_PROFESSIONAL = 3;
 const MAX_WAITING = 10;
 
+// One booking at a time per person, or requests sent together would each pass
+// the waiting limits below before any of them is saved. In memory: the API
+// runs as a single instance.
+const bookingNow = new Set();
+
 async function bookSession(req, res) {
+    const client = req.user._id.toString();
+    if (bookingNow.has(client)) throw ApiError.conflict("Your last request is still being sent. Please try again in a moment");
+    bookingNow.add(client);
+    try {
+        await requestSession(req, res);
+    } finally {
+        bookingNow.delete(client);
+    }
+}
+
+async function requestSession(req, res) {
     const { professionalId, scheduledAt, mode, clientNote } = req.body;
 
     const professional = await Professional.findOne({ _id: professionalId, status: "approved", type: { $ne: "institution" } })
