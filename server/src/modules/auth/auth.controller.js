@@ -84,6 +84,8 @@ async function changePassword(req, res) {
 
     user.password = await bcrypt.hash(newPassword, 12);
     user.passwordChangedAt = new Date();
+    // A reset link already sent is for the password that was just replaced
+    user.passwordReset = undefined;
     await user.save();
     // Every other device is now signed out; this one gets a fresh session.
     res.json({ message: "Password updated", token: signToken(user), user });

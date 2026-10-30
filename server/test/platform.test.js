@@ -25,6 +25,15 @@ async function completedSession(therapist, client) {
     return session;
 }
 
+test("changing a password cancels a reset link already sent", async () => {
+    const person = await signUp(api);
+    await api.post("/api/v1/auth/forgot-password").send({ email: person.user.email });
+    const token = lastMailTo(person.user.email).text.match(/token=([\w-]+)/)[1];
+    const changed = await api.post("/api/v1/auth/change-password").set(person.auth).send({ currentPassword: person.password, newPassword: "brand-new-pass-1" });
+    assert.equal(changed.status, 200);
+    assert.equal((await api.post("/api/v1/auth/reset-password").send({ token, newPassword: "another-new-pass-2" })).status, 400);
+});
+
 test("password reset works once, by emailed link, and never reveals who has an account", async () => {
     const person = await signUp(api);
 
