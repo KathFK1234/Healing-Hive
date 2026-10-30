@@ -23,7 +23,11 @@ const schema = z.object({
     ANTHROPIC_API_KEY: z.string().optional(),
     AI_MODEL: z.string().default("claude-opus-5-5"),
 
-    // Outgoing email. Empty host = emails are printed to the server log instead.
+    // Outgoing email: Brevo when the key is set, otherwise SMTP. Neither = emails
+    // are printed to the server log instead. MAIL_FROM must be a sender verified
+    // in Brevo.
+    BREVO_API_KEY: z.string().optional(),
+    BREVO_API_URL: z.string().url().default("https://api.brevo.com/v3"),
     SMTP_HOST: z.string().optional(),
     SMTP_PORT: z.coerce.number().int().default(465),
     SMTP_USER: z.string().optional(),
