@@ -119,14 +119,26 @@ async function accessTokenFor(professionalId) {
     const professional = await Professional.findById(professionalId).select("+google calendarConnected");
     if (!professional?.calendarConnected || !professional.google?.refreshToken) return null;
 
+    // Stored under an earlier JWT_SECRET, it can't be read any more. Saying
+    // "disconnected" lets the professional connect again.
+    const disconnect = () => Professional.updateOne({ _id: professionalId }, { calendarConnected: false, $unset: { google: 1 } });
+    let refreshToken;
     try {
-        const tokens = await tokenRequest({ refresh_token: decrypt(professional.google.refreshToken), grant_type: "refresh_token" });
+        refreshToken = decrypt(professional.google.refreshToken);
+    } catch {
+        await disconnect();
+        console.error("A stored Google token could not be read, so that calendar was disconnected");
+        return null;
+    }
+
+    try {
+        const tokens = await tokenRequest({ refresh_token: refreshToken, grant_type: "refresh_token" });
         accessTokens.set(key, { token: tokens.access_token, expiresAt: Date.now() + (tokens.expires_in - 60) * 1000 });
         return tokens.access_token;
     } catch (err) {
         // "invalid_grant" means access was withdrawn on Google's side.
         if (err.message.includes("invalid_grant")) {
-            await Professional.updateOne({ _id: professionalId }, { calendarConnected: false, $unset: { google: 1 } });
+            await disconnect();
         }
         console.error("Google access for a professional failed:", err.message);
         return null;

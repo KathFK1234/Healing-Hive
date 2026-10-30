@@ -5,7 +5,7 @@ import assert from "node:assert/strict";
 process.env.GOOGLE_CLIENT_ID = "test-client-id";
 process.env.GOOGLE_CLIENT_SECRET = "test-client-secret";
 const { start, stop, reset, signUp, makeAdmin, makeProfessional } = await import("./setup.js");
-const { connectUrl, encrypt } = await import("../src/modules/google/google.service.js");
+const { busyTimes, connectUrl, encrypt } = await import("../src/modules/google/google.service.js");
 const { default: mongoose } = await import("mongoose");
 
 let api;
@@ -33,6 +33,15 @@ test("the Google callback says why a calendar was not connected", async () => {
     } finally {
         globalThis.fetch = realFetch;
     }
+});
+
+test("a stored token that can't be read disconnects the calendar", async () => {
+    const professional = await makeProfessional(api, await makeAdmin(api));
+    const Professional = mongoose.model("Professional");
+    await Professional.updateOne({ user: professional.user._id }, { calendarConnected: true, google: { refreshToken: "made.under.another-secret" } });
+    const stored = await Professional.findOne({ user: professional.user._id });
+    assert.deepEqual(await busyTimes(stored), []);
+    assert.equal((await Professional.findById(stored._id)).calendarConnected, false);
 });
 
 test("the directory's next free time leaves out calendar busy times, like the profile page", async () => {
