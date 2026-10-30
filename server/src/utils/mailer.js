@@ -5,6 +5,7 @@ import env from "../config/env.js";
 // that block SMTP, such as Railway's Hobby plan), otherwise any SMTP provider.
 // For Gmail: SMTP_HOST=smtp.gmail.com, SMTP_PORT=465, SMTP_USER=<address>,
 // SMTP_PASS=<an app password>.
+const SMTP_TIMEOUT_MS = 10 * 1000;
 let transport;
 function getTransport() {
     if (!env.SMTP_HOST) return null;
@@ -13,6 +14,11 @@ function getTransport() {
         port: env.SMTP_PORT,
         secure: env.SMTP_PORT === 465,
         auth: env.SMTP_USER ? { user: env.SMTP_USER, pass: env.SMTP_PASS } : undefined,
+        // A mail server that doesn't answer (some hosts block SMTP) must not
+        // hold up the booking waiting on it for nodemailer's default minutes
+        connectionTimeout: SMTP_TIMEOUT_MS,
+        greetingTimeout: SMTP_TIMEOUT_MS,
+        socketTimeout: 2 * SMTP_TIMEOUT_MS,
     });
     return transport;
 }
