@@ -115,7 +115,7 @@ function Invitation({ profile }) {
   const answer = useMutation({
     mutationFn: (accept) => api.post('/professionals/me/institution', { accept }),
     onSuccess: (updated, accept) => {
-      queryClient.setQueryData(['professionals', 'me'], updated);
+      queryClient.setQueryData(['professionals', 'me'], { ...updated, certificate: profile.certificate });
       toast(accept ? `You are now part of ${profile.institution.organisationName}` : 'Invitation declined');
     },
     onError: (error) => toast(error.message, 'error'),
@@ -400,7 +400,7 @@ function EditProfile({ profile }) {
   const leave = useMutation({
     mutationFn: () => api.post('/professionals/me/institution', { accept: false }),
     onSuccess: (updated) => {
-      queryClient.setQueryData(['professionals', 'me'], updated);
+      queryClient.setQueryData(['professionals', 'me'], { ...updated, certificate: profile.certificate });
       setLeaving(false);
       toast('You have left the institution');
     },
