@@ -11,11 +11,12 @@ export function LogoMark({ className = 'h-9 w-9' }) {
 
 export function Logo({ to = '/' }) {
   return (
-    <Link to={to} className="flex items-center gap-2 rounded-lg" aria-label="Healing Hive home">
+    <Link to={to} className="flex items-center gap-2 rounded-lg">
       <LogoMark />
       <span className="whitespace-nowrap leading-none">
         <span className="block text-lg font-bold tracking-tight">Healing Hive</span>
         <span className="block text-xs italic text-muted-foreground">St;ll Here</span>
+        <span className="sr-only">, home</span>
       </span>
     </Link>
   );
