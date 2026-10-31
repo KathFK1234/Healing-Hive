@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import env from "../../config/env.js";
 import ApiError from "../../utils/ApiError.js";
+import { CRISIS_REPLY } from "../../utils/crisis.js";
 
 const SYSTEM_PROMPT = `You are the Healing Hive companion, a supportive listener for young people in Kenya (roughly 18 to 35).
 
@@ -84,7 +85,7 @@ export async function generateReply(history, { urgent = false } = {}) {
     }
 
     // Check why the model stopped before trusting the content.
-    if (response.stop_reason === "refusal") return DECLINED_REPLY;
+    if (response.stop_reason === "refusal") return urgent ? CRISIS_REPLY : DECLINED_REPLY;
 
     const reply = response.content
         .filter((block) => block.type === "text")
