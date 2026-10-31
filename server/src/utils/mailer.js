@@ -58,6 +58,13 @@ export function unsentLog({ to, subject, text }, production = env.isProduction) 
     return `\n--- Email (not sent, no email provider is configured) ---\nTo: ${to}\nSubject: ${subject}\n\n${text}\n---\n`;
 }
 
+// Why an email failed, for the log. The codes only: a mail server's message can
+// repeat the address it refused, and logs are not the place for that.
+export const failureLog = (subject, err) => {
+    const why = typeof err.code === "string" ? [err.code, err.responseCode].filter(Boolean).join(" ") : err.message;
+    return `Could not send "${subject}" email: ${why}`;
+};
+
 // Sends one email. Never throws: a failed notification must not fail the
 // booking or sign-up that triggered it.
 export async function sendMail({ to, subject, text }) {
@@ -78,6 +85,6 @@ export async function sendMail({ to, subject, text }) {
         if (env.BREVO_API_KEY) await sendWithBrevo(message);
         else await smtp.sendMail(message);
     } catch (err) {
-        console.error(`Could not send "${subject}" email:`, err.message);
+        console.error(failureLog(subject, err));
     }
 }

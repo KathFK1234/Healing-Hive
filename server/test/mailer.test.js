@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import http from "node:http";
 import "./setup.js";
-import { parseSender, sendWithBrevo } from "../src/utils/mailer.js";
+import { failureLog, parseSender, sendWithBrevo } from "../src/utils/mailer.js";
 
 const message = { from: "Healing Hive <hello@example.com>", to: "person@example.com", subject: "Hello", text: "Body" };
 
@@ -20,6 +20,12 @@ async function fakeBrevo(status, answer) {
     await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
     return { requests, server, config: { apiKey: "test-key", apiUrl: `http://127.0.0.1:${server.address().port}/v3` } };
 }
+
+test("a refused address stays out of the log", () => {
+    const refused = Object.assign(new Error("all recipients were rejected: 550 5.1.1 <person@example.org>: rejected"), { code: "EENVELOPE", responseCode: 550 });
+    assert.equal(failureLog("Hello", refused), 'Could not send "Hello" email: EENVELOPE 550');
+    assert.equal(failureLog("Hello", new Error("Brevo answered 401 (unauthorized)")), 'Could not send "Hello" email: Brevo answered 401 (unauthorized)');
+});
 
 test("the sender is read with or without a name", () => {
     assert.deepEqual(parseSender("Healing Hive <hello@example.com>"), { name: "Healing Hive", email: "hello@example.com" });
