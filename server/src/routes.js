@@ -1,4 +1,5 @@
 import express from "express";
+import rateLimit from "express-rate-limit";
 import mongoose from "mongoose";
 import authRoutes from "./modules/auth/auth.routes.js";
 import professionalRoutes from "./modules/professionals/professional.routes.js";
@@ -29,6 +30,22 @@ router.get("/health", (req, res) => {
     res.status(code).json({ status, commit: env.RAILWAY_GIT_COMMIT_SHA || null });
 });
 router.get("/crisis-contacts", (req, res) => res.json(CRISIS_CONTACTS));
+
+// Everything below shares a limit per address, set high because a campus or a
+// mobile network puts many people behind one. Health and the crisis contacts
+// stay above it, so they always answer.
+const limiter = (limit, skip) => rateLimit({
+    windowMs: 60 * 1000,
+    limit,
+    standardHeaders: "draft-7",
+    legacyHeaders: false,
+    skip: (req) => env.isTest || Boolean(skip?.(req)),
+    message: { error: { code: "TOO_MANY_REQUESTS", message: "That's a lot of requests from this connection. Please wait a minute and try again" } },
+});
+const READS = ["GET", "HEAD", "OPTIONS"];
+router.use(limiter(600));
+// Each write can add to the database. The companion has its own limit per person.
+router.use(limiter(120, (req) => READS.includes(req.method) || req.path.startsWith("/ai/")));
 
 router.use("/auth", authRoutes);
 router.use("/professionals", professionalRoutes);
