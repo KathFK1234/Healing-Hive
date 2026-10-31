@@ -61,11 +61,11 @@ function Applications() {
   const review = useMutation({
     mutationFn: ({ application, decision, reviewNote }) =>
       api.patch(`/admin/applications/${application._id}`, { status: decision, reviewNote: reviewNote || undefined }),
-    onSuccess: (_, { decision }) => {
+    onSuccess: (_, { application, decision }) => {
       queryClient.invalidateQueries({ queryKey: ['admin'] });
       queryClient.invalidateQueries({ queryKey: ['professionals'] });
       setRejecting(null);
-      toast(decision === 'approved' ? 'Approved and listed' : 'Application sent back');
+      toast(decision === 'approved' ? 'Approved and listed' : application.status === 'approved' ? 'Removed from the directory' : 'Application sent back');
     },
     onError: (error) => toast(error.message, 'error'),
   });

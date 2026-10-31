@@ -395,6 +395,9 @@ test("removing a professional cancels their upcoming sessions and tells each cli
     await Session.updateOne({ _id: ended._id }, { scheduledAt: new Date(Date.now() - 3 * 60 * 60 * 1000) });
 
     const removed = await api.patch(`/api/v1/admin/applications/${therapist.profileId}`).set(admin.auth).send({ status: "rejected", reviewNote: "Licence expired" });
+    const told = outbox.find((mail) => mail.to === therapist.user.email && /removed from the Healing Hive directory/.test(mail.subject));
+    assert.match(told.text, /no longer listed/);
+    assert.match(told.text, /Why: Licence expired/);
     assert.equal(removed.status, 200);
 
     for (const client of [first, second, third]) {
