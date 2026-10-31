@@ -175,7 +175,7 @@ function Booking({ professional }) {
             </div>
           </fieldset>
 
-          <Field label="Anything you'd like them to know first? (optional)" hint="Only you and this professional can read this.">
+          <Field label="Anything you'd like them to know first? (optional)" hint="Shared with this professional, and no one else in the app.">
             {(field) => <Textarea {...field} rows={3} maxLength={1000} value={note} onChange={(event) => setNote(event.target.value)} />}
           </Field>
 

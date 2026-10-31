@@ -319,7 +319,7 @@ function AssignedSessions() {
         }
       >
         <FormError error={saveNotes.error} />
-        <Field label="Session notes" hint="Only you can see these. The client never does.">
+        <Field label="Session notes" hint="Just for you. The client never sees these, and no one else can open them in the app.">
           {(field) => <Textarea {...field} rows={8} maxLength={5000} value={notes} onChange={(event) => setNotes(event.target.value)} />}
         </Field>
       </Modal>

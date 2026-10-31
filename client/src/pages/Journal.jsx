@@ -73,7 +73,7 @@ const Journal = () => {
     <>
       <PageHeader
         title="Journal"
-        description={<><Lock className="-mt-1 mr-1.5 inline h-4 w-4" aria-hidden="true" />Only you can read what you write here.</>}
+        description={<><Lock className="-mt-1 mr-1.5 inline h-4 w-4" aria-hidden="true" />Private to you. No one else can open it in the app, not even our team.</>}
         action={<Button onClick={() => open(blank)}><Plus className="h-4 w-4" aria-hidden="true" /> New entry</Button>}
       />
 
