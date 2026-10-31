@@ -5,7 +5,8 @@ export async function connectDb(uri = env.MONGO_URI) {
     // Reject queries on fields that are not in the schema instead of silently
     // dropping the filter and matching every document.
     mongoose.set("strictQuery", true);
-    const connect = await mongoose.connect(uri);
+    // Fail in seconds rather than hang: a person is waiting on every query
+    const connect = await mongoose.connect(uri, { serverSelectionTimeoutMS: 10 * 1000, socketTimeoutMS: 20 * 1000 });
     if (!env.isTest) {
         console.log(`Database connected: ${connect.connection.host}, ${connect.connection.name}`);
     }

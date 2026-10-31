@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import assert from "node:assert/strict";
 import { start, stop, reset, signUp } from "./setup.js";
 import { healthAnswer } from "../src/routes.js";
+import { errorHandler } from "../src/middleware/error.js";
 
 let api;
 before(async () => { api = await start(); });
@@ -196,4 +197,13 @@ test("a broken reset link and a blank title get plain-language messages", async 
     const name = await api.patch("/api/v1/auth/me").set(auth).send({ fullName: " a " });
     assert.equal(name.status, 400);
     assert.equal(name.body.error.message, "Enter your name");
+});
+
+test("losing the database reads as an outage, not as a fault in the request", () => {
+    for (const err of [Object.assign(new Error("x"), { name: "MongoNetworkTimeoutError" }), Object.assign(new Error("x"), { name: "MongooseServerSelectionError" }), new Error("Operation `nuggets.find()` buffering timed out after 10000ms")]) {
+        let sent;
+        errorHandler(err, {}, { status(code) { sent = { code }; return this; }, json(body) { sent.body = body; } });
+        assert.equal(sent.code, 503);
+        assert.equal(sent.body.error.code, "SERVER_DOWN");
+    }
 });

@@ -14,6 +14,11 @@ export function notFound(req, res, next) {
     next(ApiError.notFound("Route"));
 }
 
+// The database is out of reach, which is an outage rather than a fault in this
+// request: the web app shows its calm notice for this code.
+const DATABASE_DOWN = /^Mongo(ose)?(ServerSelection|Network|NetworkTimeout)Error$/;
+const isDatabaseDown = (err) => DATABASE_DOWN.test(err?.name || "") || /buffering timed out/.test(err?.message || "");
+
 // eslint-disable-next-line no-unused-vars
 export function errorHandler(err, req, res, next) {
     let error = err;
@@ -30,6 +35,9 @@ export function errorHandler(err, req, res, next) {
         error = ApiError.badRequest("The request body is not valid JSON");
     } else if (err?.type === "entity.too.large") {
         error = new ApiError(413, "TOO_LARGE", "That is too large to send");
+    } else if (isDatabaseDown(err)) {
+        if (!env.isTest) console.error("Database unavailable:", err.name);
+        error = new ApiError(503, "SERVER_DOWN", "The Healing Hive server isn't responding right now, so this couldn't load. Please try again in a few minutes");
     } else if (err?.expose && err.status >= 400 && err.status < 500) {
         // Any other body the JSON reader could not read (a broken compressed
         // body, an encoding or charset it doesn't know, an aborted request):
