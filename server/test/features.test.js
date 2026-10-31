@@ -236,6 +236,20 @@ test("today's nugget turns over at midnight in Kenya", async () => {
     assert.equal(eatDayNumber(new Date("2026-10-14T00:01:00+03:00")), eatDayNumber(new Date("2026-10-14T02:59:00+03:00")));
 });
 
+test("an event under way can be edited, but not moved into the past", async () => {
+    const Event = (await import("../src/modules/events/event.model.js")).default;
+    const admin = await makeAdmin(api);
+    const eventDate = new Date(Date.now() - 10 * 60 * 1000);
+    const event = await Event.create({ title: "Under way", eventDate, host: admin.user._id });
+
+    const fixed = await api.patch(`/api/v1/events/${event._id}`).set(admin.auth).send({ title: "Under way", eventDate, joinLink: "https://meet.example.com/new" });
+    assert.equal(fixed.status, 200);
+    assert.equal(fixed.body.joinLink, "https://meet.example.com/new");
+
+    const moved = await api.patch(`/api/v1/events/${event._id}`).set(admin.auth).send({ eventDate: new Date(Date.now() - 60 * 60 * 1000) });
+    assert.equal(moved.status, 400);
+});
+
 test("deleting an event emails each person who registered, but not for a past event", async () => {
     const admin = await makeAdmin(api);
     const host = await makeProfessional(api, admin);

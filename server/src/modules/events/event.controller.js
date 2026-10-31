@@ -72,7 +72,9 @@ async function updateEvent(req, res) {
     const event = await Event.findById(req.params.id);
     if (!event) throw ApiError.notFound("Event");
     if (!canManage(event, req.user)) throw ApiError.forbidden();
-    refusePastDate(req.body.eventDate);
+    // The form always sends the date: an unchanged one is fine, so the host of
+    // an event under way can still fix its join link.
+    if (req.body.eventDate?.getTime() !== event.eventDate.getTime()) refusePastDate(req.body.eventDate);
 
     Object.assign(event, req.body);
     await event.save();
