@@ -182,7 +182,7 @@ async function updateStatus(req, res) {
 
     // Only the first of two taps moves the session on, so the other person
     // hears about it once.
-    const claimed = await Session.updateOne({ _id: session._id, status: session.status }, { status: req.body.status });
+    const claimed = await Session.updateOne({ _id: session._id, status: session.status }, { status: req.body.status, active: req.body.status === "confirmed" });
     if (!claimed.modifiedCount) throw ApiError.conflict("This session was just changed. Refresh the page to see where it stands");
 
     const [client, professionalUser] = await Promise.all([
@@ -197,17 +197,23 @@ async function updateStatus(req, res) {
             clientEmail: client.email,
             professionalName: professionalUser.fullName,
         });
-        session.meetingUrl = meeting.meetingUrl;
-        session.googleEventId = meeting.googleEventId;
+        // Only onto a session still confirmed: arranging can take seconds, and
+        // the client may have cancelled meanwhile.
+        const saved = await Session.updateOne({ _id: session._id, status: "confirmed" }, meeting);
+        if (!saved.modifiedCount) {
+            await cancelMeeting({ professional: session.professional, googleEventId: meeting.googleEventId });
+            throw ApiError.conflict("This session was just cancelled, so it wasn't confirmed");
+        }
+        session.set(meeting);
     }
     if (req.body.status === "cancelled") {
         await cancelMeeting(session);
+        await Session.updateOne({ _id: session._id }, { $unset: { meetingUrl: 1, googleEventId: 1 } });
         session.meetingUrl = undefined;
         session.googleEventId = undefined;
     }
-
     session.status = req.body.status;
-    await session.save();
+    session.active = req.body.status === "confirmed";
 
     if (req.body.status === "confirmed") {
         await sendMail({

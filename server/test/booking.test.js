@@ -1,5 +1,6 @@
 import { test, before, after, beforeEach } from "node:test";
 import assert from "node:assert/strict";
+import mongoose from "mongoose";
 import { start, stop, reset, signUp, makeAdmin, makeProfessional, uploadCertificate } from "./setup.js";
 
 const { outbox } = await import("../src/utils/mailer.js");
@@ -153,6 +154,33 @@ test("cancelling does not show the client the professional's private meeting roo
     assert.equal(cancelled.status, 200);
     assert.equal(cancelled.body.professional, professional.profileId);
     assert.doesNotMatch(JSON.stringify(cancelled.body), /private/);
+});
+
+test("a cancel that lands while the meeting is being arranged is not undone", async (t) => {
+    const Session = (await import("../src/modules/sessions/session.model.js")).default;
+    const admin = await makeAdmin(api);
+    const professional = await makeProfessional(api, admin);
+    const client = await signUp(api);
+    const { body: profile } = await api.get(`/api/v1/professionals/${professional.profileId}`);
+    const { body: session } = await api.post("/api/v1/sessions").set(client.auth).send({ professionalId: professional.profileId, scheduledAt: profile.slots[0] });
+
+    // The client's cancel arrives straight after the confirm has claimed the session
+    const updateOne = Session.updateOne.bind(Session);
+    let cancelled = false;
+    t.mock.method(Session, "updateOne", async (...args) => {
+        const answer = await updateOne(...args);
+        if (!cancelled) {
+            cancelled = true;
+            await Session.collection.updateOne({ _id: new mongoose.Types.ObjectId(session._id) }, { $set: { status: "cancelled", active: false } });
+        }
+        return answer;
+    });
+
+    const confirm = await api.patch(`/api/v1/sessions/${session._id}/status`).set(professional.auth).send({ status: "confirmed" });
+    assert.equal(confirm.status, 409);
+    const saved = await Session.findById(session._id);
+    assert.equal(saved.status, "cancelled");
+    assert.equal(saved.meetingUrl, undefined);
 });
 
 test("times outside the professional's hours cannot be booked", async () => {
