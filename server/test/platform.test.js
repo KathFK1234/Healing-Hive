@@ -432,6 +432,7 @@ test("admins can search everyone and page through them", async () => {
     assert.equal(first.body.items.length, 50);
     assert.equal(first.body.items[0].email, "achieng@example.com");
     assert.equal(first.body.pages, 2);
+    assert.equal((await api.get("/api/v1/admin/users?q=%00").set(admin.auth)).status, 200);
     const second = await api.get("/api/v1/admin/users?page=2").set(admin.auth);
     assert.equal(second.body.items.length, first.body.total - 50);
 

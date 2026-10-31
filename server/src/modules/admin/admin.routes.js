@@ -132,7 +132,8 @@ router.patch("/applications/:id", validateId, validate({ body: reviewSchema }), 
 
 const PEOPLE_PER_PAGE = 50;
 const peopleSchema = z.object({
-    q: z.string().trim().max(80).optional(),
+    // MongoDB refuses a regular expression holding a NUL byte, and no name has one
+    q: z.string().trim().max(80).transform((text) => text.replaceAll("\0", "")).optional(),
     page: z.coerce.number().int().min(1).default(1),
 });
 
