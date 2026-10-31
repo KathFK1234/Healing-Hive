@@ -5,6 +5,7 @@ import aiController from "./ai.controller.js";
 import { authenticate } from "../../middleware/auth.js";
 import { validate } from "../../middleware/validate.js";
 import env from "../../config/env.js";
+import { looksLikeCrisis } from "../../utils/crisis.js";
 
 const router = express.Router();
 
@@ -17,6 +18,15 @@ const chatLimiter = rateLimit({
     skip: () => env.isTest,
     keyGenerator: (req) => req.user._id.toString(),
     message: { error: { code: "TOO_MANY_REQUESTS", message: "You are sending messages very quickly. Take a breath and try again in a minute" } },
+    // Someone in crisis is never told to wait: they get the safety reply, which
+    // costs nothing upstream.
+    handler: (req, res, next, options) => {
+        if (typeof req.body?.message === "string" && looksLikeCrisis(req.body.message)) {
+            req.overChatLimit = true;
+            return next();
+        }
+        res.status(options.statusCode).json(options.message);
+    },
 });
 
 const messageSchema = z.object({

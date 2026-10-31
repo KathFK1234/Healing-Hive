@@ -11,7 +11,7 @@ async function sendAiMessage(req, res) {
     const crisis = looksLikeCrisis(message);
 
     let replyText;
-    if (crisis && !isAiConfigured()) {
+    if (crisis && (req.overChatLimit || !isAiConfigured())) {
         // The safety reply never depends on the AI provider being up.
         replyText = CRISIS_REPLY;
     } else {
