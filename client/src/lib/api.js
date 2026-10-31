@@ -24,9 +24,15 @@ export const tokenStore = {
   },
 };
 
+// A server that takes the call and never answers would otherwise leave the
+// page waiting for ever, with no outage notice.
+const WAIT_MS = 30 * 1000;
+const FILE_WAIT_MS = 2 * 60 * 1000;
+
 // `file` sends a file as the body itself (with its type and name); `asFile`
-// returns a successful answer as a Blob instead of JSON.
-async function request(method, path, body, { file, fileType, asFile } = {}) {
+// returns a successful answer as a Blob instead of JSON. `waitMs` is for calls
+// that are slow by nature.
+async function request(method, path, body, { file, fileType, asFile, waitMs = file || asFile ? FILE_WAIT_MS : WAIT_MS } = {}) {
   const token = tokenStore.get();
   let response;
   try {
@@ -39,6 +45,7 @@ async function request(method, path, body, { file, fileType, asFile } = {}) {
         ...(token && { Authorization: `Bearer ${token}` }),
       },
       body: file ?? (body !== undefined ? JSON.stringify(body) : undefined),
+      signal: AbortSignal.timeout(waitMs),
     });
   } catch (error) {
     const failure = errorForNoAnswer(typeof navigator !== 'undefined' && navigator.onLine === false);
@@ -86,7 +93,7 @@ function withQuery(path, params) {
 
 export const api = {
   get: (path, params) => request('GET', withQuery(path, params)),
-  post: (path, body) => request('POST', path, body ?? {}),
+  post: (path, body, options) => request('POST', path, body ?? {}, options),
   put: (path, body) => request('PUT', path, body ?? {}),
   patch: (path, body) => request('PATCH', path, body ?? {}),
   delete: (path) => request('DELETE', path),

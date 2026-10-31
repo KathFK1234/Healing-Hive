@@ -9,6 +9,9 @@ import { formatTime } from '@/lib/format';
 import { Button, Card, FormError, Modal, PageHeader, QueryState, useToast } from '@/components/ui';
 import { usePageTitle } from '@/hooks/usePageTitle';
 
+// The server gives the provider a minute a try, with two retries
+const REPLY_WAIT_MS = 200 * 1000;
+
 const starters = [
   "I've been feeling anxious lately",
   "I can't sleep and my mind won't stop",
@@ -40,7 +43,7 @@ const Companion = () => {
   const query = useQuery({ queryKey: ['ai', 'messages'], queryFn: () => api.get('/ai/messages') });
 
   const send = useMutation({
-    mutationFn: (message) => api.post('/ai/messages', { message }),
+    mutationFn: (message) => api.post('/ai/messages', { message }, { waitMs: REPLY_WAIT_MS }),
     onSuccess: ({ userMessage, reply }) => {
       queryClient.setQueryData(['ai', 'messages'], (current) => ({ ...current, messages: [...current.messages, userMessage, reply] }));
       setInput('');
