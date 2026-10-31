@@ -142,6 +142,19 @@ test("a session cancelled twice at once is cancelled, and announced, once", asyn
     assert.equal(outbox.length, 1);
 });
 
+test("cancelling does not show the client the professional's private meeting room", async () => {
+    const admin = await makeAdmin(api);
+    const professional = await makeProfessional(api, admin, { meetingLink: "https://meet.example.com/private" });
+    const client = await signUp(api);
+    const { body: profile } = await api.get(`/api/v1/professionals/${professional.profileId}`);
+    const { body: session } = await api.post("/api/v1/sessions").set(client.auth).send({ professionalId: professional.profileId, scheduledAt: profile.slots[0] });
+
+    const cancelled = await api.patch(`/api/v1/sessions/${session._id}/status`).set(client.auth).send({ status: "cancelled" });
+    assert.equal(cancelled.status, 200);
+    assert.equal(cancelled.body.professional, professional.profileId);
+    assert.doesNotMatch(JSON.stringify(cancelled.body), /private/);
+});
+
 test("times outside the professional's hours cannot be booked", async () => {
     const admin = await makeAdmin(api);
     const therapist = await makeProfessional(api, admin);

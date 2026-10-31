@@ -227,8 +227,9 @@ async function updateStatus(req, res) {
         });
     }
 
+    // The id only: the populated professional holds their private meeting link
     const { googleEventId, ...result } = session.toObject();
-    res.json(result);
+    res.json({ ...result, professional: session.professional._id });
 }
 
 async function updateNotes(req, res) {
