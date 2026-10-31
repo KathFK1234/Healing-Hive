@@ -199,6 +199,13 @@ test("a broken reset link and a blank title get plain-language messages", async 
     assert.equal(name.body.error.message, "Enter your name");
 });
 
+test("a web address that can't be decoded is not found, not a server error", async () => {
+    for (const path of ["events/%E0%A4%A", "professionals/%ZZ"]) {
+        const answer = await api.get(`/api/v1/${path}`);
+        assert.equal(answer.status, 404);
+    }
+});
+
 test("losing the database reads as an outage, not as a fault in the request", () => {
     for (const err of [Object.assign(new Error("x"), { name: "MongoNetworkTimeoutError" }), Object.assign(new Error("x"), { name: "MongooseServerSelectionError" }), new Error("Operation `nuggets.find()` buffering timed out after 10000ms")]) {
         let sent;

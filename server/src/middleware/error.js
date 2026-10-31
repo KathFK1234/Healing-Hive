@@ -31,6 +31,9 @@ export function errorHandler(err, req, res, next) {
     } else if (err?.code === 11000) {
         const field = Object.keys(err.keyPattern || err.keyValue || {})[0];
         error = ApiError.conflict(duplicateMessages[field] || "This was already saved, so it was not added again");
+    } else if (err instanceof URIError) {
+        // A web address that can't be decoded names nothing that exists
+        error = ApiError.notFound("Route");
     } else if (err?.type === "entity.parse.failed") {
         error = ApiError.badRequest("The request body is not valid JSON");
     } else if (err?.type === "entity.too.large") {
