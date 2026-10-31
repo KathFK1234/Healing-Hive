@@ -145,6 +145,12 @@ const Companion = () => {
               className="space-y-2 border-t border-border p-3"
             >
               <FormError error={send.error} />
+              {send.isError && (
+                <p className="text-sm">
+                  If things feel urgent, please don't wait for this:{' '}
+                  <Link to="/help" className="font-semibold text-danger hover:underline">get help now</Link>.
+                </p>
+              )}
               <div className="flex items-end gap-2">
                 <textarea
                   ref={box}
