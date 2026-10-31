@@ -72,12 +72,23 @@ async function updateEvent(req, res) {
     const event = await Event.findById(req.params.id);
     if (!event) throw ApiError.notFound("Event");
     if (!canManage(event, req.user)) throw ApiError.forbidden();
-    // The form always sends the date: an unchanged one is fine, so the host of
-    // an event under way can still fix its join link.
-    if (req.body.eventDate?.getTime() !== event.eventDate.getTime()) refusePastDate(req.body.eventDate);
+    // The edit form sends the date even when it is unchanged, and the host of
+    // an event under way must still be able to fix its join link.
+    const moved = !!req.body.eventDate && req.body.eventDate.getTime() !== event.eventDate.getTime();
+    if (moved) refusePastDate(req.body.eventDate);
 
     Object.assign(event, req.body);
     await event.save();
+
+    // One email each, so nobody learns who else is going
+    if (moved) {
+        const people = await User.find({ _id: { $in: event.participants, $ne: req.user._id } }).select("fullName email");
+        await Promise.all(people.map((person) => sendMail({
+            to: person.email,
+            subject: "A Healing Hive event has moved",
+            text: `Hello ${person.fullName},\n\n"${event.title}" is now on ${when(event.eventDate)}.\n\nIf that no longer suits you, you can cancel your place here:\n${env.clientUrl}/events`,
+        })));
+    }
     res.json(present(event, req.user));
 }
 

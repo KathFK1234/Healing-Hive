@@ -9,6 +9,9 @@ const longDateFormat = new Intl.DateTimeFormat('en-KE', { timeZone: TIME_ZONE, w
 
 // "2026-10-06" for the EAT calendar day a moment falls on
 export const localDay = (date) => dayKey.format(new Date(date));
+const clockFormat = new Intl.DateTimeFormat('en-GB', { timeZone: 'Africa/Nairobi', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
+// "18:30", as a time box wants it
+export const clockInEat = (date) => clockFormat.format(new Date(date));
 
 // Some browsers write the en-KE day period in lower case; keep it consistent.
 export const formatTime = (date) => timeFormat.format(new Date(date)).replace(/\s?(am|pm)$/i, (match) => ` ${match.trim().toUpperCase()}`);

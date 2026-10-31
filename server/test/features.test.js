@@ -250,6 +250,26 @@ test("an event under way can be edited, but not moved into the past", async () =
     assert.equal(moved.status, 400);
 });
 
+test("moving an event emails each person going, and emptied fields are cleared", async () => {
+    const Event = (await import("../src/modules/events/event.model.js")).default;
+    const admin = await makeAdmin(api);
+    const person = await signUp(api);
+    const eventDate = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    const event = await Event.create({ title: "Talk", eventDate, capacity: 5, joinLink: "https://meet.example.com/a", host: admin.user._id, participants: [person.user._id] });
+    outbox.length = 0;
+
+    const same = await api.patch(`/api/v1/events/${event._id}`).set(admin.auth).send({ eventDate, capacity: null, joinLink: "" });
+    assert.equal(same.status, 200);
+    assert.equal(same.body.capacity, undefined);
+    assert.equal(same.body.joinLink, undefined);
+    assert.equal(outbox.length, 0);
+
+    const later = new Date(eventDate.getTime() + 60 * 60 * 1000);
+    assert.equal((await api.patch(`/api/v1/events/${event._id}`).set(admin.auth).send({ eventDate: later })).status, 200);
+    assert.deepEqual(outbox.map((mail) => mail.to), [person.user.email]);
+    assert.match(outbox[0].subject, /moved/);
+});
+
 test("deleting an event emails each person who registered, but not for a past event", async () => {
     const admin = await makeAdmin(api);
     const host = await makeProfessional(api, admin);

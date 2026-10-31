@@ -1,14 +1,28 @@
 import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { CalendarDays, Clock, ExternalLink, Mic, Plus, Ticket, Trash2, Users } from 'lucide-react';
+import { CalendarDays, Clock, ExternalLink, Mic, Pencil, Plus, Ticket, Trash2, Users } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
-import { formatLongDate, formatMoney, formatTime, localDay } from '@/lib/format';
+import { clockInEat, formatLongDate, formatMoney, formatTime, localDay } from '@/lib/format';
 import { Badge, Button, Card, Chip, ConfirmModal, EmptyState, Field, FormError, Input, Modal, PageHeader, QueryState, Textarea, useToast } from '@/components/ui';
 import { usePageTitle } from '@/hooks/usePageTitle';
 
 const blank = { title: '', description: '', speaker: '', date: '', time: '18:00', durationMinutes: 60, price: 0, capacity: '', joinLink: '' };
+
+// An event as the form shows it, in East Africa Time
+const toDraft = (event) => ({
+  _id: event._id,
+  title: event.title,
+  description: event.description || '',
+  speaker: event.speaker || '',
+  date: localDay(event.eventDate),
+  time: clockInEat(event.eventDate),
+  durationMinutes: event.durationMinutes,
+  price: event.price,
+  capacity: event.capacity ?? '',
+  joinLink: event.joinLink || '',
+});
 
 const Events = () => {
   usePageTitle('Events');
@@ -48,33 +62,37 @@ const Events = () => {
     },
   });
 
-  const create = useMutation({
-    mutationFn: () => api.post('/events', {
-      title: draft.title,
-      description: draft.description || undefined,
-      speaker: draft.speaker || undefined,
-      // The form asks for East Africa Time, which is always UTC+3
-      eventDate: `${draft.date}T${draft.time}:00+03:00`,
-      durationMinutes: Number(draft.durationMinutes),
-      price: Number(draft.price) || 0,
-      capacity: draft.capacity ? Number(draft.capacity) : undefined,
-      joinLink: draft.joinLink || undefined,
-    }),
+  const save = useMutation({
+    mutationFn: () => {
+      const details = {
+        title: draft.title,
+        description: draft.description,
+        speaker: draft.speaker,
+        // The form asks for East Africa Time, which is always UTC+3
+        eventDate: `${draft.date}T${draft.time}:00+03:00`,
+        durationMinutes: Number(draft.durationMinutes),
+        price: Number(draft.price) || 0,
+        // Emptied boxes clear what was there
+        capacity: draft.capacity ? Number(draft.capacity) : null,
+        joinLink: draft.joinLink,
+      };
+      return draft._id ? api.patch(`/events/${draft._id}`, details) : api.post('/events', details);
+    },
     onSuccess: () => {
       refresh();
+      toast(draft._id ? 'Event updated' : 'Event created');
       setDraft(null);
-      toast('Event created');
     },
   });
 
-  const set = (key) => (event) => setDraft({ ...draft, [key]: event.target.value });
+  const set = (key) => (event) => setDraft({ ...draft, [key]: event.target.value, changed: true });
 
   return (
     <>
       <PageHeader
         title="Wellness events"
         description="Guided group sessions and talks, led by our therapists and peer counsellors."
-        action={canHost && <Button onClick={() => { create.reset(); setDraft(blank); }}><Plus className="h-4 w-4" aria-hidden="true" /> New event</Button>}
+        action={canHost && <Button onClick={() => { save.reset(); setDraft(blank); }}><Plus className="h-4 w-4" aria-hidden="true" /> New event</Button>}
       />
 
       <div className="mb-4 flex gap-2" role="group" aria-label="Which events to show">
@@ -123,9 +141,16 @@ const Events = () => {
                         </a>
                       )}
                       {event.canManage && (
-                        <button type="button" onClick={() => { remove.reset(); setDeleting(event); }} aria-label={`Delete ${event.title}`} className="ml-auto rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-danger">
-                          <Trash2 className="h-4 w-4" aria-hidden="true" />
-                        </button>
+                        <div className="ml-auto flex">
+                          {when === 'upcoming' && (
+                            <button type="button" onClick={() => { save.reset(); setDraft(toDraft(event)); }} aria-label={`Edit ${event.title}`} className="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground">
+                              <Pencil className="h-4 w-4" aria-hidden="true" />
+                            </button>
+                          )}
+                          <button type="button" onClick={() => { remove.reset(); setDeleting(event); }} aria-label={`Delete ${event.title}`} className="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-danger">
+                            <Trash2 className="h-4 w-4" aria-hidden="true" />
+                          </button>
+                        </div>
                       )}
                     </div>
                     {event.price > 0 && when === 'upcoming' && (
@@ -142,23 +167,23 @@ const Events = () => {
       <Modal
         open={!!draft}
         onClose={() => setDraft(null)}
-        dirty={!!draft && Boolean(draft.title || draft.description || draft.speaker || draft.date || draft.joinLink)}
-        title="New event"
+        dirty={!!draft?.changed}
+        title={draft?._id ? 'Edit event' : 'New event'}
         footer={
           <>
             <Button variant="outline" onClick={() => setDraft(null)}>Cancel</Button>
-            <Button type="submit" form="event-form" loading={create.isPending}>Create event</Button>
+            <Button type="submit" form="event-form" loading={save.isPending}>{draft?._id ? 'Save changes' : 'Create event'}</Button>
           </>
         }
       >
         {draft && (
-          <form id="event-form" className="space-y-4" onSubmit={(event) => { event.preventDefault(); create.mutate(); }}>
-            <FormError error={create.error} />
+          <form id="event-form" className="space-y-4" onSubmit={(event) => { event.preventDefault(); save.mutate(); }}>
+            <FormError error={save.error} />
             <Field label="Title">{(field) => <Input {...field} required minLength={3} maxLength={120} value={draft.title} onChange={set('title')} />}</Field>
             <Field label="What is it about?">{(field) => <Textarea {...field} rows={3} maxLength={2000} value={draft.description} onChange={set('description')} />}</Field>
             <Field label="Speaker or host name">{(field) => <Input {...field} maxLength={80} value={draft.speaker} onChange={set('speaker')} />}</Field>
             <div className="grid grid-cols-2 gap-4">
-              <Field label="Date">{(field) => <Input {...field} type="date" required min={localDay(Date.now())} value={draft.date} onChange={set('date')} />}</Field>
+              <Field label="Date">{(field) => <Input {...field} type="date" required min={draft._id ? undefined : localDay(Date.now())} value={draft.date} onChange={set('date')} />}</Field>
               <Field label="Time (EAT)">{(field) => <Input {...field} type="time" required value={draft.time} onChange={set('time')} />}</Field>
               <Field label="Length (minutes)">{(field) => <Input {...field} type="number" min={10} max={600} required value={draft.durationMinutes} onChange={set('durationMinutes')} />}</Field>
               <Field label="Price (KSh)" hint="0 for free">{(field) => <Input {...field} type="number" min={0} value={draft.price} onChange={set('price')} />}</Field>

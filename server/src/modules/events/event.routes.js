@@ -14,8 +14,9 @@ const eventSchema = z.object({
     // no defaults here: the model supplies them, and updates must not reset fields
     durationMinutes: z.number().int().min(10).max(600).optional(),
     price: z.number().min(0).max(1000000).optional(),
-    capacity: z.number().int().min(1).max(100000).optional(),
-    joinLink: webLink(500).optional(),
+    // null and "" (an emptied box) remove them; undefined is what unsets a field on save
+    capacity: z.number().int().min(1).max(100000).nullable().transform((value) => value ?? undefined).optional(),
+    joinLink: webLink(500).or(z.literal("")).transform((value) => value || undefined).optional(),
 });
 
 const listSchema = z.object({
