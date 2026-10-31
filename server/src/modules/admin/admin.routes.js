@@ -116,14 +116,14 @@ router.patch("/applications/:id", validateId, validate({ body: reviewSchema }), 
     }
 
     const applicant = await User.findById(application.user).select("fullName email");
-    if (!approved && wasListed) await cancelUpcomingSessions(application, applicant?.fullName || "your professional");
+    const cancelled = !approved && wasListed ? await cancelUpcomingSessions(application, applicant?.fullName || "your professional") : 0;
     if (applicant) {
         await sendMail({
             to: applicant.email,
             subject: approved ? "You are approved on Healing Hive" : wasListed ? "You were removed from the Healing Hive directory" : "Your Healing Hive application needs changes",
             text: approved
                 ? `Hello ${applicant.fullName},\n\nGood news: your application has been approved. Sign in to finish setting up:\n${env.clientUrl}/login`
-                : `Hello ${applicant.fullName},\n\n${wasListed ? "You are no longer listed on Healing Hive, and your upcoming sessions have been cancelled. Their clients have been told." : "We could not approve your application yet."}${req.body.reviewNote ? `\n\n${wasListed ? "Why" : "What needs to change"}: ${req.body.reviewNote}` : ""}\n\nYou can update your application and send it again here:\n${env.clientUrl}/apply`,
+                : `Hello ${applicant.fullName},\n\n${wasListed ? `You are no longer listed on Healing Hive.${cancelled ? " Your upcoming sessions have been cancelled, and their clients have been told." : ""}` : "We could not approve your application yet."}${req.body.reviewNote ? `\n\n${wasListed ? "Why" : "What needs to change"}: ${req.body.reviewNote}` : ""}\n\nYou can update your application and send it again here:\n${env.clientUrl}/apply`,
         });
     }
 

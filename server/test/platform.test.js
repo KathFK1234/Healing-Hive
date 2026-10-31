@@ -397,6 +397,7 @@ test("removing a professional cancels their upcoming sessions and tells each cli
     const removed = await api.patch(`/api/v1/admin/applications/${therapist.profileId}`).set(admin.auth).send({ status: "rejected", reviewNote: "Licence expired" });
     const told = outbox.find((mail) => mail.to === therapist.user.email && /removed from the Healing Hive directory/.test(mail.subject));
     assert.match(told.text, /no longer listed/);
+    assert.match(told.text, /upcoming sessions have been cancelled/);
     assert.match(told.text, /Why: Licence expired/);
     assert.equal(removed.status, 200);
 
@@ -409,6 +410,15 @@ test("removing a professional cancels their upcoming sessions and tells each cli
     const [past] = (await api.get("/api/v1/sessions/mine").set(fourth.auth)).body;
     assert.equal(past.status, "confirmed");
     assert.doesNotMatch(lastMailTo(fourth.user.email)?.text || "", /no longer listed/);
+});
+
+test("a professional removed with no sessions is not told any were cancelled", async () => {
+    const admin = await makeAdmin(api);
+    const therapist = await makeProfessional(api, admin);
+    await api.patch(`/api/v1/admin/applications/${therapist.profileId}`).set(admin.auth).send({ status: "rejected" });
+    const told = outbox.find((mail) => mail.to === therapist.user.email && /removed from the Healing Hive directory/.test(mail.subject));
+    assert.match(told.text, /no longer listed/);
+    assert.doesNotMatch(told.text, /cancelled/);
 });
 
 test("admins can search everyone and page through them", async () => {
