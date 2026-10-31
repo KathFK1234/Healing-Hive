@@ -72,7 +72,7 @@ jobs:
       # names its own address, or Facebook and LinkedIn send people to the home page.
       - name: Give each public page its own copy
         run: |
-          for page in therapists nuggets events help professionals login signup; do
+          for page in therapists nuggets events help professionals professionals/signup login signup; do
             mkdir -p "client/dist/$page"
             sed "s|/Healing-Hive/\"|/Healing-Hive/$page/\"|" client/dist/index.html > "client/dist/$page/index.html"
             test "$(grep -c "/Healing-Hive/$page/\"" "client/dist/$page/index.html")" -eq 2
