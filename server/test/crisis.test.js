@@ -21,11 +21,14 @@ test("crisis messages are noticed however they are typed", () => {
         "I don\u2019t want to live anymore", "I dont want to be here", "I wanna die", "I wish I was dead", "I want to end it all",
         "I can\u2019t go on", "I cant go on", "there is no point in living", "nothing to live for", "I keep hurting myself",
         "nataka kujiua", "nitajiua", "sitaki kuishi", "ni bora nife",
+        "I want to unalive myself", "gonna kms", "life is not worth living", "I can\u2019t take it anymore", "I can't do this any more",
+        "I hope I never wake up", "I don't want to wake up", "I want to disappear forever",
+        "najiua", "ngoja nijiue", "anataka kujitoa uhai", "nataka kujimaliza", "nimechoka na maisha", "nimechoka kuishi", "sina sababu ya kuishi", "nijinyonge",
     ]) assert.ok(looksLikeCrisis(text), text);
 });
 
 test("everyday messages are not treated as a crisis", () => {
-    for (const text of ["I feel so tired today", "my phone died", "I want to go on holiday", "this is killing me, so much homework"]) {
+    for (const text of ["I feel so tired today", "my phone died", "I want to go on holiday", "this is killing me, so much homework", "I walked 5 kms today", "I can't take it with me", "nimechoka sana leo", "I never wake up on time"]) {
         assert.equal(looksLikeCrisis(text), false, text);
     }
 });
