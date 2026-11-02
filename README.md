@@ -76,6 +76,31 @@ The web app and the API are hosted separately:
 - **API: Railway**, from this repository. `railway.json` starts only the API (`npm start -w server`), checks `/api/v1/health`, and runs `npm run seed -w server` before each deploy (starter nuggets and the admin account; it skips anything already there).
 - **When Railway has a problem.** A deployment that fails (its build, the seed, or the `/api/v1/health` check) never replaces the one that is running: Railway keeps serving the last good deployment (seen on 2026-10-23, when a deploy failed during Railway's own incident and the API stayed up). If the API can't be reached at all (down, restarting, Railway's 502/503/504 or its "Application not found"), the web app keeps working where it doesn't need the API (the Help page and its crisis numbers, the public pages), shows a calm banner saying the server is unreachable because of our hosting provider, with a link to https://status.railway.com and a Try again button, and clears it by itself once the API answers. Someone signed in whose account can't be loaded gets a "temporarily unavailable" page with the crisis numbers. Ordinary errors (a wrong password, a missing item) are shown as before. The detection is in `client/src/lib/apiError.js`.
 
+#### Railway stops reading `railway.json` on 1 December 2026
+
+Railway has deprecated `railway.json` ("Config as Code") and **stops reading it on 2026-12-01** (a hard cutoff). Its replacement, [Infrastructure as Code](https://docs.railway.com/infrastructure-as-code), is a `.railway/railway.ts` file that the [Railway CLI](https://docs.railway.com/cli/config) applies when you run it, not at deploy time. A service can't be managed by both. `railway.json` sets:
+
+| Setting | Value | Without it |
+| --- | --- | --- |
+| Build command | `echo 'API only: …'` (skips building the web app) | Railway builds the whole repo, web app included: slower, still works |
+| Start command | `npm start -w server` | The repo root has no `start` script, so the deploy can fail to start unless the dashboard's Start Command says this |
+| Pre-deploy command | `npm run seed -w server` | Whatever the dashboard's Pre-deploy Command says (it was set there on 2026-10-20) |
+| Healthcheck path | `/api/v1/health` | No check: a deploy that can't reach the database replaces the working one |
+| Healthcheck timeout | `60` seconds | Railway's default, 300 |
+| Restart policy | `ON_FAILURE`, up to `10` restarts | Railway's default, the same |
+| Draining time | `75` seconds | Railway's default |
+
+It sets no watch paths, replicas or region.
+
+Move them before 1 December, from a checkout of this repo with the CLI signed in to the account that owns the project:
+
+1. Install and sign in: `bash <(curl -fsSL railway.com/install.sh)` (or `brew install railway`), then `railway login` and `railway link` (project "Healing Hive", environment "production", service "Healing Hive repo").
+2. `railway config migrate` writes `.railway/railway.ts` from `railway.json` without changing anything on Railway. Read it: the table above should be in it. If a later step says the `railway` package is missing, run `npm install --save-dev railway` at the repo root.
+3. `railway config migrate --apply` writes the file and clears the service's Config File setting, so Railway stops reading `railway.json`.
+4. `railway config plan`. **Read every line before going on.** It should only set the settings in the table on "Healing Hive repo". If it marks anything as destroyed or deleted, above all the MongoDB service or a variable, stop: a project file treats a service it leaves out as one to delete.
+5. `railway config apply`, and confirm only if the plan is what you read.
+6. Commit `.railway/` and remove `railway.json` in the same push (never delete it before step 5). Then check the deploy as in step 5 below: health answers with the new commit, and in the dashboard the service shows the settings above.
+
 Setting it up once:
 
 1. **Database.** Create a MongoDB database: MongoDB Atlas (copy its connection string), or Railway's MongoDB in the same project (+ New > Database > MongoDB).
