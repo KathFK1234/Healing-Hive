@@ -93,16 +93,17 @@ Railway has deprecated `railway.json` ("Config as Code") and **stops reading it 
 
 It sets no watch paths, replicas or region.
 
-Move them before 1 December, from a checkout of this repo with the CLI signed in to the account that owns the project.
+Move them before 1 December, from a checkout of this repo with the CLI (version 5.71 or later) signed in to the account that owns the project. The steps follow the CLI itself, which differs from Railway's docs page: `--apply` only writes a file, and a separate `cutover` switches the service over.
 
-Never add `--include-variables`, `--show-values` or `--decrypt-variables` to the commands below: they write the secret settings (`JWT_SECRET`, the database password, API keys) into the file you commit, or print them. Before committing, check `.railway/railway.ts` has no secret values in it; variables should appear only as `preserve()`, if at all.
+Always pass `--variables unmanaged` (the CLI asks for a choice): the file then never reads or writes variables, so `JWT_SECRET`, the database password and API keys stay in Railway's Variables. Never add `--include-variables`, `--show-values` or `--decrypt-variables`: they put secret values in the file you commit, or on screen. Before committing, check `.railway/railway.ts` has no secret values in it.
 
 1. Install and sign in: `bash <(curl -fsSL railway.com/install.sh)` (or `brew install railway`), then `railway login` and `railway link` (project "Healing Hive", environment "production", service "Healing Hive repo").
-2. `railway config migrate` writes `.railway/railway.ts` from `railway.json` without changing anything on Railway. Read it: the table above should be in it. If a later step says the `railway` package is missing, run `npm install --save-dev railway` at the repo root.
-3. `railway config migrate --apply` writes the file and clears the service's Config File setting, so Railway stops reading `railway.json`.
-4. `railway config plan`. **Read every line before going on.** It should only set the settings in the table on "Healing Hive repo". If it marks anything as destroyed or deleted, above all the MongoDB service or a variable, stop: a project file treats a service it leaves out as one to delete.
-5. `railway config apply`, and confirm only if the plan is what you read.
-6. Commit `.railway/` and remove `railway.json` in the same push (never delete it before step 5). Then check the deploy as in the "Check" step of "Setting it up once" below: health answers with the new commit, and in the dashboard the service shows the settings above.
+2. `railway config migrate --variables unmanaged` is a dry run: it shows what it would write and changes nothing (if it asks to write the file, say no). It should show the settings in the table above, for "Healing Hive repo" only.
+3. `railway config migrate --apply --variables unmanaged` writes `.railway/railway.ts` and nothing else: Railway still reads `railway.json`. If it offers to cut over now, say no. Read the file. If a later step says the `railway` package is missing, run `npm install --save-dev railway` at the repo root.
+4. Do steps 4 to 6 one straight after another: between them the service runs on its dashboard settings. `railway config migrate cutover --service "Healing Hive repo"` stops Railway reading `railway.json` for the service and redeploys it. `railway config migrate status` shows which services still read it, and `railway config migrate undo` puts it back.
+5. `railway config plan`. **Read every line before going on.** It should only set the settings in the table on "Healing Hive repo". If it marks anything as destroyed or deleted, above all the MongoDB service or a variable, stop and run `railway config migrate undo`: a project file treats a service it leaves out as one to delete.
+6. `railway config apply`, and confirm only if the plan is what you read.
+7. Commit `.railway/` and remove `railway.json` in the same push (never before step 6). Then check the deploy as in the "Check" step of "Setting it up once" below: health answers with the new commit, and in the dashboard the service shows the settings above.
 
 Setting it up once:
 
