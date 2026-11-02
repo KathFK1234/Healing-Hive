@@ -52,6 +52,7 @@ Other commands, all from the repo root:
 | `npm run lint` | Lints the web app |
 | `npm run build` | Builds the web app into `client/dist` |
 | `npm run seed` | Adds starter nuggets and the admin account to whatever database `server/.env` points at |
+| `npm start` | Starts only the API, as the host does (no database or web app of its own) |
 
 ### Switching features on
 
@@ -83,7 +84,7 @@ Railway has deprecated `railway.json` ("Config as Code") and **stops reading it 
 | Setting | Value | Without it |
 | --- | --- | --- |
 | Build command | `echo 'API only: …'` (skips building the web app) | Railway builds the whole repo, web app included: slower, still works |
-| Start command | `npm start -w server` | The repo root has no `start` script, so the deploy can fail to start unless the dashboard's Start Command says this |
+| Start command | `npm start -w server` | The same: Railway's builder runs the root `start` script, which starts the API |
 | Pre-deploy command | `npm run seed -w server` | Whatever the dashboard's Pre-deploy Command says (it was set there on 2026-10-20) |
 | Healthcheck path | `/api/v1/health` | No check: a deploy that can't reach the database replaces the working one |
 | Healthcheck timeout | `60` seconds | Railway's default, 300 |
