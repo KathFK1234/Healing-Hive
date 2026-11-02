@@ -164,6 +164,7 @@ To add a feature: create a folder in `server/src/modules/`, mount its routes in 
 
 - **Verify every crisis number** in `server/src/utils/crisis.js` and `client/src/lib/crisis.js` (the two lists must match), and re-check them regularly.
 - Watch the API from outside. Railway checks `/api/v1/health` only while a deploy starts, never afterwards, so if the API or its database goes down later nothing raises an alarm. Point an uptime monitor at `https://<your Railway domain>/api/v1/health` (it answers 503 when the database is unreachable), for example Railway's Uptime Kuma template or any uptime service, and have it alert you.
+- Know where the data lives. Railway has no region in Africa (only the USA, the Netherlands and Singapore), so journals, mood check-ins, chats and session records are stored outside Kenya. Check which region the API and MongoDB services use (each service's Settings), say so in the privacy notice, and have the legal check confirm that sending health data abroad meets Kenya's Data Protection Act 2019.
 - Turn on database backups, and try a restore once. People's journals, sessions and certificates live only in MongoDB.
 - Add your own domain as a Brevo sender. A Gmail `MAIL_FROM` works, but without the domain's DKIM and DMARC records password reset emails can land in spam.
 - Google Calendar uses "sensitive" permissions. While the Google Cloud project is in testing, only the test users you list can connect; opening it to all professionals needs Google's verification.
