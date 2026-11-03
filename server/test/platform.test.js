@@ -450,3 +450,19 @@ test("the Google callback says when Google Calendar is not set up on this server
     assert.equal(res.status, 302);
     assert.equal(new URL(res.headers.location).searchParams.get("calendar"), "unavailable");
 });
+
+test("signed-in answers are never cached, public ones can be revalidated", async () => {
+    const person = await signUp(api);
+    await api.post("/api/v1/journal").set(person.auth).send({ content: "Only for me" });
+    for (const path of ["/api/v1/journal", "/api/v1/auth/me", "/api/v1/moods", "/api/v1/sessions/mine", "/api/v1/nuggets?limit=1"]) {
+        const answer = await api.get(path).set(person.auth);
+        assert.equal(answer.status, 200, path);
+        assert.equal(answer.headers["cache-control"], "no-store", path);
+    }
+    // A refused token gets the same header
+    assert.equal((await api.get("/api/v1/journal").set("Authorization", "Bearer nonsense")).headers["cache-control"], "no-store");
+
+    const anonymous = await api.get("/api/v1/nuggets?limit=1");
+    assert.equal(anonymous.headers["cache-control"], undefined);
+    assert.ok(anonymous.headers.etag);
+});

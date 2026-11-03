@@ -18,6 +18,14 @@ export function createApp() {
     app.use(cors({ origin: env.clientOrigins }));
     app.use(express.json({ limit: "100kb" }));
 
+    // A signed-in answer can hold someone's journal, chats or sessions. Keep it
+    // out of the browser's cache, which outlives signing out on a shared
+    // computer. Public answers keep their ETag, so they can still be revalidated.
+    app.use((req, res, next) => {
+        if (req.headers.authorization) res.set("Cache-Control", "no-store");
+        next();
+    });
+
     // Routes. Versioned so the API can change later without breaking old clients.
     app.use("/api/v1", routes);
 
