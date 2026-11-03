@@ -45,4 +45,11 @@ test("an index that can't be built is named in the log, without the duplicate va
     assert.equal(lines.length, 1);
     assert.match(lines[0], /^Database indexes for User could not be built \(DuplicateKey\)/);
     assert.doesNotMatch(lines[0], /person@example\.org/);
+    assert.match(lines[0], /duplicate data$/);
+
+    // Only a duplicate key points at the data
+    const dropped = Object.assign(new Error("connection closed"), { name: "MongoNetworkError" });
+    await reportIndexFailures({ Session: { init: () => Promise.reject(dropped) } }, (line) => lines.push(line));
+    assert.match(lines[1], /^Database indexes for Session could not be built \(MongoNetworkError\)/);
+    assert.doesNotMatch(lines[1], /duplicate/);
 });

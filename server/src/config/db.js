@@ -45,7 +45,8 @@ export async function reportIndexFailures(models = mongoose.models, log = consol
             await model.init();
         } catch (err) {
             failed.push(name);
-            log(`Database indexes for ${name} could not be built (${err.codeName || err.code || err.name}): its rules, such as unique fields, are not enforced. Check that collection for duplicate data`);
+            const advice = err.code === 11000 ? " Check that collection for duplicate data" : "";
+            log(`Database indexes for ${name} could not be built (${err.codeName || err.code || err.name}): its rules, such as unique fields, are not enforced.${advice}`);
         }
     }));
     return failed;
