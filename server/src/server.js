@@ -1,5 +1,5 @@
 import env from "./config/env.js";
-import { connectDbOrExit, disconnectDb } from "./config/db.js";
+import { connectDbOrExit, disconnectDb, reportIndexFailures } from "./config/db.js";
 import { createApp } from "./app.js";
 
 await connectDbOrExit();
@@ -16,6 +16,8 @@ if (env.isProduction && env.BREVO_API_KEY && env.MAIL_FROM.endsWith(".local>")) 
 const server = createApp().listen(env.PORT, () => {
     console.log(`Server is running at port ${env.PORT}`);
 });
+
+reportIndexFailures();
 
 // Finish in-flight requests before exiting when the host restarts the process.
 for (const signal of ["SIGINT", "SIGTERM"]) {

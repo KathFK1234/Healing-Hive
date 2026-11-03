@@ -33,6 +33,24 @@ export async function connectDbOrExit() {
     }
 }
 
+// Mongoose builds each schema's indexes in the background and drops any
+// failure silently. A unique index that can't be built (because stored data
+// already breaks it) stops guarding anything: one account per email, no double
+// booking. So say which one failed. The code only: the message repeats the
+// duplicate value, such as an email address.
+export async function reportIndexFailures(models = mongoose.models, log = console.error) {
+    const failed = [];
+    await Promise.all(Object.entries(models).map(async ([name, model]) => {
+        try {
+            await model.init();
+        } catch (err) {
+            failed.push(name);
+            log(`Database indexes for ${name} could not be built (${err.codeName || err.code || err.name}): its rules, such as unique fields, are not enforced. Check that collection for duplicate data`);
+        }
+    }));
+    return failed;
+}
+
 export async function disconnectDb() {
     await mongoose.disconnect();
 }

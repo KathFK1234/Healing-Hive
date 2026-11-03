@@ -35,3 +35,14 @@ test("an unexpected error gives a reference but no internals", () => {
     assert.match(res.body.error.message, /reference for this error is [0-9a-f]{8}$/);
     assert.doesNotMatch(JSON.stringify(res.body), /secret|mongodb/);
 });
+
+test("an index that can't be built is named in the log, without the duplicate value", async () => {
+    const { reportIndexFailures } = await import("../src/config/db.js");
+    const duplicate = Object.assign(new Error('E11000 duplicate key error collection: test.users index: email_1 dup key: { email: "person@example.org" }'), { code: 11000, codeName: "DuplicateKey" });
+    const lines = [];
+    const failed = await reportIndexFailures({ User: { init: () => Promise.reject(duplicate) }, Mood: { init: () => Promise.resolve() } }, (line) => lines.push(line));
+    assert.deepEqual(failed, ["User"]);
+    assert.equal(lines.length, 1);
+    assert.match(lines[0], /^Database indexes for User could not be built \(DuplicateKey\)/);
+    assert.doesNotMatch(lines[0], /person@example\.org/);
+});
