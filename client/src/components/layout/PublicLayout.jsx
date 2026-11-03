@@ -32,14 +32,14 @@ export function PublicLayout({ children }) {
       <ServiceBanner />
 
       <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-sm">
-        <div className="mx-auto flex h-20 max-w-6xl items-center justify-between gap-3 px-5">
+        <div className="mx-auto flex min-h-20 max-w-6xl flex-wrap items-center justify-between gap-3 px-5 py-2">
           <Logo />
 
-          <nav aria-label="Main" className="hidden items-center gap-1 xl:flex">
+          <nav aria-label="Main" className="hidden flex-wrap items-center gap-1 xl:flex">
             {links.map((link) => <NavLink key={link.to} to={link.to} className={linkClass}>{link.label}</NavLink>)}
           </nav>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <HelpButton className="max-sm:hidden" />
             <ThemeToggle />
             <Button to="/login" variant="outline" size="sm" className="max-sm:hidden">Sign in</Button>
