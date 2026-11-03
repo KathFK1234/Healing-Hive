@@ -101,6 +101,8 @@ const professionalSchema = new mongoose.Schema({
 
 professionalSchema.index({ status: 1, type: 1 });
 professionalSchema.index({ specialties: 1 });
+// An institution's members. Sparse: most professionals belong to none.
+professionalSchema.index({ institution: 1 }, { sparse: true });
 
 professionalSchema.set("toJSON", {
     transform(doc, ret) {
