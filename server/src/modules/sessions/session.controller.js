@@ -164,6 +164,10 @@ async function updateStatus(req, res) {
     const { session, as } = await findForParticipant(req, "+googleEventId");
     const allowed = TRANSITIONS[as][session.status] || [];
     if (!allowed.includes(req.body.status)) {
+        // Possible, just not for the client: say who can, not that nobody can.
+        if (as === "client" && (TRANSITIONS.professional[session.status] || []).includes(req.body.status)) {
+            throw ApiError.forbidden(`Only the professional can mark a session ${req.body.status}`);
+        }
         throw ApiError.badRequest(`A ${session.status} session cannot be marked ${req.body.status}`);
     }
     // Once it has started, a session is part of both people's records: the

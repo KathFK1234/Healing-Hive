@@ -207,11 +207,16 @@ test("only the people in a session can see or change it", async () => {
     assert.equal(hijack.status, 404);
     assert.equal((await api.patch(`/api/v1/sessions/${session._id}/status`).set(stranger.auth).send({ status: "cancelled" })).status, 404);
 
-    // clients cannot confirm their own booking
-    assert.equal((await api.patch(`/api/v1/sessions/${session._id}/status`).set(client.auth).send({ status: "confirmed" })).status, 400);
+    // clients cannot confirm their own booking, and are told who can
+    const selfConfirm = await api.patch(`/api/v1/sessions/${session._id}/status`).set(client.auth).send({ status: "confirmed" });
+    assert.equal(selfConfirm.status, 403);
+    assert.equal(selfConfirm.body.error.message, "Only the professional can mark a session confirmed");
 
     const confirmed = await api.patch(`/api/v1/sessions/${session._id}/status`).set(therapist.auth).send({ status: "confirmed" });
     assert.equal(confirmed.status, 200);
+    const selfComplete = await api.patch(`/api/v1/sessions/${session._id}/status`).set(client.auth).send({ status: "completed" });
+    assert.equal(selfComplete.status, 403);
+    assert.equal(selfComplete.body.error.message, "Only the professional can mark a session completed");
 
     // private notes are for the professional only
     await api.put(`/api/v1/sessions/${session._id}/notes`).set(therapist.auth).send({ privateNotes: "Follow up on sleep" });
@@ -294,6 +299,13 @@ test("a request whose time has passed cannot be confirmed, only declined", async
 
     const declined = await api.patch(`/api/v1/sessions/${session._id}/status`).set(therapist.auth).send({ status: "cancelled" });
     assert.equal(declined.status, 200);
+
+    // a change nobody can make is still refused as impossible
+    for (const who of [therapist, client]) {
+        const reopen = await api.patch(`/api/v1/sessions/${session._id}/status`).set(who.auth).send({ status: "confirmed" });
+        assert.equal(reopen.status, 400);
+        assert.equal(reopen.body.error.message, "A cancelled session cannot be marked confirmed");
+    }
 });
 
 test("directory filters only offer what the directory lists", async () => {
