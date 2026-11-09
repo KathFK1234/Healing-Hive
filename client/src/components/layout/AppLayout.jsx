@@ -140,9 +140,9 @@ export function AppLayout({ children }) {
 
       {/* Top bar */}
       <header className="sticky top-0 z-30 bg-background/95 backdrop-blur-sm">
-        <div className="flex h-20 items-center justify-between gap-3 px-5 lg:px-12">
+        <div className="flex min-h-20 flex-wrap items-center justify-between gap-3 px-5 py-2 lg:px-12">
           <div className="lg:hidden"><Logo to={homePath(user)} /></div>
-          <div className="ml-auto flex items-center gap-2">
+          <div className="ml-auto flex flex-wrap items-center gap-2">
             <HelpButton />
             <ThemeToggle />
           </div>
