@@ -108,7 +108,7 @@ const Home = () => {
             <div className="flex flex-wrap items-center justify-between gap-5">
               <div>
                 <p className="text-xl font-bold">{formatDateTime(nextSession.scheduledAt)}</p>
-                <p className="mt-1 text-muted-foreground">with {nextSession.professional?.user?.fullName}</p>
+                <p className="mt-1 text-muted-foreground wrap-anywhere">with {nextSession.professional?.user?.fullName}</p>
                 {nextSession.status === 'pending' && <Badge tone="honey" className="mt-3">Waiting for them to confirm</Badge>}
               </div>
               {canJoin(nextSession) && (

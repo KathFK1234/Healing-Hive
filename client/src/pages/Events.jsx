@@ -116,12 +116,12 @@ const Events = () => {
                       {when === 'upcoming' && new Date(event.eventDate) <= new Date() && <Badge tone="warmth">Happening now</Badge>}
                       {event.joined && <Badge tone="honey">You're going</Badge>}
                     </div>
-                    <h2 className="mt-3 text-lg">{event.title}</h2>
-                    {event.description && <p className="mt-1 flex-1 text-sm leading-relaxed text-muted-foreground">{event.description}</p>}
+                    <h2 className="mt-3 text-lg wrap-anywhere">{event.title}</h2>
+                    {event.description && <p className="mt-1 flex-1 text-sm leading-relaxed text-muted-foreground wrap-anywhere">{event.description}</p>}
                     <ul className="mt-4 space-y-1.5 text-sm">
                       <li className="flex items-center gap-2"><CalendarDays className="h-4 w-4 text-muted-foreground" aria-hidden="true" /> {formatLongDate(event.eventDate)}</li>
                       <li className="flex items-center gap-2"><Clock className="h-4 w-4 text-muted-foreground" aria-hidden="true" /> {formatTime(event.eventDate)} EAT · {event.durationMinutes} min</li>
-                      {event.speaker && <li className="flex items-center gap-2"><Mic className="h-4 w-4 text-muted-foreground" aria-hidden="true" /> {event.speaker}</li>}
+                      {event.speaker && <li className="flex items-center gap-2 wrap-anywhere"><Mic className="h-4 w-4 text-muted-foreground" aria-hidden="true" /> {event.speaker}</li>}
                       <li className="flex items-center gap-2">
                         <Users className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
                         {event.participantCount} going{event.capacity ? ` · ${Math.max(0, event.capacity - event.participantCount)} places left` : ''}

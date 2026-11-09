@@ -88,7 +88,7 @@ const Institution = () => {
                           <Avatar name={member.user?.fullName} />
                           <div className="min-w-0 flex-1">
                             <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
-                              <h2 className="text-xl">{member.user?.fullName}</h2>
+                              <h2 className="text-xl wrap-anywhere">{member.user?.fullName}</h2>
                               {member.institutionStatus === 'invited'
                                 ? <Badge tone="honey">Invited, waiting for them</Badge>
                                 : <Badge tone="primary">Active</Badge>}

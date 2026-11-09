@@ -148,6 +148,11 @@
   body {
     @apply bg-background text-foreground font-sans antialiased;
     line-height: var(--leading-relaxed);
+    /* A pasted link or long word in something a person wrote would otherwise
+       widen the whole page. Only a word that can't fit its line is broken, so
+       normal text lays out as before. Text inside a flex or grid item also
+       needs wrap-anywhere on that element (break-word doesn't let it shrink) */
+    overflow-wrap: break-word;
   }
 
   /* Browsers give a fieldset the width of its content by default, so a

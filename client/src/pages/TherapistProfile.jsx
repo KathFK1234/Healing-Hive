@@ -45,7 +45,7 @@ function About({ professional }) {
       <div className="flex items-center gap-5">
         <Avatar name={user?.fullName} size="lg" />
         <div className="min-w-0">
-          <h1 className="text-2xl">{user?.fullName}</h1>
+          <h1 className="text-2xl wrap-anywhere">{user?.fullName}</h1>
           <p className="text-muted-foreground">{title || PROFESSIONAL_TYPES[type]}</p>
           <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
             <Badge tone="primary" icon={BadgeCheck}>Verified by Healing Hive</Badge>
@@ -66,10 +66,10 @@ function About({ professional }) {
       )}
 
       <ul className="mt-6 space-y-3">
-        {institution && <li className="flex items-center gap-3"><Building2 className="h-4 w-4 text-muted-foreground" aria-hidden="true" /> Part of {institution.organisationName}</li>}
-        {location && <li className="flex items-center gap-2"><MapPin className="h-4 w-4 text-muted-foreground" aria-hidden="true" /> {location}</li>}
+        {institution && <li className="flex items-center gap-3 wrap-anywhere"><Building2 className="h-4 w-4 text-muted-foreground" aria-hidden="true" /> Part of {institution.organisationName}</li>}
+        {location && <li className="flex items-center gap-2 wrap-anywhere"><MapPin className="h-4 w-4 text-muted-foreground" aria-hidden="true" /> {location}</li>}
         {yearsExperience > 0 && <li className="flex items-center gap-2"><Clock className="h-4 w-4 text-muted-foreground" aria-hidden="true" /> {yearsExperience} {yearsExperience === 1 ? 'year' : 'years'} of experience</li>}
-        {languages.length > 0 && <li className="flex items-center gap-2"><Languages className="h-4 w-4 text-muted-foreground" aria-hidden="true" /> {languages.join(', ')}</li>}
+        {languages.length > 0 && <li className="flex items-center gap-2 wrap-anywhere"><Languages className="h-4 w-4 text-muted-foreground" aria-hidden="true" /> {languages.join(', ')}</li>}
       </ul>
     </Card>
   );

@@ -69,7 +69,7 @@ const Mood = () => {
                       <p className="font-semibold">{moodFor(mood.score).label} <span className="font-semibold text-muted-foreground">· {formatDateTime(mood.createdAt)}</span></p>
                       {mood.note && <p className="text-sm text-muted-foreground">{mood.note}</p>}
                       {mood.tags?.length > 0 && (
-                        <div className="mt-1.5 flex flex-wrap gap-1">{mood.tags.map((tag) => <Badge key={tag}>{tag}</Badge>)}</div>
+                        <div className="mt-1.5 flex flex-wrap gap-1">{mood.tags.map((tag) => <Badge key={tag} className="wrap-anywhere">{tag}</Badge>)}</div>
                       )}
                     </div>
                     <button

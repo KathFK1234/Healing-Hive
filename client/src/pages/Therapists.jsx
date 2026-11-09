@@ -165,7 +165,7 @@ function ProfessionalCard({ professional }) {
         <Avatar name={user?.fullName} size="lg" className="max-sm:hidden" />
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-            <h2 className="text-xl">{user?.fullName}</h2>
+            <h2 className="text-xl wrap-anywhere">{user?.fullName}</h2>
             <Badge tone="primary" icon={BadgeCheck}>Verified</Badge>
           </div>
           <p className="mt-1 text-muted-foreground">

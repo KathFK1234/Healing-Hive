@@ -75,7 +75,7 @@ const Nuggets = () => {
                   </button>
                 )}
               </div>
-              <h2 className="mt-3 text-lg">{nugget.title}</h2>
+              <h2 className="mt-3 text-lg wrap-anywhere">{nugget.title}</h2>
               <p className="mt-2 flex-1 leading-relaxed text-foreground/85">{nugget.content}</p>
               <p className="mt-4 flex items-center gap-3 text-sm text-muted-foreground">
                 <span>{nugget.topic}</span>
