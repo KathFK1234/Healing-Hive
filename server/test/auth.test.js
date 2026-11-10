@@ -207,7 +207,8 @@ test("a web address that can't be decoded is not found, not a server error", asy
 });
 
 test("losing the database reads as an outage, not as a fault in the request", () => {
-    for (const err of [Object.assign(new Error("x"), { name: "MongoNetworkTimeoutError" }), Object.assign(new Error("x"), { name: "MongooseServerSelectionError" }), new Error("Operation `nuggets.find()` buffering timed out after 10000ms")]) {
+    const named = (name) => Object.assign(new Error("x"), { name });
+    for (const err of [named("MongoNetworkTimeoutError"), named("MongooseServerSelectionError"), named("MongoPoolClearedError"), named("PoolClearedOnNetworkError"), new Error("Operation `nuggets.find()` buffering timed out after 10000ms")]) {
         let sent;
         errorHandler(err, {}, { status(code) { sent = { code }; return this; }, json(body) { sent.body = body; } });
         assert.equal(sent.code, 503);

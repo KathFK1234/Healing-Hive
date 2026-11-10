@@ -15,8 +15,10 @@ export function notFound(req, res, next) {
 }
 
 // The database is out of reach, which is an outage rather than a fault in this
-// request: the web app shows its calm notice for this code.
-const DATABASE_DOWN = /^Mongo(ose)?(ServerSelection|Network|NetworkTimeout)Error$/;
+// request: the web app shows its calm notice for this code. The pool-cleared
+// errors are what a request already under way gets when the driver loses the
+// database and drops its connections.
+const DATABASE_DOWN = /^(Mongo(ose)?(ServerSelection|Network|NetworkTimeout|PoolCleared)Error|PoolClearedOnNetworkError)$/;
 const isDatabaseDown = (err) => DATABASE_DOWN.test(err?.name || "") || /buffering timed out/.test(err?.message || "");
 
 // eslint-disable-next-line no-unused-vars
