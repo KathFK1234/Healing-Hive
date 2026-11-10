@@ -48,7 +48,7 @@ async function request(method, path, body, { file, fileType, asFile, waitMs = fi
       signal: AbortSignal.timeout(waitMs),
     });
   } catch (error) {
-    const failure = errorForNoAnswer(typeof navigator !== 'undefined' && navigator.onLine === false);
+    const failure = errorForNoAnswer(typeof navigator !== 'undefined' && navigator.onLine === false, error?.name === 'TimeoutError');
     // Being offline is the device's own state, not the server's
     if (failure.code !== 'OFFLINE') {
       console.error(`Healing Hive API: ${method} ${BASE_URL}${path} could not be reached`, error);

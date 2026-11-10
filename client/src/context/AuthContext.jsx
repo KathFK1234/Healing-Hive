@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, tokenStore } from '@/lib/api';
+import { worthRetrying } from '@/lib/apiError';
 
 const AuthContext = createContext(null);
 
@@ -15,7 +16,7 @@ export function AuthProvider({ children }) {
     queryFn: () => api.get('/auth/me'),
     enabled: !!token,
     staleTime: 5 * 60 * 1000,
-    retry: (count, error) => error.status !== 401 && count < 2,
+    retry: (count, error) => error.status !== 401 && worthRetrying(error) && count < 2,
   });
 
   // The session ran out on its own. Stay in the app so that, after signing in

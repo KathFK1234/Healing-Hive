@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { errorForAnswer, errorForNoAnswer, isOutage } from './apiError.js';
+import { errorForAnswer, errorForNoAnswer, isOutage, worthRetrying } from './apiError.js';
 import { outage } from './outage.js';
 
 const apiError = (status, code, message) => errorForAnswer({ status, ok: false, contentType: 'application/json; charset=utf-8', data: { error: { code, message } } });
@@ -44,6 +44,14 @@ test("no answer at all is an outage, unless the device is offline", () => {
   const offline = errorForNoAnswer(true);
   assert.equal(offline.code, 'OFFLINE');
   assert.equal(isOutage(offline), false);
+});
+
+test("a call that waited its whole time limit is not tried again; quick failures are", () => {
+  const timedOut = errorForNoAnswer(false, true);
+  assert.equal(isOutage(timedOut), true);
+  assert.equal(worthRetrying(timedOut), false);
+  assert.equal(worthRetrying(errorForNoAnswer(false)), true);
+  assert.equal(worthRetrying(errorForAnswer({ status: 502, ok: false, contentType: 'text/html', data: null })), true);
 });
 
 test("a host's rate limit is not an outage", () => {

@@ -14,10 +14,18 @@ export class ApiError extends Error {
 // unreachable, or refused by CORS, which is how Railway's own error pages
 // arrive: they carry no CORS header), but it does know when the device itself
 // is offline.
-export function errorForNoAnswer(offline) {
+// `timedOut`: the call waited its whole time limit for an answer.
+export function errorForNoAnswer(offline, timedOut = false) {
   if (offline) return new ApiError(0, 'OFFLINE', "You're offline. Check your internet connection and try again");
-  return new ApiError(0, 'NETWORK', "We couldn't reach the Healing Hive server. If your internet is working, the server may be down: please try again in a few minutes");
+  const error = new ApiError(0, 'NETWORK', "We couldn't reach the Healing Hive server. If your internet is working, the server may be down: please try again in a few minutes");
+  error.timedOut = timedOut;
+  return error;
 }
+
+// Whether trying a failed call again is worth it. A call that already waited
+// its whole time limit is not: another try means another long wait on a
+// loading screen, when the outage notice (with its own Try again) should show.
+export const worthRetrying = (error) => !error?.timedOut;
 
 // An answer arrived. Returns null when it is the API's data, otherwise the
 // error to show.
