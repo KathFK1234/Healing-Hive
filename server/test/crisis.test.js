@@ -24,11 +24,17 @@ test("crisis messages are noticed however they are typed", () => {
         "I want to unalive myself", "gonna kms", "life is not worth living", "I can\u2019t take it anymore", "I can't do this any more",
         "I hope I never wake up", "I don't want to wake up", "I want to disappear forever",
         "najiua", "ngoja nijiue", "anataka kujitoa uhai", "nataka kujimaliza", "nimechoka na maisha", "nimechoka kuishi", "sina sababu ya kuishi", "nijinyonge",
+        "I want to hang myself", "I'm going to jump off a bridge", "I want to jump in front of a car", "I took too many pills", "I'm going to drink poison",
+        "thinking of drinking jik", "I have a rope", "I'm thinking of ending things", "I won't be here tomorrow", "this is my goodbye",
+        "I don’t want to exist anymore", "I want to stop existing", "life isn't worth living", "I'm tired of living", "I'm done with life",
+        "I feel like dying", "thinking of taking my own life", "nobody would miss me if I was gone", "I'm a burden to everyone",
+        "natamani kufa", "heri nife", "ningependa kufa", "nataka kunywa sumu", "nitakunywa sumu", "maisha haina maana", "najihisi kama kufa",
     ]) assert.ok(looksLikeCrisis(text), text);
 });
 
 test("everyday messages are not treated as a crisis", () => {
-    for (const text of ["I feel so tired today", "my phone died", "I want to go on holiday", "this is killing me, so much homework", "I walked 5 kms today", "I can't take it with me", "nimechoka sana leo", "I never wake up on time"]) {
+    for (const text of ["I feel so tired today", "my phone died", "I want to go on holiday", "this is killing me, so much homework", "I walked 5 kms today", "I can't take it with me", "nimechoka sana leo", "I never wake up on time",
+        "I'm ending things with my boyfriend", "I jumped off the bus at my stage", "I take all my pills with breakfast", "I'm tired of this rain", "I'm done with my exams", "nataka kunywa chai"]) {
         assert.equal(looksLikeCrisis(text), false, text);
     }
 });
