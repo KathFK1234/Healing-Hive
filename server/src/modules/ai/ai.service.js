@@ -1,7 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import env from "../../config/env.js";
 import ApiError from "../../utils/ApiError.js";
-import { CRISIS_REPLY } from "../../utils/crisis.js";
 
 const SYSTEM_PROMPT = `You are the Healing Hive companion, a supportive listener for young people in Kenya (roughly 18 to 35).
 
@@ -43,8 +42,10 @@ export function isAiConfigured() {
 const URGENT_REQUEST = { timeout: 12 * 1000, maxRetries: 0 };
 
 // `history` is [{ role: "user" | "assistant", content }], oldest first, ending
-// with the message to answer.
-export async function generateReply(history, { urgent = false } = {}) {
+// with the message to answer. `safetyReply` is set when the message looks like
+// a crisis: the request is then urgent, and a refusal gets that reply instead.
+export async function generateReply(history, { safetyReply = null } = {}) {
+    const urgent = safetyReply !== null;
     if (!isAiConfigured()) {
         throw new ApiError(503, "AI_NOT_CONFIGURED", "The AI companion is not switched on yet");
     }
@@ -85,7 +86,7 @@ export async function generateReply(history, { urgent = false } = {}) {
     }
 
     // Check why the model stopped before trusting the content.
-    if (response.stop_reason === "refusal") return urgent ? CRISIS_REPLY : DECLINED_REPLY;
+    if (response.stop_reason === "refusal") return safetyReply ?? DECLINED_REPLY;
 
     const reply = response.content
         .filter((block) => block.type === "text")

@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import http from "node:http";
 import { start, stop, reset, signUp } from "./setup.js";
 import env from "../src/config/env.js";
-import { CRISIS_REPLY } from "../src/utils/crisis.js";
+import { CRISIS_REPLY, DANGER_REPLY } from "../src/utils/crisis.js";
 
 let api;
 let provider;
@@ -37,6 +37,15 @@ test("a crisis message still gets the safety reply when the AI provider fails", 
     assert.equal(answer.body.reply.message, CRISIS_REPLY);
     assert.equal(answer.body.crisis, true);
     assert.ok(answer.body.contacts.length > 0);
+});
+
+test("someone in danger from another person gets the violence lines when the AI provider fails", async () => {
+    const person = await signUp(api);
+    const answer = await api.post("/api/v1/ai/messages").set(person.auth).send({ message: "my husband beats me" });
+    assert.equal(answer.status, 201);
+    assert.equal(answer.body.reply.message, DANGER_REPLY);
+    assert.equal(answer.body.crisis, true);
+    assert.ok(answer.body.contacts.some((contact) => contact.phone === "1195"));
 });
 
 test("a crisis message the model declines still gets the safety reply", async () => {

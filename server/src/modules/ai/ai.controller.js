@@ -1,6 +1,6 @@
 import AiMessage from "./aiMessage.model.js";
 import { generateReply, isAiConfigured } from "./ai.service.js";
-import { looksLikeCrisis, CRISIS_REPLY, CRISIS_CONTACTS } from "../../utils/crisis.js";
+import { safetyReplyFor, CRISIS_CONTACTS } from "../../utils/crisis.js";
 
 // How many earlier messages are sent along for context
 const HISTORY_LIMIT = 20;
@@ -8,20 +8,22 @@ const HISTORY_LIMIT = 20;
 async function sendAiMessage(req, res) {
     const { message } = req.body;
     const user = req.user._id;
-    const crisis = looksLikeCrisis(message);
+    // Thoughts of dying or being in danger from someone: either way there is a
+    // reply ready that never depends on the AI provider.
+    const safetyReply = safetyReplyFor(message);
+    const crisis = safetyReply !== null;
 
     let replyText;
     if (crisis && (req.overChatLimit || !isAiConfigured())) {
-        // The safety reply never depends on the AI provider being up.
-        replyText = CRISIS_REPLY;
+        replyText = safetyReply;
     } else {
         const recent = await AiMessage.find({ user }).sort({ createdAt: -1 }).limit(HISTORY_LIMIT);
         const history = recent.reverse().map((m) => ({ role: m.role, content: m.message }));
         try {
-            replyText = await generateReply([...history, { role: "user", content: message }], { urgent: crisis });
+            replyText = await generateReply([...history, { role: "user", content: message }], { safetyReply });
         } catch (err) {
             if (!crisis) throw err;
-            replyText = CRISIS_REPLY;
+            replyText = safetyReply;
         }
     }
 

@@ -77,10 +77,35 @@ const CRISIS_PATTERNS = [
     /\bsitaki\s+kuishi\b/i,
 ];
 
+// Someone being hurt, abused or threatened by another person. The same broad
+// screen, but these people need the violence lines more than a counsellor.
+const DANGER_PATTERNS = [
+    /\b(he|she|they|my\s+\w+)\s+(beats?|hits?|chokes?|strangles?|kicks?|slaps?)\s+me\b(?!\s+(up|at|to|in)\b)/i,
+    /\b(he|she|they|my\s+\w+)\s+(raped|rapes|molested|molests|forced\s+himself|forced\s+herself)\b/i,
+    /\bi\s+(was|got|have\s+been|am\s+being|'?ve\s+been)\s+(raped|molested|sexually\s+(assaulted|abused)|abused|beaten)\b/i,
+    /\b(uncle|father|dad|stepfather|stepdad|teacher|pastor|boss|brother|cousin|husband|boyfriend|he)\s+(touches|touched|keeps\s+touching)\s+me\b/i,
+    /\b(scared|afraid|terrified)\s+(he|she|they)('ll|\s+will|\s+is\s+going\s+to|\s+are\s+going\s+to|\s+might)\s+(kill|hurt|beat)\s+me\b/i,
+    /\bthreaten(ed|s|ing)?\s+to\s+(kill|hurt|beat)\s+me\b/i,
+    /\b(not|don'?t\s+feel)\s+safe\s+at\s+home\b/i,
+    /\b(a|ali|ame|hu)(na)?nipiga\b/i,
+    /\b(a|ali|ame)(na)?nibaka\b/i,
+    /\b(a|ali|ame)(na)?nitishia\b/i,
+];
+
 // Phones type a curly apostrophe, so "don\u2019t" has to read as "don't"
+const plainText = (text) => text.replace(/[\u2018\u2019\u02bc`]/g, "'");
+
 export function looksLikeCrisis(text) {
-    const plain = text.replace(/[\u2018\u2019\u02bc`]/g, "'");
-    return CRISIS_PATTERNS.some((pattern) => pattern.test(plain));
+    return safetyReplyFor(text) !== null;
+}
+
+// The reply that stands ready for a message, or null when it needs none.
+// Thoughts of dying come first when a message has both.
+export function safetyReplyFor(text) {
+    const plain = plainText(text);
+    if (CRISIS_PATTERNS.some((pattern) => pattern.test(plain))) return CRISIS_REPLY;
+    if (DANGER_PATTERNS.some((pattern) => pattern.test(plain))) return DANGER_REPLY;
+    return null;
 }
 
 export const CRISIS_REPLY =
@@ -90,3 +115,10 @@ export const CRISIS_REPLY =
     "You can talk to a counsellor for free at any hour by calling the Kenya Red Cross on 1199. " +
     "Befrienders Kenya is also there on weekdays from 9am to 5pm on +254 722 178 177. " +
     "If you can, tell someone near you that you trust how you are feeling. I'm still here if you want to keep talking.";
+
+export const DANGER_REPLY =
+    "I'm really sorry this is happening to you. It is not your fault, and you deserve to be safe. " +
+    "If you are in danger right now, please call 999 or 112. " +
+    "The GBV helpline on 1195 is free and answers at any hour, and if you are under 18 the Child helpline on 116 is there for you too. " +
+    "The Kenya Red Cross on 1199 offers free counselling day or night. " +
+    "If you can, get somewhere you feel safer or tell someone you trust. I'm still here if you want to keep talking.";

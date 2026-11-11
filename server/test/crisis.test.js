@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { CRISIS_CONTACTS, CRISIS_REPLY, looksLikeCrisis } from "../src/utils/crisis.js";
+import { CRISIS_CONTACTS, CRISIS_REPLY, DANGER_REPLY, looksLikeCrisis, safetyReplyFor } from "../src/utils/crisis.js";
 import { CRISIS_CONTACTS as CLIENT_CONTACTS } from "../../client/src/lib/crisis.js";
 
 // The web app keeps its own copy so the help page works when the API is
@@ -9,11 +9,24 @@ test("the server and the web app list the same crisis contacts", () => {
     assert.deepEqual(CRISIS_CONTACTS, CLIENT_CONTACTS);
 });
 
-test("every number in the crisis reply is one of the listed contacts", () => {
+test("every number in the safety replies is one of the listed contacts", () => {
     const listed = new Set(CRISIS_CONTACTS.flatMap((contact) => [contact.phone, ...(contact.note.match(/\b112\b/g) || [])]));
-    const mentioned = CRISIS_REPLY.match(/\+?\d[\d ]{1,}\d/g);
-    assert.ok(mentioned.length >= 3);
-    for (const number of mentioned) assert.ok(listed.has(number), `${number} is not in CRISIS_CONTACTS`);
+    for (const reply of [CRISIS_REPLY, DANGER_REPLY]) {
+        const mentioned = reply.match(/\+?\d[\d ]{1,}\d/g);
+        assert.ok(mentioned.length >= 3);
+        for (const number of mentioned) assert.ok(listed.has(number), `${number} is not in CRISIS_CONTACTS`);
+    }
+});
+
+test("someone hurt or threatened by another person gets the violence lines", () => {
+    for (const text of [
+        "he beats me every night", "my husband hits me", "my uncle touches me", "I was raped", "I'm scared he will kill me",
+        "she threatened to kill me", "I don\u2019t feel safe at home", "ananipiga kila siku", "alinibaka", "ananitishia",
+    ]) assert.equal(safetyReplyFor(text), DANGER_REPLY, text);
+    assert.equal(safetyReplyFor("he beats me and I want to die"), CRISIS_REPLY);
+    for (const text of ["he hit me up on WhatsApp", "she beat me at FIFA", "your words touched me", "my mum is going to kill me when she sees my grades", "alinipigia simu"]) {
+        assert.equal(safetyReplyFor(text), null, text);
+    }
 });
 
 test("crisis messages are noticed however they are typed", () => {
