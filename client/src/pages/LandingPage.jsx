@@ -30,7 +30,7 @@ const LandingPage = () => {
         <p className="mb-6 font-semibold text-primary">St;ll Here. Your story isn't over.</p>
         <h1 className="text-4xl sm:text-6xl">You don't have to carry it alone</h1>
         <p className="mx-auto mt-6 max-w-xl text-xl text-muted-foreground">
-          Therapy, peer counselling and everyday tools for young people in Kenya.
+          Healing Hive brings therapy, peer counselling and everyday tools to young people in Kenya.
         </p>
         <div className="mt-10 flex flex-wrap justify-center gap-4">
           <Button to="/signup" size="lg">Get started free</Button>
