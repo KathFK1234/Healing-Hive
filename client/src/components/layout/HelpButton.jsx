@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import classNames from 'classnames';
 import { LifeBuoy } from 'lucide-react';
 
-// On every page, signed in or not: one tap to the crisis contacts.
+// On every page, signed in or not, at every screen width: one tap to the crisis contacts.
 export function HelpButton({ className }) {
   return (
     <Link

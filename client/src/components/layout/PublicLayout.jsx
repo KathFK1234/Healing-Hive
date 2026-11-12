@@ -33,14 +33,14 @@ export function PublicLayout({ children }) {
 
       <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-sm">
         <div className="mx-auto flex min-h-20 max-w-6xl flex-wrap items-center justify-between gap-3 px-5 py-2">
-          <Logo />
+          <Logo markOnlyOnSmallPhones />
 
           <nav aria-label="Main" className="hidden flex-wrap items-center gap-1 xl:flex">
             {links.map((link) => <NavLink key={link.to} to={link.to} className={linkClass}>{link.label}</NavLink>)}
           </nav>
 
           <div className="flex flex-wrap items-center gap-2">
-            <HelpButton className="max-sm:hidden" />
+            <HelpButton />
             <ThemeToggle />
             <Button to="/login" variant="outline" size="sm" className="max-sm:hidden">Sign in</Button>
             <Button to="/signup" size="sm" className="max-sm:hidden">Get started</Button>
@@ -65,7 +65,6 @@ export function PublicLayout({ children }) {
                 <Button to="/login" variant="outline" onClick={close}>Sign in</Button>
                 <Button to="/signup" onClick={close}>Get started</Button>
               </div>
-              <HelpButton className="mt-2 justify-center sm:hidden" />
             </div>
           </nav>
         )}

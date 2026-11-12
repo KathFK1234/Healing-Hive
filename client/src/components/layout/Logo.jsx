@@ -9,12 +9,14 @@ export function LogoMark({ className = 'h-9 w-9' }) {
   );
 }
 
-export function Logo({ to = '/' }) {
+// The narrowest phones have room for the mark only. `markOnlyOnSmallPhones` widens that
+// to anything under 480 px, so the public header keeps Get help on one row (#185);
+// screen readers still hear the name.
+export function Logo({ to = '/', markOnlyOnSmallPhones = false }) {
   return (
     <Link to={to} className="flex items-center gap-2 rounded-lg">
       <LogoMark />
-      {/* The narrowest phones have room for the mark only */}
-      <span className="whitespace-nowrap leading-none max-[359px]:sr-only">
+      <span className={`whitespace-nowrap leading-none ${markOnlyOnSmallPhones ? 'max-[479px]:sr-only' : 'max-[359px]:sr-only'}`}>
         <span className="block text-lg font-bold tracking-tight">Healing Hive</span>
         <span className="block text-xs italic text-muted-foreground">St;ll Here</span>
         <span className="sr-only">, home</span>
