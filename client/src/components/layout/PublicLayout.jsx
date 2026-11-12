@@ -34,7 +34,7 @@ export function PublicLayout({ children }) {
       {/* Sticky only when the screen is at least 30 lines of text tall: with large text or zoom
           the header wraps, and a sticky one would cover much of the screen and the focused element (#194). */}
       <header className="relative top-0 z-40 bg-background/95 backdrop-blur-sm [@media(min-height:30em)]:sticky">
-        <div className="mx-auto flex min-h-20 max-w-6xl flex-wrap items-center justify-between gap-3 px-5 py-2">
+        <div className="mx-auto flex min-h-20 max-w-6xl flex-wrap items-center justify-between gap-3 px-5 py-2 max-[359px]:gap-2 max-[359px]:px-3">
           <Logo markOnlyOnSmallPhones />
 
           <nav aria-label="Main" className="hidden flex-wrap items-center gap-1 xl:flex">
