@@ -5,8 +5,17 @@ export async function connectDb(uri = env.MONGO_URI) {
     // Reject queries on fields that are not in the schema instead of silently
     // dropping the filter and matching every document.
     mongoose.set("strictQuery", true);
-    // Fail in seconds rather than hang: a person is waiting on every query
-    const connect = await mongoose.connect(uri, { serverSelectionTimeoutMS: 10 * 1000, socketTimeoutMS: 20 * 1000 });
+    // Fail in seconds rather than hang: a person is waiting on every query.
+    // Few connections, closed when idle: each one holds memory in this process
+    // and in the database, and the driver's default (up to 100, kept forever)
+    // left a burst's connections open for good. Queries here take
+    // milliseconds, so ten is plenty and a busy moment queues briefly.
+    const connect = await mongoose.connect(uri, {
+        serverSelectionTimeoutMS: 10 * 1000,
+        socketTimeoutMS: 20 * 1000,
+        maxPoolSize: 10,
+        maxIdleTimeMS: 60 * 1000,
+    });
     if (!env.isTest) {
         console.log(`Database connected: ${connect.connection.host}, ${connect.connection.name}`);
     }
