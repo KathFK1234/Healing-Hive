@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
+import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 // The seed runs before every deploy (railway.json preDeployCommand), so what
@@ -48,19 +49,23 @@ test("Railway's MONGO_URL is used when MONGO_URI is not set", () => {
 // API the same way: node itself (an npm parent stays resident, about 85 MB),
 // with a heap limit sized for the API (V8's default follows the machine's
 // memory, so the heap grows far past the ~35 MB the API keeps live). #197
-test("every start command runs node directly with the same memory limits", async () => {
-    const { readFileSync } = await import("node:fs");
+test("every start command runs node directly with the same memory limits", () => {
     const read = (path) => JSON.parse(readFileSync(new URL(path, new URL("../", import.meta.url)), "utf8"));
-    const railway = read("../railway.json").deploy.startCommand;
-    const root = read("../package.json").scripts.start;
-    const server = read("package.json").scripts.start;
-
-    const flags = (command) => command.match(/^node((?: --[a-z-]+=\d+)*) (?:server\/)?src\/server\.js$/)?.[1];
-    for (const command of [railway, root, server]) {
-        assert.ok(flags(command), `starts node directly: ${command}`);
-        assert.match(command, /--max-old-space-size=\d+/);
-        assert.match(command, /--max-semi-space-size=\d+/);
-    }
-    assert.equal(flags(root), flags(railway));
-    assert.equal(flags(server), flags(railway));
+    // Railway and the root script run from the repository root, the server's
+    // own script from server/: each must name the entry file from where it runs.
+    const commands = [
+        [read("../railway.json").deploy.startCommand, "server/src/server.js"],
+        [read("../package.json").scripts.start, "server/src/server.js"],
+        [read("package.json").scripts.start, "src/server.js"],
+    ];
+    const flags = commands.map(([command, entry]) => {
+        const match = command.match(/^node((?: --[a-z-]+=\d+)+) (\S+)$/);
+        assert.ok(match, `starts node directly: ${command}`);
+        assert.equal(match[2], entry, command);
+        assert.match(match[1], /--max-old-space-size=\d+/);
+        assert.match(match[1], /--max-semi-space-size=\d+/);
+        return match[1];
+    });
+    assert.equal(flags[1], flags[0]);
+    assert.equal(flags[2], flags[0]);
 });
