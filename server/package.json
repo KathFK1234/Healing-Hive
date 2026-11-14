@@ -6,7 +6,7 @@
   "main": "src/server.js",
   "scripts": {
     "dev": "node --watch src/server.js",
-    "start": "node --max-old-space-size=192 --max-semi-space-size=4 src/server.js",
+    "start": "node --max-old-space-size=512 --max-semi-space-size=4 src/server.js",
     "seed": "node scripts/seed.js",
     "test": "node --test --test-concurrency=1 \"test/*.test.js\"",
     "dev:db": "node scripts/dev-db.js"
