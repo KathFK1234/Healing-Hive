@@ -5,7 +5,7 @@
   },
   "deploy": {
     "preDeployCommand": ["npm run seed -w server"],
-    "startCommand": "npm start -w server",
+    "startCommand": "node --max-old-space-size=192 --max-semi-space-size=4 server/src/server.js",
     "healthcheckPath": "/api/v1/health",
     "healthcheckTimeout": 60,
     "restartPolicyType": "ON_FAILURE",

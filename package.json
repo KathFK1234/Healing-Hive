@@ -14,7 +14,7 @@
     "dev:server": "npm run dev -w server",
     "dev:client": "npm run dev -w client",
     "build": "npm run build -w client",
-    "start": "npm start -w server",
+    "start": "node --max-old-space-size=192 --max-semi-space-size=4 server/src/server.js",
     "test": "npm test -w server && npm test -w client",
     "lint": "npm run lint -w client",
     "seed": "npm run seed -w server"

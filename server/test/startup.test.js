@@ -43,3 +43,24 @@ test("Railway's MONGO_URL is used when MONGO_URI is not set", () => {
     assert.doesNotMatch(result.stderr, /Invalid environment configuration/);
     assert.match(result.stderr, /Could not connect to the database: .*127\.0\.0\.1:1/);
 });
+
+// Railway, the root `npm start` and the server's own `npm start` must start the
+// API the same way: node itself (an npm parent stays resident, about 85 MB),
+// with a heap limit sized for the API (V8's default follows the machine's
+// memory, so the heap grows far past the ~35 MB the API keeps live). #197
+test("every start command runs node directly with the same memory limits", async () => {
+    const { readFileSync } = await import("node:fs");
+    const read = (path) => JSON.parse(readFileSync(new URL(path, new URL("../", import.meta.url)), "utf8"));
+    const railway = read("../railway.json").deploy.startCommand;
+    const root = read("../package.json").scripts.start;
+    const server = read("package.json").scripts.start;
+
+    const flags = (command) => command.match(/^node((?: --[a-z-]+=\d+)*) (?:server\/)?src\/server\.js$/)?.[1];
+    for (const command of [railway, root, server]) {
+        assert.ok(flags(command), `starts node directly: ${command}`);
+        assert.match(command, /--max-old-space-size=\d+/);
+        assert.match(command, /--max-semi-space-size=\d+/);
+    }
+    assert.equal(flags(root), flags(railway));
+    assert.equal(flags(server), flags(railway));
+});
