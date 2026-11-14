@@ -466,3 +466,12 @@ test("signed-in answers are never cached, public ones can be revalidated", async
     assert.equal(anonymous.headers["cache-control"], undefined);
     assert.ok(anonymous.headers.etag);
 });
+
+// #198: the driver's defaults (100 connections, never closed when idle) kept a
+// busy moment's connections open for good, each holding memory here and in
+// the database.
+test("the database pool stays small and closes idle connections", () => {
+    const options = mongoose.connection.getClient().options;
+    assert.equal(options.maxPoolSize, 10);
+    assert.equal(options.maxIdleTimeMS, 60 * 1000);
+});
